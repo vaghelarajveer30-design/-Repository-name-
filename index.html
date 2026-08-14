@@ -1,208 +1,898 @@
 <!DOCTYPE html>
 <html lang="gu">
 <head>
-    <!-- ગુજરાતી ફોન્ટ્સ અને અક્ષરો સાચા દેખાડવા માટે UTF-8 એનકોડિંગ -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>નિર્મળા નવોદય સ્ટડી ઝોન - ઓનલાઈન ટેસ્ટ</title>
-    
-    <!-- Google Gujarati Font (Noto Sans Gujarati) -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <title>નિર્મળા નવોદય સ્ટડી ઝોન - ઓનલાઇન ટેસ્ટ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Noto Sans Gujarati', sans-serif;
-        }
-
-        body {
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 15px;
-            color: #1c1e21;
-        }
-
-        /* હેડર સ્ટાઈલ */
-        .header {
-            background-color: #3b36db;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .admin-btn {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        /* ટેસ્ટ કાર્ડ */
-        .test-card {
-            background-color: white;
-            margin-top: 15px;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .test-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        .timer {
-            background-color: #ffebe9;
-            color: #d93025;
-            font-weight: bold;
-            font-size: 18px;
-            padding: 5px 12px;
-            border-radius: 8px;
-            border: 1px solid #ffc2c0;
-        }
-
-        /* પ્રશ્નો અને વિકલ્પો */
-        .question-box {
-            margin-bottom: 25px;
-        }
-
-        .question-title {
-            font-weight: 700;
-            font-size: 16px;
-            margin-bottom: 12px;
-            line-height: 1.5;
-        }
-
-        .options-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .option-item {
-            background-color: #f7f8fa;
-            border: 1px solid #e4e6eb;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .option-item:hover {
-            background-color: #ebedf0;
-        }
-
-        .option-item input[type="radio"] {
-            transform: scale(1.2);
-        }
-
-        .share-btn {
-            background-color: #25d366;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-        }
+        body { font-family: 'Hind Vadodara', sans-serif; background-color: #f1f5f9; }
+        .selected-ans { background-color: #e0e7ff !important; border-color: #6366f1 !important; font-weight: bold; color: #4338ca !important; }
+        .sticky-passage { position: sticky; top: 85px; max-height: calc(100vh - 120px); overflow-y: auto; }
     </style>
 </head>
-<body>
+<body class="text-slate-800">
 
-    <!-- મુખ્ય હેડર -->
-    <div class="header">
-        <h1>🎓 નિર્મળા નવોદય સ્ટડી ઝોન</h1>
-        <a href="#" class="admin-btn">શિક્ષક ડેશબોર્ડ (Admin)</a>
-    </div>
-
-    <!-- ટેસ્ટ કાર્ડ -->
-    <div class="test-card">
-        <div class="test-info">
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-graduation-cap text-2xl text-yellow-300"></i>
+                <h1 class="text-xl font-bold tracking-wide">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
+            </div>
             <div>
-                <strong style="color: #3b36db; font-size: 18px;">ટેસ્ટ નં. 12</strong><br>
-                <span style="color: #65676b; font-size: 14px;">વિષય: ગણિત</span>
-            </div>
-            <div class="timer" id="timer">59:50</div>
-        </div>
-
-        <!-- પ્રશ્ન ૧ -->
-        <div class="question-box">
-            <div class="question-title">પ્રશ્ન 1: આપેલ સંખ્યાઓમાંથી કઈ સંખ્યા 4 વડે સંપૂર્ણ વિભાજ્ય છે?</div>
-            <div class="options-list">
-                <label class="option-item"><input type="radio" name="q1"> A. 1234</label>
-                <label class="option-item"><input type="radio" name="q1"> B. 5672</label>
-                <label class="option-item"><input type="radio" name="q1"> C. 8910</label>
-                <label class="option-item"><input type="radio" name="q1"> D. 3411</label>
+                <button onclick="promptTeacherLogin()" class="bg-indigo-800 hover:bg-indigo-900 px-3 py-1.5 rounded-lg text-sm font-semibold transition border border-indigo-500 flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-yellow-300"></i> શિક્ષક ડેશબોર્ડ (Admin)
+                </button>
             </div>
         </div>
+    </header>
 
-        <!-- પ્રશ્ન ૨ -->
-        <div class="question-box">
-            <div class="question-title">પ્રશ્ન 2: 0.5 ને ટકા (%) માં ફેરવો.</div>
-            <div class="options-list">
-                <label class="option-item"><input type="radio" name="q2"> A. 5%</label>
-                <label class="option-item"><input type="radio" name="q2"> B. 50%</label>
-                <label class="option-item"><input type="radio" name="q2"> C. 500%</label>
-                <label class="option-item"><input type="radio" name="q2"> D. 0.05%</label>
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- 1. STUDENT REGISTRATION SCREEN -->
+        <section id="studentRegScreen" class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl border border-slate-200 mt-6">
+            <div class="text-center mb-6">
+                <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-indigo-700 text-2xl">
+                    <i class="fa-solid fa-user-pen"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">નિર્મળા નવોદય સ્ટડી ઝોન</h2>
+                <p id="studentTestTitle" class="text-indigo-600 font-bold text-lg mt-1">ઓનલાઇન કસોટી</p>
             </div>
-        </div>
 
-        <!-- શેર લિંક માટે બટન -->
-        <button class="share-btn" onclick="shareTest()">📲 ટેસ્ટ લિંક શેર કરો</button>
+            <!-- Test Info Box -->
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-sm space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-600 font-semibold"><i class="fa-solid fa-book text-indigo-600"></i> વિષય:</span>
+                    <span id="dispSubject" class="font-bold text-indigo-900">-</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-600 font-semibold"><i class="fa-solid fa-star text-amber-500"></i> કુલ ગુણ:</span>
+                    <span id="dispTotalMarks" class="font-bold text-amber-700">-</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-600 font-semibold"><i class="fa-solid fa-clock text-rose-500"></i> સમય:</span>
+                    <span id="dispTimeLimit" class="font-bold text-rose-700">-</span>
+                </div>
+            </div>
+
+            <form onsubmit="startStudentQuiz(event)" class="space-y-4">
+                <div>
+                    <label class="block text-slate-700 text-sm font-semibold mb-1">વિદ્યાર્થીનું પૂરું નામ *</label>
+                    <input type="text" id="studentName" required placeholder="દા.ત. રમેશભાઈ પટેલ" class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-700 text-sm font-semibold mb-1">ધોરણ *</label>
+                        <select id="studentStd" required class="w-full px-4 py-2 rounded-lg border bg-white font-semibold">
+                            <option value="ધોરણ 1">ધોરણ 1</option>
+                            <option value="ધોરણ 2">ધોરણ 2</option>
+                            <option value="ધોરણ 3">ધોરણ 3</option>
+                            <option value="ધોરણ 4">ધોરણ 4</option>
+                            <option value="ધોરણ 5" selected>ધોરણ 5</option>
+                            <option value="ધોરણ 6">ધોરણ 6</option>
+                            <option value="ધોરણ 7">ધોરણ 7</option>
+                            <option value="ધોરણ 8">ધોરણ 8</option>
+                            <option value="ધોરણ 9">ધોરણ 9</option>
+                            <option value="ધોરણ 10">ધોરણ 10</option>
+                            <option value="ધોરણ 11">ધોરણ 11</option>
+                            <option value="ધોરણ 12">ધોરણ 12</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 text-sm font-semibold mb-1">રોલ નંબર *</label>
+                        <input type="text" id="studentRoll" required placeholder="101" class="w-full px-4 py-2 rounded-lg border">
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow mt-2">
+                    ટેસ્ટ શરૂ કરો
+                </button>
+            </form>
+        </section>
+
+        <!-- 2. LIVE QUIZ SCREEN -->
+        <section id="quizScreen" class="hidden">
+            <div class="bg-white p-4 rounded-xl shadow border border-slate-200 mb-6 flex justify-between items-center sticky top-16 z-40">
+                <div>
+                    <span class="font-bold text-indigo-600 text-lg block" id="quizTitleDisplay">ટેસ્ટ ચાલુ છે...</span>
+                    <span class="text-xs text-slate-500 font-semibold" id="quizSubDisplay">વિષય: -</span>
+                </div>
+                <div class="bg-red-50 border border-red-200 px-4 py-1.5 rounded-lg text-red-600 font-mono font-bold text-xl">
+                    <span id="timerDisplay">00:00</span>
+                </div>
+            </div>
+
+            <div id="quizQuestionsContainer"></div>
+
+            <div class="mt-8 text-center pb-10">
+                <button onclick="confirmSubmitQuiz()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg">
+                    ટેસ્ટ સબમિટ કરો
+                </button>
+            </div>
+        </section>
+
+        <!-- 3. STUDENT RESULT SCREEN -->
+        <section id="resultScreen" class="hidden max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow border text-center space-y-4">
+            <div class="text-emerald-600 text-5xl mb-2"><i class="fa-solid fa-circle-check"></i></div>
+            <h2 class="text-2xl font-bold">ટેસ્ટ સફળતાપૂર્વક પૂર્ણ થઈ!</h2>
+            <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto my-4">
+                <div class="bg-slate-50 p-4 rounded-xl border">
+                    <span class="text-xs text-slate-500 block">મેળવેલ ગુણ</span>
+                    <span id="resTotalScore" class="text-2xl font-bold text-indigo-600">0 / 0</span>
+                </div>
+                <div class="bg-amber-50 p-4 rounded-xl border">
+                    <span class="text-xs text-amber-700 block">ટકાવારી</span>
+                    <span id="resPercentage" class="text-2xl font-bold text-amber-600">0%</span>
+                </div>
+            </div>
+            <p class="text-sm text-slate-500">તમારો રિસ્પોન્સ સબમિટ થઈ ગયો છે.</p>
+        </section>
+
+        <!-- 4. ADMIN PANEL (ONLY TEACHER) -->
+        <section id="adminScreen" class="hidden space-y-6">
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow border">
+                <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-sliders text-indigo-600"></i> શિક્ષક એડમિન પેનલ</h2>
+                <button onclick="switchView('student')" class="bg-slate-100 hover:bg-slate-200 px-4 py-1.5 rounded border text-sm font-semibold">
+                    <i class="fa-solid fa-eye"></i> વિદ્યાર્થી મોડ જુઓ
+                </button>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow border space-y-6">
+                <!-- Select Test & Meta Config -->
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <label class="font-bold text-slate-700">ટેસ્ટ પસંદ કરો:</label>
+                            <select id="adminTestSelect" onchange="loadAdminTestData()" class="p-2 border rounded-lg font-bold text-indigo-600 bg-white">
+                                <option value="Test 1">ટેસ્ટ ૧ (Test 1)</option>
+                                <option value="Test 2">ટેસ્ટ ૨ (Test 2)</option>
+                                <option value="Test 3">ટેસ્ટ ૩ (Test 3)</option>
+                                <option value="Test 4">ટેસ્ટ ૪ (Test 4)</option>
+                                <option value="Test 5">ટેસ્ટ ૫ (Test 5)</option>
+                            </select>
+                        </div>
+                        <button onclick="createNewTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm">
+                            <i class="fa-solid fa-plus"></i> નવી ટેસ્ટ બનાવો
+                        </button>
+                    </div>
+
+                    <!-- Online Share Link Box -->
+                    <div class="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="w-full">
+                            <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> આ ટેસ્ટની શેર કરવા માટેની લિંક:</span>
+                            <input type="text" id="shareLinkInput" readonly class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-600 font-mono">
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto justify-end">
+                            <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap">
+                                લિંક કોપી કરો
+                            </button>
+                            <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap flex items-center gap-1">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                            </button>
+                            <button onclick="showQRCode()" class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap">
+                                QR કોડ
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Test Details Controls -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-indigo-200">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">વિષયનું નામ:</label>
+                            <input type="text" id="adminSubject" placeholder="દા.ત. ગણિત" class="w-full p-2 border rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">કુલ ગુણ:</label>
+                            <input type="number" id="adminTotalMarks" placeholder="100" class="w-full p-2 border rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">સમય (મિનિટમાં):</label>
+                            <input type="number" id="adminTimeLimit" placeholder="60" class="w-full p-2 border rounded text-sm">
+                        </div>
+                    </div>
+                    <button onclick="saveTestMetaSettings()" class="bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow">
+                        સેટિંગ્સ સેવ કરો
+                    </button>
+                </div>
+
+                <!-- 3 Options Selection Tabs -->
+                <div class="flex border-b gap-2 overflow-x-auto">
+                    <button id="mode1Btn" onclick="setBuilderMode(1)" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap">
+                        વિકલ્પ ૧: સામાન્ય MCQ
+                    </button>
+                    <button id="mode2Btn" onclick="setBuilderMode(2)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap">
+                        વિકલ્પ ૨: ફકરો + પ્રશ્નો
+                    </button>
+                    <button id="mode3Btn" onclick="setBuilderMode(3)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap">
+                        વિકલ્પ ૩: આકૃતિ વાળા પ્રશ્નો
+                    </button>
+                </div>
+
+                <!-- MODE 1 -->
+                <div id="builderMode1" class="space-y-4 bg-slate-50 p-4 rounded-xl border">
+                    <textarea id="m1RawText" rows="5" placeholder="પ્રશ્ન અને ૪ વિકલ્પો પેસ્ટ કરો...&#10;૧. ભારતની રાજધાની કઈ છે?&#10;(A) મુંબઈ&#10;(B) નવી દિલ્હી&#10;(C) કોલકાતા&#10;(D) ચેન્નઈ" class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
+                    <div class="flex items-center gap-4">
+                        <label class="text-sm font-bold text-slate-700">સાચો જવાબ:</label>
+                        <select id="m1Correct" class="p-2 border rounded bg-white font-bold text-emerald-600">
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                        </select>
+                        <button onclick="addSingleMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">પ્રશ્ન ઉમેરો</button>
+                    </div>
+                </div>
+
+                <!-- MODE 2 -->
+                <div id="builderMode2" class="hidden space-y-4 bg-slate-50 p-4 rounded-xl border">
+                    <textarea id="m2Passage" rows="4" placeholder="અહીં ફકરો પેસ્ટ કરો..." class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
+                    <textarea id="m2Questions" rows="6" placeholder="૫ પ્રશ્નો (વિકલ્પો સાથે) અહી પેસ્ટ કરો..." class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
+                    <button onclick="addPassageGroup()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">ફકરો અને પ્રશ્નો ઉમેરો</button>
+                </div>
+
+                <!-- MODE 3 -->
+                <div id="builderMode3" class="hidden space-y-4 bg-slate-50 p-4 rounded-xl border">
+                    <div class="border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-4 rounded-xl text-center">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">
+                            <i class="fa-solid fa-image text-indigo-600"></i> આકૃતિ અપલોડ કરો અથવા ઈમેજ Paste (Ctrl+V) કરો:
+                        </label>
+                        <input type="file" id="m3FileInput" accept="image/*" onchange="handleImageUpload(event)" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                        <p class="text-xs text-slate-400 mt-2">તમે સ્ક્રીનશોટ અથવા ઈમેજ કોપી કરીને અહિયાં સીધી **Ctrl + V** વડે પેસ્ટ પણ કરી શકો છો.</p>
+                        
+                        <!-- Image Preview -->
+                        <div id="imgPreviewContainer" class="hidden mt-3">
+                            <img id="m3ImgPreview" src="" class="max-h-40 mx-auto rounded-lg border shadow">
+                            <span id="uploadStatus" class="text-xs font-bold text-emerald-600 mt-1 block"></span>
+                        </div>
+                    </div>
+
+                    <textarea id="m3RawText" rows="4" placeholder="પ્રશ્ન અને વિકલ્પો કોપી-પેસ્ટ કરો..." class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
+                    
+                    <div class="flex items-center gap-4">
+                        <label class="text-sm font-bold text-slate-700">સાચો જવાબ:</label>
+                        <select id="m3Correct" class="p-2 border rounded bg-white font-bold text-emerald-600">
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                        </select>
+                        <button onclick="addImageMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">આકૃતિ પ્રશ્ન ઉમેરો</button>
+                    </div>
+                </div>
+
+                <!-- Questions List & Submissions -->
+                <div class="mt-6 border-t pt-4">
+                    <h4 class="font-bold text-slate-800 mb-3 flex justify-between">
+                        <span>હાલના ઉમેરેલા પ્રશ્નો (<span id="qCountDisplay">0</span>)</span>
+                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold">બધા ભૂસી નાખો</button>
+                    </h4>
+                    <div id="adminQuestionsList" class="space-y-3"></div>
+                </div>
+
+                <!-- Teacher Only View: Student Submissions Results -->
+                <div class="mt-8 border-t pt-4">
+                    <h4 class="font-bold text-slate-800 mb-3"><i class="fa-solid fa-users text-indigo-600"></i> વિદ્યાર્થીઓના પરિણામો (માર્ક્સ)</h4>
+                    <div id="submissionsList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white p-6 rounded-2xl max-w-sm w-full text-center space-y-4">
+            <h3 class="font-bold text-lg text-slate-800">ટેસ્ટ સ્કેન કરવા માટે QR કોડ</h3>
+            <div id="qrcode" class="flex justify-center my-4"></div>
+            <button onclick="closeQRModal()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold text-sm w-full">બંધ કરો</button>
+        </div>
     </div>
 
     <script>
-        // ૧. ટાઈમર સ્ક્રિપ્ટ
-        let timeInSeconds = 3590; // 59 મિનિટ 50 સેકન્ડ
-        const timerElement = document.getElementById('timer');
+        const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; 
 
-        setInterval(() => {
-            if (timeInSeconds > 0) {
-                timeInSeconds--;
-                let minutes = Math.floor(timeInSeconds / 60);
-                let seconds = timeInSeconds % 60;
-                timerElement.innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        let currentUploadedImgUrl = "";
+        let allTestData = JSON.parse(localStorage.getItem('jnv_test_data_v3') || '{}');
+        let allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions') || '[]');
+        let currentActiveTest = "Test 1";
+        let activeTestData = { meta: {}, items: [] };
+        let timerInterval = null;
+
+        // Unicode Safe UTF-8 Base64 Encoding
+        function encodeTestData(obj) {
+            try {
+                let jsonStr = JSON.stringify(obj);
+                let bytes = new TextEncoder().encode(jsonStr);
+                let binaryStr = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
+                return btoa(binaryStr);
+            } catch (e) {
+                return "";
             }
-        }, 1000);
+        }
 
-        // ૨. ટૂંકી લિંક બનાવવાની અને શેર કરવાની રીત (URL લંબાઈ ઘટાડવા માટે)
-        function shareTest() {
-            // આખો ડેટા મોકલવાને બદલે માત્ર ટેસ્ટ આઈડી (Test ID) મોકલો
-            const testId = "12"; 
-            const baseUrl = window.location.origin + window.location.pathname;
-            const shortUrl = `${baseUrl}?test=${testId}`;
+        // Unicode Safe UTF-8 Base64 Decoding
+        function decodeTestData(str) {
+            try {
+                let binaryStr = atob(str);
+                let bytes = Uint8Array.from(binaryStr, char => char.charCodeAt(0));
+                let jsonStr = new TextDecoder().encode(bytes);
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                try {
+                    // Fallback for older links
+                    let decoded = decodeURIComponent(atob(decodeURIComponent(str)));
+                    return JSON.parse(decoded);
+                } catch(err) {
+                    return null;
+                }
+            }
+        }
 
-            // વોટ્સએપ પર શેર કરવા માટે
-            const shareText = `નિર્મળા નવોદય સ્ટડી ઝોન - ઓનલાઈન ટેસ્ટ\nટેસ્ટ આપવા માટે નીચે આપેલી લિંક પર ક્લિક કરો:\n${shortUrl}`;
-            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataParam = urlParams.get('data');
+            const testFromUrl = urlParams.get('test');
+
+            if (dataParam) {
+                let loadedData = decodeTestData(dataParam);
+                if (loadedData && loadedData.items && loadedData.items.length > 0) {
+                    activeTestData = loadedData;
+                    currentActiveTest = loadedData.title || "ઓનલાઇન કસોટી";
+                    allTestData[currentActiveTest] = loadedData;
+                    saveTestData();
+                }
+            } else if (testFromUrl && allTestData[testFromUrl]) {
+                currentActiveTest = testFromUrl;
+                activeTestData = allTestData[testFromUrl];
+            } else if (allTestData[currentActiveTest] && allTestData[currentActiveTest].items && allTestData[currentActiveTest].items.length > 0) {
+                activeTestData = allTestData[currentActiveTest];
+            } else if (Object.keys(allTestData).length > 0) {
+                currentActiveTest = Object.keys(allTestData)[0];
+                activeTestData = allTestData[currentActiveTest];
+            }
+
+            setupStudentView();
+            setupPasteListener();
+        };
+
+        function setupPasteListener() {
+            document.addEventListener('paste', function (e) {
+                if (document.getElementById('builderMode3').classList.contains('hidden')) return;
+                let items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let index in items) {
+                    let item = items[index];
+                    if (item.kind === 'file' && item.type.includes('image')) {
+                        let blob = item.getAsFile();
+                        uploadImageToImgBB(blob);
+                    }
+                }
+            });
+        }
+
+        function handleImageUpload(e) {
+            let file = e.target.files[0];
+            if (file) {
+                uploadImageToImgBB(file);
+            }
+        }
+
+        function uploadImageToImgBB(file) {
+            const statusText = document.getElementById('uploadStatus');
+            const previewImg = document.getElementById('m3ImgPreview');
+            const previewBox = document.getElementById('imgPreviewContainer');
+
+            previewBox.classList.remove('hidden');
+            statusText.innerText = "આકૃતિ અપલોડ થઈ રહી છે...";
+            statusText.className = "text-xs font-bold text-amber-600 mt-1 block";
+
+            const reader = new FileReader();
+            reader.onload = function(e) { previewImg.src = e.target.result; }
+            reader.readAsDataURL(file);
+
+            let formData = new FormData();
+            formData.append("image", file);
+
+            fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    currentUploadedImgUrl = data.data.url;
+                    statusText.innerText = "✓ આકૃતિ સફળતાપૂર્વક ઓનલાઈન સેટ થઈ ગઈ!";
+                    statusText.className = "text-xs font-bold text-emerald-600 mt-1 block";
+                } else {
+                    currentUploadedImgUrl = previewImg.src;
+                    statusText.innerText = "લોકલ ઈમેજ સેટ થઈ છે.";
+                }
+            })
+            .catch(err => {
+                currentUploadedImgUrl = previewImg.src;
+                statusText.innerText = "ઈમેજ પ્રોસેસ થઈ ગઈ છે.";
+            });
+        }
+
+        function addImageMCQ() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            const rawText = document.getElementById('m3RawText').value.trim();
+            const correct = document.getElementById('m3Correct').value;
+
+            if (!currentUploadedImgUrl) return alert("કૃપા કરીને પહેલા આકૃતિ અપલોડ કરો!");
+            if (!rawText) return alert("પ્રશ્ન અને વિકલ્પો પેસ્ટ કરો!");
+
+            const parsed = parseMcqText(rawText);
+            initTestStructure(testKey);
+
+            allTestData[testKey].items.push({
+                id: Date.now(),
+                type: 'image_mcq',
+                imageUrl: currentUploadedImgUrl,
+                question: parsed.question,
+                options: parsed.options,
+                correct: correct
+            });
+
+            saveAndRefresh(testKey);
             
-            window.open(whatsappUrl, '_blank');
+            document.getElementById('m3RawText').value = "";
+            document.getElementById('m3FileInput').value = "";
+            document.getElementById('imgPreviewContainer').classList.add('hidden');
+            currentUploadedImgUrl = "";
+        }
+
+        function promptTeacherLogin() {
+            let pwd = prompt("શિક્ષક ડેશબોર્ડ ખોલવા માટે Admin પાસવર્ડ દાખલ કરો:");
+            if (pwd === "10101991") {
+                switchView('admin');
+            } else if (pwd !== null) {
+                alert("ખોટો પાસવર્ડ! ફક્ત Admin શિક્ષક જ આ લૉગિન કરી શકે છે.");
+            }
+        }
+
+        function switchView(view) {
+            document.getElementById('studentRegScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('adminScreen').classList.add('hidden');
+
+            if (view === 'student') {
+                document.getElementById('studentRegScreen').classList.remove('hidden');
+                setupStudentView();
+            } else if (view === 'admin') {
+                document.getElementById('adminScreen').classList.remove('hidden');
+                loadAdminTestData();
+            }
+        }
+
+        function setupStudentView() {
+            const data = activeTestData || { meta: {}, items: [] };
+            document.getElementById('studentTestTitle').innerText = currentActiveTest + " - ઓનલાઇન કસોટી";
+            document.getElementById('dispSubject').innerText = data.meta?.subject || 'નિર્ધારિત નથી';
+            document.getElementById('dispTotalMarks').innerText = data.meta?.totalMarks || '100';
+            document.getElementById('dispTimeLimit').innerText = (data.meta?.timeLimit || '60') + ' મિનિટ';
+        }
+
+        function loadAdminTestData() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            currentActiveTest = testKey;
+            const data = allTestData[testKey] || { meta: {}, items: [] };
+
+            document.getElementById('adminSubject').value = data.meta?.subject || '';
+            document.getElementById('adminTotalMarks').value = data.meta?.totalMarks || '';
+            document.getElementById('adminTimeLimit').value = data.meta?.timeLimit || '';
+
+            let baseUrl = window.location.origin + window.location.pathname;
+            
+            // Optimization for Compact Link Payload
+            let minifiedItems = (data.items || []).map(item => {
+                if(item.type === 'passage_group') {
+                    return {
+                        t: 'p',
+                        p: item.passage,
+                        q: item.questions.map(q => ({ q: q.question, o: q.options, c: q.correct }))
+                    };
+                } else if(item.type === 'image_mcq') {
+                    return { t: 'i', u: item.imageUrl, q: item.question, o: item.options, c: item.correct };
+                } else {
+                    return { t: 'm', q: item.question, o: item.options, c: item.correct };
+                }
+            });
+
+            let fullDataObj = {
+                title: testKey,
+                meta: data.meta || {},
+                items: minifiedItems
+            };
+
+            let encodedStr = encodeTestData(fullDataObj);
+            let shareUrl = `${baseUrl}?data=${encodedStr}`;
+            document.getElementById('shareLinkInput').value = shareUrl;
+
+            renderAdminQuestionsList();
+            renderTeacherSubmissions();
+        }
+
+        function copyShareLink() {
+            const copyText = document.getElementById("shareLinkInput");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            alert("ટેસ્ટની લિંક કોપી થઈ ગઈ છે!");
+        }
+
+        function shareWhatsApp() {
+            const link = document.getElementById("shareLinkInput").value;
+            const msg = `*નિર્મળા નવોદય સ્ટડી ઝોન*\n\nઓનલાઇન કસોટી આપવા માટે નીચે આપેલી લિંક પર ક્લિક કરો:\n${link}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function showQRCode() {
+            const link = document.getElementById("shareLinkInput").value;
+            const qrcodeDiv = document.getElementById("qrcode");
+            qrcodeDiv.innerHTML = "";
+            new QRCode(qrcodeDiv, {
+                text: link,
+                width: 180,
+                height: 180
+            });
+            document.getElementById("qrModal").classList.remove("hidden");
+        }
+
+        function closeQRModal() {
+            document.getElementById("qrModal").classList.add("hidden");
+        }
+
+        function createNewTest() {
+            let testName = prompt("નવી ટેસ્ટનું નામ આપો (દા.ત. Test 6, એકમ કસોટી 1):");
+            if (testName) {
+                if (!allTestData[testName]) {
+                    allTestData[testName] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
+                    
+                    let select = document.getElementById('adminTestSelect');
+                    let opt = document.createElement('option');
+                    opt.value = testName;
+                    opt.innerText = testName;
+                    select.appendChild(opt);
+                    select.value = testName;
+                    
+                    saveTestData();
+                    loadAdminTestData();
+                } else {
+                    alert("આ નામની ટેસ્ટ પહેલાથી અસ્તિત્વમાં છે!");
+                }
+            }
+        }
+
+        function saveTestMetaSettings() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            if (!allTestData[testKey]) allTestData[testKey] = { meta: {}, items: [] };
+
+            allTestData[testKey].meta = {
+                subject: document.getElementById('adminSubject').value || 'સામાન્ય કસોટી',
+                totalMarks: document.getElementById('adminTotalMarks').value || '100',
+                timeLimit: document.getElementById('adminTimeLimit').value || '60'
+            };
+
+            saveAndRefresh(testKey);
+            alert("ટેસ્ટ સેટિંગ્સ સેવ થઈ ગયા!");
+        }
+
+        function setBuilderMode(mode) {
+            [1, 2, 3].forEach(m => {
+                document.getElementById(`builderMode${m}`).classList.add('hidden');
+                document.getElementById(`mode${m}Btn`).className = "px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap";
+            });
+            document.getElementById(`builderMode${mode}`).classList.remove('hidden');
+            document.getElementById(`mode${mode}Btn`).className = "px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap";
+        }
+
+        function parseMcqText(text) {
+            let lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
+            let question = lines[0] || '';
+            let options = ['', '', '', ''];
+
+            let fullText = text;
+            let aPos = fullText.search(/\(?A\)?[\.\:\s]/i);
+            let bPos = fullText.search(/\(?B\)?[\.\:\s]/i);
+            let cPos = fullText.search(/\(?C\)?[\.\:\s]/i);
+            let dPos = fullText.search(/\(?D\)?[\.\:\s]/i);
+
+            if (aPos !== -1 && bPos !== -1 && cPos !== -1 && dPos !== -1) {
+                question = fullText.substring(0, aPos).trim();
+                options[0] = fullText.substring(aPos, bPos).replace(/^\(?A\)?[\.\:\s]*/i, '').trim();
+                options[1] = fullText.substring(bPos, cPos).replace(/^\(?B\)?[\.\:\s]*/i, '').trim();
+                options[2] = fullText.substring(cPos, dPos).replace(/^\(?C\)?[\.\:\s]*/i, '').trim();
+                options[3] = fullText.substring(dPos).replace(/^\(?D\)?[\.\:\s]*/i, '').trim();
+            } else if (lines.length >= 5) {
+                question = lines[0];
+                options = [lines[1], lines[2], lines[3], lines[4]];
+            }
+            return { question, options };
+        }
+
+        function addSingleMCQ() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            const rawText = document.getElementById('m1RawText').value.trim();
+            const correct = document.getElementById('m1Correct').value;
+
+            if (!rawText) return alert("પ્રશ્ન પેસ્ટ કરો!");
+
+            const parsed = parseMcqText(rawText);
+            initTestStructure(testKey);
+
+            allTestData[testKey].items.push({
+                id: Date.now(),
+                type: 'mcq',
+                question: parsed.question,
+                options: parsed.options,
+                correct: correct
+            });
+
+            saveAndRefresh(testKey);
+            document.getElementById('m1RawText').value = "";
+        }
+
+        function addPassageGroup() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            const passage = document.getElementById('m2Passage').value.trim();
+            const rawQuestions = document.getElementById('m2Questions').value.trim();
+
+            if (!passage || !rawQuestions) return alert("ફકરો અને પ્રશ્નો બંને ઉમેરો!");
+
+            initTestStructure(testKey);
+
+            let qBlocks = rawQuestions.split(/\n(?=\d+[\.\:\)])/);
+            let passageQuestions = [];
+
+            qBlocks.forEach((block, idx) => {
+                if (block.trim()) {
+                    let parsed = parseMcqText(block);
+                    passageQuestions.push({
+                        id: Date.now() + idx,
+                        question: parsed.question,
+                        options: parsed.options,
+                        correct: 'A'
+                    });
+                }
+            });
+
+            allTestData[testKey].items.push({
+                id: Date.now(),
+                type: 'passage_group',
+                passage: passage,
+                questions: passageQuestions
+            });
+
+            saveAndRefresh(testKey);
+            document.getElementById('m2Passage').value = "";
+            document.getElementById('m2Questions').value = "";
+        }
+
+        function initTestStructure(key) {
+            if (!allTestData[key]) allTestData[key] = { meta: {}, items: [] };
+            if (!allTestData[key].items) allTestData[key].items = [];
+        }
+
+        function saveAndRefresh(testKey) {
+            saveTestData();
+            activeTestData = allTestData[testKey];
+            loadAdminTestData();
+            alert("પ્રશ્ન સફળતાપૂર્વક ઉમેરાયો!");
+        }
+
+        function saveTestData() {
+            localStorage.setItem('jnv_test_data_v3', JSON.stringify(allTestData));
+        }
+
+        function renderAdminQuestionsList() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            const container = document.getElementById('adminQuestionsList');
+            const items = allTestData[testKey]?.items || [];
+
+            document.getElementById('qCountDisplay').innerText = items.length;
+            container.innerHTML = "";
+
+            items.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = "p-3 bg-slate-50 border rounded-lg text-sm flex justify-between items-center";
+
+                if (item.type === 'passage_group' || item.t === 'p') {
+                    let passageText = item.passage || item.p || '';
+                    let qCount = item.questions ? item.questions.length : (item.q ? item.q.length : 0);
+                    div.innerHTML = `<div><b class="text-indigo-600">[ફકરો]</b> ${passageText.substring(0, 50)}... (${qCount} પ્રશ્નો)</div>
+                    <button onclick="deleteItem('${testKey}', ${item.id})" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                } else if(item.type === 'image_mcq' || item.t === 'i') {
+                    let img = item.imageUrl || item.u;
+                    let qText = item.question || item.q;
+                    div.innerHTML = `<div class="flex items-center gap-2"><img src="${img}" class="w-10 h-10 object-cover rounded"> <b>${idx+1}. ${qText}</b></div>
+                    <button onclick="deleteItem('${testKey}', ${item.id})" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                } else {
+                    let qText = item.question || item.q;
+                    div.innerHTML = `<div><b>${idx+1}. ${qText}</b></div>
+                    <button onclick="deleteItem('${testKey}', ${item.id})" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                }
+                container.appendChild(div);
+            });
+        }
+
+        function renderTeacherSubmissions() {
+            const container = document.getElementById('submissionsList');
+            const currentTestSubmissions = allSubmissions.filter(s => s.testName === currentActiveTest);
+
+            if (currentTestSubmissions.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400">હજી સુધી આ ટેસ્ટ કોઈ વિદ્યાર્થીએ આપી નથી.</p>`;
+                return;
+            }
+
+            container.innerHTML = currentTestSubmissions.map(s => `
+                <div class="p-2 border rounded bg-slate-50 text-xs flex justify-between items-center">
+                    <div>
+                        <span class="font-bold text-slate-800">${s.studentName}</span> 
+                        <span class="text-slate-500">(${s.std} - રોલ: ${s.roll})</span>
+                    </div>
+                    <div class="font-bold text-indigo-700">
+                        ગુણ: ${s.score}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteItem(testKey, id) {
+            allTestData[testKey].items = allTestData[testKey].items.filter(i => i.id !== id);
+            saveAndRefresh(testKey);
+        }
+
+        function clearCurrentTest() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            if(confirm("બધા પ્રશ્નો ભૂસી નાખવા છે?")) {
+                allTestData[testKey].items = [];
+                saveAndRefresh(testKey);
+            }
+        }
+
+        // --- STUDENT QUIZ & TIMER ---
+        let userAnswers = {};
+
+        function startStudentQuiz(e) {
+            e.preventDefault();
+            const testData = activeTestData;
+
+            if (!testData.items || testData.items.length === 0) return alert("આ ટેસ્ટમાં હજી સુધી કોઈ પ્રશ્નો ઉમેરાયા નથી!");
+
+            document.getElementById('quizTitleDisplay').innerText = currentActiveTest;
+            document.getElementById('quizSubDisplay').innerText = "વિષય: " + (testData.meta?.subject || 'સામાન્ય');
+
+            document.getElementById('studentRegScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+
+            startTimer(parseInt(testData.meta?.timeLimit || 60) * 60);
+            renderStudentQuestions(testData.items);
+        }
+
+        function startTimer(duration) {
+            let timer = duration, minutes, seconds;
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                document.getElementById('timerDisplay').textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    clearInterval(timerInterval);
+                    alert("સમય પૂરો થઈ ગયો છે!");
+                    confirmSubmitQuiz();
+                }
+            }, 1000);
+        }
+
+        function renderStudentQuestions(items) {
+            const container = document.getElementById('quizQuestionsContainer');
+            container.innerHTML = "";
+
+            items.forEach((item, idx) => {
+                let type = item.type || item.t;
+                if (type === 'passage_group' || type === 'p') {
+                    let passage = item.passage || item.p;
+                    let questions = item.questions || item.q;
+                    const pBox = document.createElement('div');
+                    pBox.className = "grid grid-cols-1 md:grid-cols-12 gap-6 bg-white p-6 rounded-2xl shadow border my-6";
+                    pBox.innerHTML = `
+                        <div class="md:col-span-5 bg-amber-50 p-4 rounded-xl border border-amber-200 sticky-passage">
+                            <h4 class="font-bold text-amber-900 border-b pb-2 mb-2"><i class="fa-solid fa-book-open"></i> ફકરો વાંચી પ્રશ્નોના જવાબ આપો:</h4>
+                            <p class="text-sm leading-relaxed text-slate-800 whitespace-pre-line">${passage}</p>
+                        </div>
+                        <div class="md:col-span-7 space-y-6">
+                            ${questions.map((q, qIdx) => renderMcqCard(q, `પ્રશ્ન ${qIdx+1}`)).join('')}
+                        </div>
+                    `;
+                    container.appendChild(pBox);
+                } else {
+                    let img = item.imageUrl || item.u;
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-6 rounded-2xl shadow border my-4 max-w-3xl mx-auto";
+                    card.innerHTML = `
+                        ${img ? `<img src="${img}" class="max-h-60 mx-auto mb-4 rounded-lg border shadow">` : ''}
+                        ${renderMcqCard(item, `પ્રશ્ન ${idx+1}`)}
+                    `;
+                    container.appendChild(card);
+                }
+            });
+        }
+
+        function renderMcqCard(q, labelText) {
+            let qText = q.question || q.q;
+            let options = q.options || q.o;
+            let correct = q.correct || q.c;
+            let qId = q.id || Math.random().toString(36).substr(2, 9);
+
+            return `
+                <div class="space-y-3">
+                    <h3 class="font-bold text-slate-800">${labelText}: ${qText}</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="opts_${qId}">
+                        ${['A', 'B', 'C', 'D'].map((key, i) => `
+                            <button onclick="selectAns('${qId}', '${key}', '${correct}')" id="btn_${qId}_${key}" class="p-3 border rounded-xl text-left font-medium hover:bg-indigo-50 flex items-center gap-2 transition-all">
+                                <span class="font-bold text-slate-400">${key}.</span>
+                                <span>${options[i] || ''}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAns(qId, selectedOpt, correctOpt) {
+            userAnswers[qId] = { selected: selectedOpt, correct: correctOpt };
+
+            ['A', 'B', 'C', 'D'].forEach(k => {
+                const b = document.getElementById(`btn_${qId}_${k}`);
+                if (b) b.classList.remove('selected-ans');
+            });
+
+            const selBtn = document.getElementById(`btn_${qId}_${selectedOpt}`);
+            if (selBtn) {
+                selBtn.classList.add('selected-ans');
+            }
+        }
+
+        function confirmSubmitQuiz() {
+            clearInterval(timerInterval);
+
+            let totalQuestions = Object.keys(userAnswers).length;
+            let correctCount = 0;
+            for (let qId in userAnswers) {
+                if (userAnswers[qId].selected === userAnswers[qId].correct) {
+                    correctCount++;
+                }
+            }
+
+            const name = document.getElementById('studentName').value;
+            const std = document.getElementById('studentStd').value;
+            const roll = document.getElementById('studentRoll').value;
+
+            allSubmissions.push({
+                testName: currentActiveTest,
+                studentName: name,
+                std: std,
+                roll: roll,
+                score: `${correctCount} / ${totalQuestions}`,
+                date: new Date().toLocaleDateString('gu-IN')
+            });
+            localStorage.setItem('jnv_test_submissions', JSON.stringify(allSubmissions));
+
+            document.getElementById('resTotalScore').innerText = `${correctCount} / ${totalQuestions}`;
+            let percentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+            document.getElementById('resPercentage').innerText = percentage + "%";
+
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
         }
     </script>
 </body>

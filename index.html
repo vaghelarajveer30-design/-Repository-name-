@@ -158,6 +158,11 @@
                                 <option value="Test 4">ટેસ્ટ ૪ (Test 4)</option>
                                 <option value="Test 5">ટેસ્ટ ૫ (Test 5)</option>
                             </select>
+                            
+                            <!-- 🔥 નવી સુવિધા: ટેસ્ટ ડિલીટ બટન -->
+                            <button onclick="deleteEntireTest()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1 shadow">
+                                <i class="fa-solid fa-trash-can"></i> આ ટેસ્ટ ડિલીટ કરો
+                            </button>
                         </div>
                         <button onclick="createNewTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm">
                             <i class="fa-solid fa-plus"></i> નવી ટેસ્ટ બનાવો
@@ -266,7 +271,7 @@
                 <div class="mt-6 border-t pt-4">
                     <h4 class="font-bold text-slate-800 mb-3 flex justify-between">
                         <span>હાલના ઉમેરેલા પ્રશ્નો (<span id="qCountDisplay">0</span>)</span>
-                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold">બધા ભૂસી નાખો</button>
+                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold">આ ટેસ્ટના પ્રશ્નો ભૂસી નાખો</button>
                     </h4>
                     <div id="adminQuestionsList" class="space-y-3"></div>
                 </div>
@@ -294,13 +299,13 @@
         const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; 
 
         let currentUploadedImgUrl = "";
-        let allTestData = JSON.parse(localStorage.getItem('jnv_test_data_v3') || '{}');
+        let allTestData = JSON.parse(localStorage.getItem('jnv_test_data_v4') || '{}');
         let allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions') || '[]');
         let currentActiveTest = "Test 1";
         let activeTestData = { meta: {}, items: [] };
         let timerInterval = null;
 
-        // Unicode Safe UTF-8 Base64 Encoding
+        // Base64 Encoding with Compact Stringify
         function encodeTestData(obj) {
             try {
                 let jsonStr = JSON.stringify(obj);
@@ -312,28 +317,57 @@
             }
         }
 
-        // Unicode Safe UTF-8 Base64 Decoding
+        // Base64 Decoding
         function decodeTestData(str) {
             try {
                 let binaryStr = atob(str);
                 let bytes = Uint8Array.from(binaryStr, char => char.charCodeAt(0));
-                let jsonStr = new TextDecoder().encode(bytes);
-                return JSON.parse(jsonStr);
-            } catch (e) {
-                try {
-                    // Fallback for older links
-                    let decoded = decodeURIComponent(atob(decodeURIComponent(str)));
-                    return JSON.parse(decoded);
-                } catch(err) {
-                    return null;
+                let jsonStr = new TextDecoder().decode(bytes);
+                let decoded = JSON.parse(jsonStr);
+
+                if (decoded && decoded.items) {
+                    decoded.items = decoded.items.map(item => {
+                        if (item.t === 'p' || item.type === 'passage_group') {
+                            return {
+                                id: item.id || Date.now(),
+                                type: 'passage_group',
+                                passage: item.p || item.passage,
+                                questions: (item.q || item.questions || []).map(q => ({
+                                    id: q.id || Math.random(),
+                                    question: q.q || q.question,
+                                    options: q.o || q.options,
+                                    correct: q.c || q.correct
+                                }))
+                            };
+                        } else if (item.t === 'i' || item.type === 'image_mcq') {
+                            return {
+                                id: item.id || Date.now(),
+                                type: 'image_mcq',
+                                imageUrl: item.u || item.imageUrl,
+                                question: item.q || item.question,
+                                options: item.o || item.options,
+                                correct: item.c || item.correct
+                            };
+                        } else {
+                            return {
+                                id: item.id || Date.now(),
+                                type: 'mcq',
+                                question: item.q || item.question,
+                                options: item.o || item.options,
+                                correct: item.c || item.correct
+                            };
+                        }
+                    });
                 }
+                return decoded;
+            } catch (e) {
+                return null;
             }
         }
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const dataParam = urlParams.get('data');
-            const testFromUrl = urlParams.get('test');
 
             if (dataParam) {
                 let loadedData = decodeTestData(dataParam);
@@ -342,10 +376,9 @@
                     currentActiveTest = loadedData.title || "ઓનલાઇન કસોટી";
                     allTestData[currentActiveTest] = loadedData;
                     saveTestData();
+                } else {
+                    alert("લિંકમાંથી પ્રશ્નો લોડ થઈ શક્યા નથી. કૃપા કરીને શિક્ષક ડેશબોર્ડમાં પ્રશ્નો ઉમેરી નવી લિંક જનરેટ કરો.");
                 }
-            } else if (testFromUrl && allTestData[testFromUrl]) {
-                currentActiveTest = testFromUrl;
-                activeTestData = allTestData[testFromUrl];
             } else if (allTestData[currentActiveTest] && allTestData[currentActiveTest].items && allTestData[currentActiveTest].items.length > 0) {
                 activeTestData = allTestData[currentActiveTest];
             } else if (Object.keys(allTestData).length > 0) {
@@ -353,9 +386,32 @@
                 activeTestData = allTestData[currentActiveTest];
             }
 
+            refreshSelectDropdown();
             setupStudentView();
             setupPasteListener();
         };
+
+        function refreshSelectDropdown() {
+            let select = document.getElementById('adminTestSelect');
+            select.innerHTML = "";
+            let keys = Object.keys(allTestData);
+            if(keys.length === 0) {
+                allTestData["Test 1"] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
+                keys = ["Test 1"];
+            }
+            keys.forEach(k => {
+                let opt = document.createElement('option');
+                opt.value = k;
+                opt.innerText = k;
+                select.appendChild(opt);
+            });
+            if(keys.includes(currentActiveTest)) {
+                select.value = currentActiveTest;
+            } else {
+                select.value = keys[0];
+                currentActiveTest = keys[0];
+            }
+        }
 
         function setupPasteListener() {
             document.addEventListener('paste', function (e) {
@@ -463,6 +519,7 @@
                 setupStudentView();
             } else if (view === 'admin') {
                 document.getElementById('adminScreen').classList.remove('hidden');
+                refreshSelectDropdown();
                 loadAdminTestData();
             }
         }
@@ -486,13 +543,12 @@
 
             let baseUrl = window.location.origin + window.location.pathname;
             
-            // Optimization for Compact Link Payload
             let minifiedItems = (data.items || []).map(item => {
                 if(item.type === 'passage_group') {
                     return {
                         t: 'p',
                         p: item.passage,
-                        q: item.questions.map(q => ({ q: q.question, o: q.options, c: q.correct }))
+                        q: (item.questions || []).map(q => ({ q: q.question, o: q.options, c: q.correct }))
                     };
                 } else if(item.type === 'image_mcq') {
                     return { t: 'i', u: item.imageUrl, q: item.question, o: item.options, c: item.correct };
@@ -513,6 +569,25 @@
 
             renderAdminQuestionsList();
             renderTeacherSubmissions();
+        }
+
+        // 🔥 આખા ટેસ્ટને જ ડિલીટ કરવા માટેનું નવું ફંકશન
+        function deleteEntireTest() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            
+            if (confirm(`શું તમે ખરેખર "${testKey}" ને સંપૂર્ણપણે ડિલીટ કરવા માંગો છો? આ ટેસ્ટનો બધો ડેટા નાબૂદ થઈ જશે.`)) {
+                delete allTestData[testKey];
+                
+                // ડિલીટ થયેલી ટેસ્ટના સબમિશન પણ સાફ કરી શકીએ
+                allSubmissions = allSubmissions.filter(s => s.testName !== testKey);
+                localStorage.setItem('jnv_test_submissions', JSON.stringify(allSubmissions));
+                
+                saveTestData();
+                alert(`"${testKey}" સફળતાપૂર્વક ડિલીટ થઈ ગઈ છે!`);
+                
+                refreshSelectDropdown();
+                loadAdminTestData();
+            }
         }
 
         function copyShareLink() {
@@ -550,15 +625,9 @@
             if (testName) {
                 if (!allTestData[testName]) {
                     allTestData[testName] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
-                    
-                    let select = document.getElementById('adminTestSelect');
-                    let opt = document.createElement('option');
-                    opt.value = testName;
-                    opt.innerText = testName;
-                    select.appendChild(opt);
-                    select.value = testName;
-                    
+                    currentActiveTest = testName;
                     saveTestData();
+                    refreshSelectDropdown();
                     loadAdminTestData();
                 } else {
                     alert("આ નામની ટેસ્ટ પહેલાથી અસ્તિત્વમાં છે!");
@@ -684,7 +753,7 @@
         }
 
         function saveTestData() {
-            localStorage.setItem('jnv_test_data_v3', JSON.stringify(allTestData));
+            localStorage.setItem('jnv_test_data_v4', JSON.stringify(allTestData));
         }
 
         function renderAdminQuestionsList() {
@@ -747,7 +816,7 @@
 
         function clearCurrentTest() {
             const testKey = document.getElementById('adminTestSelect').value;
-            if(confirm("બધા પ્રશ્નો ભૂસી નાખવા છે?")) {
+            if(confirm("આ ટેસ્ટના બધા પ્રશ્નો ભૂસી નાખવા છે?")) {
                 allTestData[testKey].items = [];
                 saveAndRefresh(testKey);
             }

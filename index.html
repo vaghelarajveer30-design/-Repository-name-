@@ -69,9 +69,19 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-slate-700 text-sm font-semibold mb-1">ધોરણ *</label>
-                        <select id="studentStd" required class="w-full px-4 py-2 rounded-lg border bg-white">
-                            <option value="ધોરણ 5">ધોરણ 5</option>
+                        <select id="studentStd" required class="w-full px-4 py-2 rounded-lg border bg-white font-semibold">
+                            <option value="ધોરણ 1">ધોરણ 1</option>
+                            <option value="ધોરણ 2">ધોરણ 2</option>
+                            <option value="ધોરણ 3">ધોરણ 3</option>
+                            <option value="ધોરણ 4">ધોરણ 4</option>
+                            <option value="ધોરણ 5" selected>ધોરણ 5</option>
                             <option value="ધોરણ 6">ધોરણ 6</option>
+                            <option value="ધોરણ 7">ધોરણ 7</option>
+                            <option value="ધોરણ 8">ધોરણ 8</option>
+                            <option value="ધોરણ 9">ધોરણ 9</option>
+                            <option value="ધોરણ 10">ધોરણ 10</option>
+                            <option value="ધોરણ 11">ધોરણ 11</option>
+                            <option value="ધોરણ 12">ધોરણ 12</option>
                         </select>
                     </div>
                     <div>
@@ -158,7 +168,7 @@
                             <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> આ ટેસ્ટની Dynamic Online Link (વિદ્યાર્થીઓને મોકલવા માટે):</span>
                             <input type="text" id="shareLinkInput" readonly class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-600 font-mono">
                         </div>
-                        <button onclick="copyShareLink()" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded text-xs whitespace-nowrap">
+                        <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded text-xs whitespace-nowrap">
                             લિંક કોપી કરો
                         </button>
                     </div>
@@ -246,7 +256,7 @@
                 <div class="mt-6 border-t pt-4">
                     <h4 class="font-bold text-slate-800 mb-3 flex justify-between">
                         <span>હાલના ઉમેરેલા પ્રશ્નો (<span id="qCountDisplay">0</span>)</span>
-                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600">બધા ભૂસી નાખો</button>
+                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold">બધા ભૂસી નાખો</button>
                     </h4>
                     <div id="adminQuestionsList" class="space-y-3"></div>
                 </div>
@@ -271,11 +281,11 @@
         let activeTestData = { meta: {}, items: [] };
         let timerInterval = null;
 
-        // Base64 Encoding Helpers for Gujarati / Unicode Support
+        // Base64 Unicode Safe Encoding
         function encodeTestData(obj) {
             try {
                 let str = JSON.stringify(obj);
-                return encodeURIComponent(btoa(unescape(encodeURIComponent(str))));
+                return encodeURIComponent(btoa(encodeURIComponent(str)));
             } catch (e) {
                 return "";
             }
@@ -283,7 +293,7 @@
 
         function decodeTestData(str) {
             try {
-                let decoded = decodeURIComponent(escape(atob(decodeURIComponent(str))));
+                let decoded = decodeURIComponent(atob(decodeURIComponent(str)));
                 return JSON.parse(decoded);
             } catch (e) {
                 return null;
@@ -300,10 +310,15 @@
                 if (loadedData && loadedData.items && loadedData.items.length > 0) {
                     activeTestData = loadedData;
                     currentActiveTest = loadedData.title || "ઓનલાઇન કસોટી";
+                    // Save URL Data to Local Storage automatically
+                    allTestData[currentActiveTest] = loadedData;
+                    saveTestData();
                 }
             } else if (testFromUrl && allTestData[testFromUrl]) {
                 currentActiveTest = testFromUrl;
                 activeTestData = allTestData[testFromUrl];
+            } else if (allTestData[currentActiveTest] && allTestData[currentActiveTest].items && allTestData[currentActiveTest].items.length > 0) {
+                activeTestData = allTestData[currentActiveTest];
             } else if (Object.keys(allTestData).length > 0) {
                 currentActiveTest = Object.keys(allTestData)[0];
                 activeTestData = allTestData[currentActiveTest];
@@ -440,7 +455,6 @@
             document.getElementById('adminTotalMarks').value = data.meta?.totalMarks || '';
             document.getElementById('adminTimeLimit').value = data.meta?.timeLimit || '';
 
-            // Generate Encoded Full Dynamic Link
             let baseUrl = window.location.origin + window.location.pathname;
             let fullDataObj = {
                 title: testKey,
@@ -461,7 +475,7 @@
             copyText.select();
             copyText.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(copyText.value);
-            alert("ટેસ્ટની સંપૂર્ણ ડાયનેમિક લિંક કોપી થઈ ગઈ છે! હવે આ લિંક વિદ્યાર્થીઓને વોટ્સએપમાં મોકલો.");
+            alert("ટેસ્ટની સંપૂર્ણ ડાયનેમિક લિંક કોપી થઈ ગઈ છે! હવે આ લિંક વિદ્યાર્થીઓને મોકલો.");
         }
 
         function createNewTest() {
@@ -597,8 +611,9 @@
 
         function saveAndRefresh(testKey) {
             saveTestData();
+            activeTestData = allTestData[testKey];
             loadAdminTestData();
-            alert("પ્રશ્ન સફળતાપૂર્વક ઉમેરાયો અને લિંક અપડેટ થઈ ગઈ!");
+            alert("પ્રશ્ન સફળતાપૂર્વક ઉમેરાયો!");
         }
 
         function saveTestData() {
@@ -800,7 +815,4 @@
         }
     </script>
 </body>
-</html>                
-
-                            
-        
+</html>

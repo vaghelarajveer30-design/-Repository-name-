@@ -30,7 +30,7 @@
                 <h1 class="text-xl font-bold tracking-wide">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
             </div>
             <div>
-                <button onclick="promptTeacherLogin()" class="bg-indigo-800 hover:bg-indigo-900 px-3 py-1.5 rounded-lg text-sm font-semibold transition border border-indigo-500 flex items-center gap-2">
+                <button onclick="promptTeacherLogin()" class="bg-indigo-800 hover:bg-indigo-900 px-3 py-1.5 rounded-lg text-sm font-semibold transition border border-indigo-500 flex items-center gap-2 cursor-pointer">
                     <i class="fa-solid fa-user-shield text-yellow-300"></i> શિક્ષક ડેશબોર્ડ (Admin)
                 </button>
             </div>
@@ -85,7 +85,7 @@
                     </div>
                 </div>
                 
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow mt-2">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow mt-2 cursor-pointer">
                     ટેસ્ટ શરૂ કરો
                 </button>
             </form>
@@ -106,7 +106,7 @@
             <div id="quizQuestionsContainer"></div>
 
             <div class="mt-8 text-center pb-10">
-                <button onclick="confirmSubmitQuiz()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg">
+                <button onclick="confirmSubmitQuiz()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg cursor-pointer">
                     ટેસ્ટ સબમિટ કરો
                 </button>
             </div>
@@ -140,10 +140,10 @@
             <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow border">
                 <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-sliders text-indigo-600"></i> શિક્ષક એડમિન પેનલ</h2>
                 <div class="flex gap-2">
-                    <button onclick="openQuestionBankModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-1.5 rounded border text-sm font-bold shadow flex items-center gap-1">
+                    <button onclick="openQuestionBankModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-1.5 rounded border text-sm font-bold shadow flex items-center gap-1 cursor-pointer">
                         <i class="fa-solid fa-boxes-stacked"></i> પ્રશ્ન બેંક (Question Bank)
                     </button>
-                    <button onclick="switchView('student')" class="bg-slate-100 hover:bg-slate-200 px-4 py-1.5 rounded border text-sm font-semibold">
+                    <button onclick="switchView('student')" class="bg-slate-100 hover:bg-slate-200 px-4 py-1.5 rounded border text-sm font-semibold cursor-pointer">
                         <i class="fa-solid fa-eye"></i> વિદ્યાર્થી મોડ જુઓ
                     </button>
                 </div>
@@ -158,11 +158,11 @@
                                 <option value="Test 1">ટેસ્ટ ૧ (Test 1)</option>
                             </select>
                             
-                            <button onclick="deleteEntireTest()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1 shadow">
+                            <button onclick="deleteEntireTest()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1 shadow cursor-pointer">
                                 <i class="fa-solid fa-trash-can"></i> આ ટેસ્ટ ડિલીટ કરો
                             </button>
                         </div>
-                        <button onclick="openNewTestModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm">
+                        <button onclick="openNewTestModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm cursor-pointer">
                             <i class="fa-solid fa-plus"></i> નવી ટેસ્ટ બનાવો
                         </button>
                     </div>
@@ -174,13 +174,13 @@
                             <input type="text" id="shareLinkInput" readonly value="લિંક જનરેટ થઈ રહી છે..." class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-700 font-bold resize-none">
                         </div>
                         <div class="flex gap-2 w-full sm:w-auto justify-end">
-                            <button onclick="generateShortUrlLink()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow flex items-center gap-1">
+                            <button onclick="generateShortUrlLink()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow flex items-center gap-1 cursor-pointer">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i> લિંક ટૂંકી કરો
                             </button>
-                            <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow">
+                            <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow cursor-pointer">
                                 કોપી કરો
                             </button>
-                            <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap flex items-center gap-1 shadow">
+                            <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap flex items-center gap-1 shadow cursor-pointer">
                                 <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
                             </button>
                         </div>
@@ -200,20 +200,20 @@
                             <input type="number" id="adminTimeLimit" placeholder="60" class="w-full p-2 border rounded text-sm">
                         </div>
                     </div>
-                    <button onclick="saveTestMetaSettings()" class="bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow">
+                    <button onclick="saveTestMetaSettings()" class="bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow cursor-pointer">
                         સેટિંગ્સ સેવ કરો
                     </button>
                 </div>
 
                 <!-- Builder Tabs -->
                 <div class="flex border-b gap-2 overflow-x-auto">
-                    <button id="mode1Btn" onclick="setBuilderMode(1)" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap">
+                    <button id="mode1Btn" onclick="setBuilderMode(1)" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap cursor-pointer">
                         વિકલ્પ ૧: ગણિત / સામાન્ય MCQ
                     </button>
-                    <button id="mode2Btn" onclick="setBuilderMode(2)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap">
+                    <button id="mode2Btn" onclick="setBuilderMode(2)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap cursor-pointer">
                         વિકલ્પ ૨: ફકરો + ૫ પ્રશ્નો
                     </button>
-                    <button id="mode3Btn" onclick="setBuilderMode(3)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap">
+                    <button id="mode3Btn" onclick="setBuilderMode(3)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap cursor-pointer">
                         વિકલ્પ ૩: આકૃતિ વાળા પ્રશ્નો
                     </button>
                 </div>
@@ -226,7 +226,7 @@
                         <select id="m1Correct" class="p-2 border rounded bg-white font-bold text-emerald-600">
                             <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
                         </select>
-                        <button onclick="addSingleMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">પ્રશ્ન ઉમેરો</button>
+                        <button onclick="addSingleMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm cursor-pointer">પ્રશ્ન ઉમેરો</button>
                     </div>
                 </div>
 
@@ -234,7 +234,7 @@
                 <div id="builderMode2" class="hidden space-y-4 bg-slate-50 p-4 rounded-xl border">
                     <textarea id="m2Passage" rows="4" placeholder="અહીં ફકરો પેસ્ટ કરો..." class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
                     <textarea id="m2Questions" rows="6" placeholder="૫ પ્રશ્નો (વિકલ્પો સાથે) અહી પેસ્ટ કરો..." class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
-                    <button onclick="addPassageGroup()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">ફકરો અને પ્રશ્નો ઉમેરો</button>
+                    <button onclick="addPassageGroup()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm cursor-pointer">ફકરો અને પ્રશ્નો ઉમેરો</button>
                 </div>
 
                 <!-- MODE 3 -->
@@ -258,14 +258,14 @@
                         <select id="m3Correct" class="p-2 border rounded bg-white font-bold text-emerald-600">
                             <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
                         </select>
-                        <button onclick="addImageMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">આકૃતિ પ્રશ્ન ઉમેરો</button>
+                        <button onclick="addImageMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm cursor-pointer">આકૃતિ પ્રશ્ન ઉમેરો</button>
                     </div>
                 </div>
 
                 <div class="mt-6 border-t pt-4">
                     <h4 class="font-bold text-slate-800 mb-3 flex justify-between">
                         <span>હાલના ટેસ્ટમાં ઉમેરેલા પ્રશ્નો (<span id="qCountDisplay">0</span>)</span>
-                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold">આ ટેસ્ટના પ્રશ્નો ભૂસી નાખો</button>
+                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold cursor-pointer">આ ટેસ્ટના પ્રશ્નો ભૂસી નાખો</button>
                     </h4>
                     <div id="adminQuestionsList" class="space-y-3"></div>
                 </div>
@@ -277,74 +277,74 @@
             </div>
         </section>
 
-        <!-- 5. ADMIN LOGIN MODAL -->
-        <div id="adminLoginModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
-                <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-indigo-700 text-2xl">
-                    <i class="fa-solid fa-user-shield"></i>
-                </div>
-                <h3 class="text-xl font-bold text-slate-800">શિક્ષક લૉગિન (Admin)</h3>
-                <p class="text-sm text-slate-500">એડમિન પેનલ ખોલવા માટે પાસવર્ડ દાખલ કરો:</p>
-                
-                <input type="password" id="adminPasswordInput" placeholder="પાસવર્ડ દાખલ કરો" class="w-full px-4 py-2.5 rounded-xl border text-center font-bold text-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                <p id="adminLoginError" class="text-xs text-rose-600 font-bold hidden"><i class="fa-solid fa-circle-exclamation"></i> ખોટો પાસવર્ડ! ફરી પ્રયત્ન કરો.</p>
-                
-                <div class="flex gap-3 pt-2">
-                    <button onclick="closeAdminLoginModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-sm">કેન્સલ</button>
-                    <button onclick="verifyAdminPassword()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm shadow">લૉગિન કરો</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 6. NEW TEST CREATION MODAL -->
-        <div id="newTestModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
-                <h3 class="text-xl font-bold text-slate-800">નવી ટેસ્ટ બનાવો</h3>
-                <input type="text" id="newTestNameInput" placeholder="ટેસ્ટનું નામ (દા.ત. ટેસ્ટ ૨)" class="w-full px-4 py-2 rounded-xl border font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none">
-                <div class="flex gap-3 pt-2">
-                    <button onclick="closeNewTestModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl text-sm">કેન્સલ</button>
-                    <button onclick="createNewTestConfirm()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-sm shadow">બનાવો</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 7. QUESTION BANK MODAL POPUP -->
-        <div id="qBankModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-                <div class="bg-indigo-700 text-white p-4 flex justify-between items-center">
-                    <h3 class="text-lg font-bold flex items-center gap-2">
-                        <i class="fa-solid fa-boxes-stacked text-amber-300"></i> પ્રશ્ન બેંક (Question Bank)
-                    </h3>
-                    <button onclick="closeQuestionBankModal()" class="text-white hover:text-slate-200 text-xl font-bold">&times;</button>
-                </div>
-
-                <!-- Tabs inside Question Bank -->
-                <div class="flex border-b bg-slate-100 p-2 gap-2 overflow-x-auto">
-                    <button id="qbTab1Btn" onclick="switchQbTab('mcq')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-indigo-600 text-white">
-                        ૧. ગણિત / સામાન્ય MCQ (<span id="qbMcqCount">0</span>)
-                    </button>
-                    <button id="qbTab2Btn" onclick="switchQbTab('passage')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200">
-                        ૨. ફકરાઓ (<span id="qbPassageCount">0</span>)
-                    </button>
-                    <button id="qbTab3Btn" onclick="switchQbTab('image')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200">
-                        ૩. આકૃતિ વાળા (<span id="qbImageCount">0</span>)
-                    </button>
-                </div>
-
-                <div class="p-4 overflow-y-auto flex-1 space-y-3" id="qbQuestionsContainer">
-                    <!-- Dynamic Question Bank Items -->
-                </div>
-
-                <div class="p-4 border-t bg-slate-50 flex justify-between items-center">
-                    <span class="text-xs font-bold text-slate-600">પસંદ કરેલા પ્રશ્નો પ્રશ્ન બેંકમાં સચવાયેલા રહેશે અને હાલની ટેસ્ટમાં ઉમેરાશે.</span>
-                    <button onclick="importSelectedToCurrentTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-sm shadow">
-                        <i class="fa-solid fa-file-import"></i> હાલની ટેસ્ટમાં ઉમેરો
-                    </button>
-                </div>
-            </div>
-        </div>
-
     </main>
+
+    <!-- 5. ADMIN LOGIN MODAL -->
+    <div id="adminLoginModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
+            <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-indigo-700 text-2xl">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800">શિક્ષક લૉગિન (Admin)</h3>
+            <p class="text-sm text-slate-500">એડમિન પેનલ ખોલવા માટે પાસવર્ડ દાખલ કરો:</p>
+            
+            <input type="password" id="adminPasswordInput" placeholder="પાસવર્ડ દાખલ કરો" class="w-full px-4 py-2.5 rounded-xl border text-center font-bold text-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            <p id="adminLoginError" class="text-xs text-rose-600 font-bold hidden"><i class="fa-solid fa-circle-exclamation"></i> ખોટો પાસવર્ડ! ફરી પ્રયત્ન કરો.</p>
+            
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeAdminLoginModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-sm cursor-pointer">કેન્સલ</button>
+                <button onclick="verifyAdminPassword()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm shadow cursor-pointer">લૉગિન કરો</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. NEW TEST CREATION MODAL -->
+    <div id="newTestModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
+            <h3 class="text-xl font-bold text-slate-800">નવી ટેસ્ટ બનાવો</h3>
+            <input type="text" id="newTestNameInput" placeholder="ટેસ્ટનું નામ (દા.ત. ટેસ્ટ ૨)" class="w-full px-4 py-2 rounded-xl border font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeNewTestModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl text-sm cursor-pointer">કેન્સલ</button>
+                <button onclick="createNewTestConfirm()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-sm shadow cursor-pointer">બનાવો</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. QUESTION BANK MODAL POPUP -->
+    <div id="qBankModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-indigo-700 text-white p-4 flex justify-between items-center">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-boxes-stacked text-amber-300"></i> પ્રશ્ન બેંક (Question Bank)
+                </h3>
+                <button onclick="closeQuestionBankModal()" class="text-white hover:text-slate-200 text-xl font-bold cursor-pointer">&times;</button>
+            </div>
+
+            <!-- Tabs inside Question Bank -->
+            <div class="flex border-b bg-slate-100 p-2 gap-2 overflow-x-auto">
+                <button id="qbTab1Btn" onclick="switchQbTab('mcq')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-indigo-600 text-white cursor-pointer">
+                    ૧. ગણિત / સામાન્ય MCQ (<span id="qbMcqCount">0</span>)
+                </button>
+                <button id="qbTab2Btn" onclick="switchQbTab('passage')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200 cursor-pointer">
+                    ૨. ફકરાઓ (<span id="qbPassageCount">0</span>)
+                </button>
+                <button id="qbTab3Btn" onclick="switchQbTab('image')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200 cursor-pointer">
+                    ૩. આકૃતિ વાળા (<span id="qbImageCount">0</span>)
+                </button>
+            </div>
+
+            <div class="p-4 overflow-y-auto flex-1 space-y-3" id="qbQuestionsContainer">
+                <!-- Dynamic Question Bank Items -->
+            </div>
+
+            <div class="p-4 border-t bg-slate-50 flex justify-between items-center">
+                <span class="text-xs font-bold text-slate-600">પસંદ કરેલા પ્રશ્નો પ્રશ્ન બેંકમાં સચવાયેલા રહેશે અને હાલની ટેસ્ટમાં ઉમેરાશે.</span>
+                <button onclick="importSelectedToCurrentTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-sm shadow cursor-pointer">
+                    <i class="fa-solid fa-file-import"></i> હાલની ટેસ્ટમાં ઉમેરો
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; 
@@ -453,6 +453,7 @@
 
         function refreshSelectDropdown() {
             let select = document.getElementById('adminTestSelect');
+            if(!select) return;
             select.innerHTML = "";
             let keys = Object.keys(allTestData);
             if(keys.length === 0) {
@@ -475,7 +476,8 @@
 
         function setupPasteListener() {
             document.addEventListener('paste', function (e) {
-                if (document.getElementById('builderMode3').classList.contains('hidden')) return;
+                const mode3 = document.getElementById('builderMode3');
+                if (mode3 && mode3.classList.contains('hidden')) return;
                 let items = (e.clipboardData || e.originalEvent.clipboardData).items;
                 for (let index in items) {
                     let item = items[index];
@@ -662,10 +664,12 @@
             currentQbTab = tab;
             ['mcq', 'passage', 'image'].forEach(t => {
                 let btn = document.getElementById(`qbTab${t === 'mcq' ? '1' : t === 'passage' ? '2' : '3'}Btn`);
-                if (t === tab) {
-                    btn.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-indigo-600 text-white";
-                } else {
-                    btn.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200";
+                if(btn) {
+                    if (t === tab) {
+                        btn.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-indigo-600 text-white cursor-pointer";
+                    } else {
+                        btn.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200 cursor-pointer";
+                    }
                 }
             });
 
@@ -721,7 +725,7 @@
 
                 card.innerHTML = `
                     ${mainContent}
-                    <button onclick="deleteQbQuestion('${item.id}')" class="text-rose-600 hover:text-rose-800 p-2 rounded-lg hover:bg-rose-50 transition" title="પ્રશ્ન બેંકમાંથી કાયમી ડિલીટ કરો">
+                    <button onclick="deleteQbQuestion('${item.id}')" class="text-rose-600 hover:text-rose-800 p-2 rounded-lg hover:bg-rose-50 transition cursor-pointer" title="પ્રશ્ન બેંકમાંથી કાયમી ડિલીટ કરો">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 `;
@@ -771,7 +775,7 @@
             alert(`સફળતાપૂર્વક ${importedCount} પ્રશ્નો "${testKey}" માં ઉમેરાઈ ગયા છે! તે પ્રશ્ન બેંકમાં પણ સુરક્ષિત રહેશે.`);
         }
 
-        // 🌟 સુધારેલું એડમિન લોગિન પૉપઅપ (Custom Modal)
+        /* 🌟 TEACHER LOGIN MODAL FUNCTIONS */
         function promptTeacherLogin() {
             document.getElementById('adminPasswordInput').value = "";
             document.getElementById('adminLoginError').classList.add('hidden');
@@ -928,7 +932,6 @@
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // 🌟 નવી ટેસ્ટ બનાવવાનું મોડલ (Modal Handle)
         function openNewTestModal() {
             document.getElementById('newTestNameInput').value = "";
             document.getElementById('newTestModal').classList.remove('hidden');
@@ -973,10 +976,10 @@
         function setBuilderMode(mode) {
             [1, 2, 3].forEach(m => {
                 document.getElementById(`builderMode${m}`).classList.add('hidden');
-                document.getElementById(`mode${m}Btn`).className = "px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap";
+                document.getElementById(`mode${m}Btn`).className = "px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap cursor-pointer";
             });
             document.getElementById(`builderMode${mode}`).classList.remove('hidden');
-            document.getElementById(`mode${mode}Btn`).className = "px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap";
+            document.getElementById(`mode${mode}Btn`).className = "px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap cursor-pointer";
         }
 
         function parseMcqText(text) {
@@ -1037,16 +1040,16 @@
                     let passageText = item.passage || item.p || '';
                     let qCount = item.questions ? item.questions.length : (item.q ? item.q.length : 0);
                     div.innerHTML = `<div><b class="text-indigo-600">[ફકરો]</b> ${passageText.substring(0, 50)}... (${qCount} પ્રશ્નો)</div>
-                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600 cursor-pointer"><i class="fa-solid fa-trash"></i></button>`;
                 } else if(item.type === 'image_mcq' || item.t === 'i') {
                     let img = item.imageUrl || item.u;
                     let qText = item.question || item.q;
                     div.innerHTML = `<div class="flex items-center gap-2"><img src="${img}" class="w-10 h-10 object-cover rounded"> <b>${idx+1}. ${qText}</b></div>
-                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600 cursor-pointer"><i class="fa-solid fa-trash"></i></button>`;
                 } else {
                     let qText = item.question || item.q;
                     div.innerHTML = `<div><b>${idx+1}. ${qText}</b></div>
-                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600 cursor-pointer"><i class="fa-solid fa-trash"></i></button>`;
                 }
                 container.appendChild(div);
             });
@@ -1186,7 +1189,7 @@
                     <h3 class="font-bold text-slate-800">${labelText}: ${qText}</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="opts_${qId}">
                         ${['A', 'B', 'C', 'D'].map((key, i) => `
-                            <button onclick="selectAns('${qId}', '${key}', '${correct}')" id="btn_${qId}_${key}" class="p-3 border rounded-xl text-left font-medium hover:bg-indigo-50 flex items-center gap-2 transition-all">
+                            <button onclick="selectAns('${qId}', '${key}', '${correct}')" id="btn_${qId}_${key}" class="p-3 border rounded-xl text-left font-medium hover:bg-indigo-50 flex items-center gap-2 transition-all cursor-pointer">
                                 <span class="font-bold text-slate-400">${key}.</span>
                                 <span>${options[i] || ''}</span>
                             </button>

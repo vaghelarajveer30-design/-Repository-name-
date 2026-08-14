@@ -337,7 +337,7 @@
             </div>
 
             <div class="p-4 border-t bg-slate-50 flex justify-between items-center">
-                <span class="text-xs font-bold text-slate-600">પસંદ કરેલા પ્રશ્નો પ્રશ્ન બેંકમાં સચવાયેલા રહેશે અને હાલની ટેસ્ટમાં ઉમેરાશે.</span>
+                <span class="text-xs font-bold text-slate-600">પસંદ કરેલા પ્રશ્નો પ્રશ્ન બેંકમાં હંમેશા સુરક્ષિત રહેશે અને ટેસ્ટમાં ઉમેરાશે.</span>
                 <button onclick="importSelectedToCurrentTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-sm shadow cursor-pointer">
                     <i class="fa-solid fa-file-import"></i> હાલની ટેસ્ટમાં ઉમેરો
                 </button>
@@ -424,6 +424,34 @@
             }
         }
 
+        function syncExistingQuestionsToBank() {
+            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
+            let hasNew = false;
+
+            Object.keys(allTestData).forEach(testKey => {
+                let items = allTestData[testKey]?.items || [];
+                items.forEach(item => {
+                    let targetArr = [];
+                    if (item.type === 'mcq' || item.t === 'm') targetArr = questionBank.mcq;
+                    else if (item.type === 'passage_group' || item.t === 'p') targetArr = questionBank.passage;
+                    else if (item.type === 'image_mcq' || item.t === 'i') targetArr = questionBank.image;
+
+                    let exists = targetArr.some(qb => qb.question === (item.question || item.q) && JSON.stringify(qb.options || qb.o) === JSON.stringify(item.options || item.o));
+                    
+                    if (!exists) {
+                        let newItem = JSON.parse(JSON.stringify(item));
+                        if (!newItem.type) newItem.type = newItem.t === 'p' ? 'passage_group' : newItem.t === 'i' ? 'image_mcq' : 'mcq';
+                        targetArr.push(newItem);
+                        hasNew = true;
+                    }
+                });
+            });
+
+            if (hasNew) {
+                localStorage.setItem('jnv_question_bank', JSON.stringify(questionBank));
+            }
+        }
+
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const dataParam = urlParams.get('data');
@@ -445,6 +473,7 @@
                 activeTestData = allTestData[currentActiveTest];
             }
 
+            syncExistingQuestionsToBank();
             refreshSelectDropdown();
             setupStudentView();
             setupPasteListener();
@@ -539,12 +568,13 @@
             if (!questionBank.image) questionBank.image = [];
 
             let qbItem = JSON.parse(JSON.stringify(item));
+            qbItem.id = generateUniqueId();
             
-            if (qbItem.type === 'mcq') {
+            if (qbItem.type === 'mcq' || qbItem.t === 'm') {
                 questionBank.mcq.push(qbItem);
-            } else if (qbItem.type === 'passage_group') {
+            } else if (qbItem.type === 'passage_group' || qbItem.t === 'p') {
                 questionBank.passage.push(qbItem);
-            } else if (qbItem.type === 'image_mcq') {
+            } else if (qbItem.type === 'image_mcq' || qbItem.t === 'i') {
                 questionBank.image.push(qbItem);
             }
             localStorage.setItem('jnv_question_bank', JSON.stringify(questionBank));
@@ -645,14 +675,14 @@
         }
 
         function openQuestionBankModal() {
-            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
+            syncExistingQuestionsToBank();
             
             document.getElementById('qbMcqCount').innerText = (questionBank.mcq || []).length;
             document.getElementById('qbPassageCount').innerText = (questionBank.passage || []).length;
             document.getElementById('qbImageCount').innerText = (questionBank.image || []).length;
             
             document.getElementById('qBankModal').classList.remove('hidden');
-            switchQbTab('mcq');
+            switchQbTab(currentQbTab || 'mcq');
         }
 
         function closeQuestionBankModal() {
@@ -681,7 +711,7 @@
             let list = (questionBank && questionBank[currentQbTab]) ? questionBank[currentQbTab] : [];
 
             if (list.length === 0) {
-                container.innerHTML = `<div class="text-center text-slate-400 py-8">આ વિભાગમાં કોઈ પ્રશ્નો જમા થયેલ નથી.</div>`;
+                container.innerHTML = `<div class="text-center text-slate-400 py-8 font-bold">આ વિભાગમાં કોઈ પ્રશ્નો જમા થયેલ નથી.</div>`;
                 return;
             }
 
@@ -695,8 +725,8 @@
                         <div class="flex items-start gap-3">
                             <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
                             <div class="text-sm">
-                                <span class="font-bold text-indigo-700">${index + 1}. ${item.question}</span>
-                                <div class="text-xs text-slate-500 mt-1">(A) ${item.options[0] || ''} (B) ${item.options[1] || ''} (C) ${item.options[2] || ''} (D) ${item.options[3] || ''}</div>
+                                <span class="font-bold text-indigo-700">${index + 1}. ${item.question || item.q}</span>
+                                <div class="text-xs text-slate-500 mt-1">(A) ${item.options ? item.options[0] : item.o[0]} (B) ${item.options ? item.options[1] : item.o[1]} (C) ${item.options ? item.options[2] : item.o[2]} (D) ${item.options ? item.options[3] : item.o[3]}</div>
                             </div>
                         </div>
                     `;
@@ -705,8 +735,8 @@
                         <div class="flex items-start gap-3">
                             <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
                             <div class="text-sm">
-                                <span class="font-bold text-indigo-700">[ફકરો] ${(item.passage || '').substring(0, 80)}...</span>
-                                <div class="text-xs text-slate-500 mt-1 font-semibold">કુલ પ્રશ્નો: ${(item.questions || []).length}</div>
+                                <span class="font-bold text-indigo-700">[ફકરો] ${(item.passage || item.p || '').substring(0, 80)}...</span>
+                                <div class="text-xs text-slate-500 mt-1 font-semibold">કુલ પ્રશ્નો: ${(item.questions || item.q || []).length}</div>
                             </div>
                         </div>
                     `;
@@ -714,9 +744,9 @@
                     mainContent = `
                         <div class="flex items-center gap-3">
                             <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
-                            <img src="${item.imageUrl}" class="w-12 h-12 object-cover rounded border">
+                            <img src="${item.imageUrl || item.u}" class="w-12 h-12 object-cover rounded border">
                             <div class="text-sm">
-                                <span class="font-bold text-indigo-700">${index + 1}. ${item.question}</span>
+                                <span class="font-bold text-indigo-700">${index + 1}. ${item.question || item.q}</span>
                             </div>
                         </div>
                     `;
@@ -760,7 +790,7 @@
             list.forEach(item => {
                 if (selectedIds.includes(item.id)) {
                     let cloned = JSON.parse(JSON.stringify(item));
-                    cloned.id = generateUniqueId();
+                    cloned.id = generateUniqueId(); // ટેસ્ટ માટે નવી Unique ID આપવી
                     
                     allTestData[testKey].items.push(cloned);
                     importedCount++;
@@ -771,7 +801,7 @@
             loadAdminTestData();
             closeQuestionBankModal();
 
-            alert(`સફળતાપૂર્વક ${importedCount} પ્રશ્નો "${testKey}" માં ઉમેરાઈ ગયા છે! તે પ્રશ્ન બેંકમાં પણ સુરક્ષિત રહેશે.`);
+            alert(`સફળતાપૂર્વક ${importedCount} પ્રશ્નો "${testKey}" માં ઉમેરાઈ ગયા છે! તે પ્રશ્ન બેંકમાં પણ સુરક્ષિત જ રહેશે.`);
         }
 
         function promptTeacherLogin() {
@@ -824,17 +854,17 @@
             let baseUrl = window.location.origin + window.location.pathname;
 
             let minifiedItems = (data.items || []).map(item => {
-                if(item.type === 'passage_group') {
+                if(item.type === 'passage_group' || item.t === 'p') {
                     return {
                         id: item.id || generateUniqueId(),
                         t: 'p',
-                        p: item.passage,
-                        q: (item.questions || []).map(q => ({ id: q.id || generateUniqueId(), q: q.question, o: q.options, c: q.correct }))
+                        p: item.passage || item.p,
+                        q: (item.questions || item.q || []).map(q => ({ id: q.id || generateUniqueId(), q: q.question || q.q, o: q.options || q.o, c: q.correct || q.c }))
                     };
-                } else if(item.type === 'image_mcq') {
-                    return { id: item.id || generateUniqueId(), t: 'i', u: item.imageUrl, q: item.question, o: item.options, c: item.correct };
+                } else if(item.type === 'image_mcq' || item.t === 'i') {
+                    return { id: item.id || generateUniqueId(), t: 'i', u: item.imageUrl || item.u, q: item.question || item.q, o: item.options || item.o, c: item.correct || item.c };
                 } else {
-                    return { id: item.id || generateUniqueId(), t: 'm', q: item.question, o: item.options, c: item.correct };
+                    return { id: item.id || generateUniqueId(), t: 'm', q: item.question || item.q, o: item.options || item.o, c: item.correct || item.c };
                 }
             });
 

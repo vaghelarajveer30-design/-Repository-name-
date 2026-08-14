@@ -10,8 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- QR Code Generator Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- LZ-String Compression Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
@@ -168,7 +166,7 @@
                         </button>
                     </div>
 
-                    <!-- Short Link Generation Box -->
+                    <!-- Short Link Box -->
                     <div class="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <div class="w-full">
                             <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> શેર કરવા માટેની શોર્ટ લિંક (૧ લીટીની):</span>
@@ -206,7 +204,7 @@
                     </button>
                 </div>
 
-                <!-- Mode Selection Tabs -->
+                <!-- Builder Tabs -->
                 <div class="flex border-b gap-2 overflow-x-auto">
                     <button id="mode1Btn" onclick="setBuilderMode(1)" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap">
                         વિકલ્પ ૧: સામાન્ય MCQ
@@ -290,6 +288,12 @@
         let currentActiveTest = "Test 1";
         let activeTestData = { meta: {}, items: [] };
         let timerInterval = null;
+        let userAnswers = {}; // વિદ્યાર્થીના ઉત્તરો રાખવા માટે
+
+        // Unique ID Generator
+        function generateUniqueId() {
+            return 'q_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        }
 
         function compressData(obj) {
             try {
@@ -314,11 +318,11 @@
                     decoded.items = decoded.items.map(item => {
                         if (item.t === 'p' || item.type === 'passage_group') {
                             return {
-                                id: item.id || Date.now(),
+                                id: item.id || generateUniqueId(),
                                 type: 'passage_group',
                                 passage: item.p || item.passage,
                                 questions: (item.q || item.questions || []).map(q => ({
-                                    id: q.id || Math.random(),
+                                    id: q.id || generateUniqueId(),
                                     question: q.q || q.question,
                                     options: q.o || q.options,
                                     correct: q.c || q.correct
@@ -326,7 +330,7 @@
                             };
                         } else if (item.t === 'i' || item.type === 'image_mcq') {
                             return {
-                                id: item.id || Date.now(),
+                                id: item.id || generateUniqueId(),
                                 type: 'image_mcq',
                                 imageUrl: item.u || item.imageUrl,
                                 question: item.q || item.question,
@@ -335,7 +339,7 @@
                             };
                         } else {
                             return {
-                                id: item.id || Date.now(),
+                                id: item.id || generateUniqueId(),
                                 type: 'mcq',
                                 question: item.q || item.question,
                                 options: item.o || item.options,
@@ -468,7 +472,7 @@
             initTestStructure(testKey);
 
             allTestData[testKey].items.push({
-                id: Date.now(),
+                id: generateUniqueId(),
                 type: 'image_mcq',
                 imageUrl: currentUploadedImgUrl,
                 question: parsed.question,
@@ -525,14 +529,15 @@
             let minifiedItems = (data.items || []).map(item => {
                 if(item.type === 'passage_group') {
                     return {
+                        id: item.id || generateUniqueId(),
                         t: 'p',
                         p: item.passage,
-                        q: (item.questions || []).map(q => ({ q: q.question, o: q.options, c: q.correct }))
+                        q: (item.questions || []).map(q => ({ id: q.id || generateUniqueId(), q: q.question, o: q.options, c: q.correct }))
                     };
                 } else if(item.type === 'image_mcq') {
-                    return { t: 'i', u: item.imageUrl, q: item.question, o: item.options, c: item.correct };
+                    return { id: item.id || generateUniqueId(), t: 'i', u: item.imageUrl, q: item.question, o: item.options, c: item.correct };
                 } else {
-                    return { t: 'm', q: item.question, o: item.options, c: item.correct };
+                    return { id: item.id || generateUniqueId(), t: 'm', q: item.question, o: item.options, c: item.correct };
                 }
             });
 
@@ -561,7 +566,6 @@
             renderTeacherSubmissions();
         }
 
-        // 🔥 સુધારેલું ઓટોમેટિક શોર્ટનર ફંક્શન (is.gd API સાથે)
         function generateShortUrlLink() {
             let longUrl = getFullLongUrl();
             let inputField = document.getElementById('shareLinkInput');
@@ -580,7 +584,6 @@
                     }
                 })
                 .catch(err => {
-                    // બેકઅપ TinyURL API
                     fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`)
                         .then(r => r.text())
                         .then(shortUrl => {
@@ -697,7 +700,7 @@
             initTestStructure(testKey);
 
             allTestData[testKey].items.push({
-                id: Date.now(),
+                id: generateUniqueId(),
                 type: 'mcq',
                 question: parsed.question,
                 options: parsed.options,
@@ -720,11 +723,11 @@
             let qBlocks = rawQuestions.split(/\n(?=\d+[\.\:\)])/);
             let passageQuestions = [];
 
-            qBlocks.forEach((block, idx) => {
+            qBlocks.forEach((block) => {
                 if (block.trim()) {
                     let parsed = parseMcqText(block);
                     passageQuestions.push({
-                        id: Date.now() + idx,
+                        id: generateUniqueId(),
                         question: parsed.question,
                         options: parsed.options,
                         correct: 'A'
@@ -733,7 +736,7 @@
             });
 
             allTestData[testKey].items.push({
-                id: Date.now(),
+                id: generateUniqueId(),
                 type: 'passage_group',
                 passage: passage,
                 questions: passageQuestions
@@ -776,16 +779,16 @@
                     let passageText = item.passage || item.p || '';
                     let qCount = item.questions ? item.questions.length : (item.q ? item.q.length : 0);
                     div.innerHTML = `<div><b class="text-indigo-600">[ફકરો]</b> ${passageText.substring(0, 50)}... (${qCount} પ્રશ્નો)</div>
-                    <button onclick="deleteItem('${testKey}', ${item.id})" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
                 } else if(item.type === 'image_mcq' || item.t === 'i') {
                     let img = item.imageUrl || item.u;
                     let qText = item.question || item.q;
                     div.innerHTML = `<div class="flex items-center gap-2"><img src="${img}" class="w-10 h-10 object-cover rounded"> <b>${idx+1}. ${qText}</b></div>
-                    <button onclick="deleteItem('${testKey}', ${item.id})" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
                 } else {
                     let qText = item.question || item.q;
                     div.innerHTML = `<div><b>${idx+1}. ${qText}</b></div>
-                    <button onclick="deleteItem('${testKey}', ${item.id})" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
                 }
                 container.appendChild(div);
             });
@@ -826,11 +829,10 @@
             }
         }
 
-        let userAnswers = {};
-
         function startStudentQuiz(e) {
             e.preventDefault();
             const testData = activeTestData;
+            userAnswers = {}; // રિટ્રાય પર જવાબ સાફ કરો
 
             if (!testData.items || testData.items.length === 0) return alert("આ ટેસ્ટમાં કોઈ પ્રશ્નો નથી!");
 
@@ -868,21 +870,30 @@
         function renderStudentQuestions(items) {
             const container = document.getElementById('quizQuestionsContainer');
             container.innerHTML = "";
+            let globalQuestionIndex = 1;
 
-            items.forEach((item, idx) => {
+            items.forEach((item) => {
                 let type = item.type || item.t;
                 if (type === 'passage_group' || type === 'p') {
                     let passage = item.passage || item.p;
                     let questions = item.questions || item.q;
+                    
                     const pBox = document.createElement('div');
                     pBox.className = "grid grid-cols-1 md:grid-cols-12 gap-6 bg-white p-6 rounded-2xl shadow border my-6";
+                    
+                    let questionsHtml = questions.map((q) => {
+                        let html = renderMcqCard(q, `પ્રશ્ન ${globalQuestionIndex}`);
+                        globalQuestionIndex++;
+                        return html;
+                    }).join('');
+
                     pBox.innerHTML = `
                         <div class="md:col-span-5 bg-amber-50 p-4 rounded-xl border border-amber-200 sticky-passage">
                             <h4 class="font-bold text-amber-900 border-b pb-2 mb-2"><i class="fa-solid fa-book-open"></i> ફકરો વાંચી પ્રશ્નોના જવાબ આપો:</h4>
                             <p class="text-sm leading-relaxed text-slate-800 whitespace-pre-line">${passage}</p>
                         </div>
                         <div class="md:col-span-7 space-y-6">
-                            ${questions.map((q, qIdx) => renderMcqCard(q, `પ્રશ્ન ${qIdx+1}`)).join('')}
+                            ${questionsHtml}
                         </div>
                     `;
                     container.appendChild(pBox);
@@ -892,8 +903,9 @@
                     card.className = "bg-white p-6 rounded-2xl shadow border my-4 max-w-3xl mx-auto";
                     card.innerHTML = `
                         ${img ? `<img src="${img}" class="max-h-60 mx-auto mb-4 rounded-lg border shadow">` : ''}
-                        ${renderMcqCard(item, `પ્રશ્ન ${idx+1}`)}
+                        ${renderMcqCard(item, `પ્રશ્ન ${globalQuestionIndex}`)}
                     `;
+                    globalQuestionIndex++;
                     container.appendChild(card);
                 }
             });
@@ -903,7 +915,7 @@
             let qText = q.question || q.q;
             let options = q.options || q.o;
             let correct = q.correct || q.c;
-            let qId = q.id || Math.random().toString(36).substr(2, 9);
+            let qId = q.id || generateUniqueId(); // પૂરું યુનિક ID
 
             return `
                 <div class="space-y-3">
@@ -920,6 +932,7 @@
             `;
         }
 
+        // વિકલ્પ સિલેક્ટ કરવાનું ફંક્શન - બગ સુધારેલ
         function selectAns(qId, selectedOpt, correctOpt) {
             userAnswers[qId] = { selected: selectedOpt, correct: correctOpt };
 

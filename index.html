@@ -12,6 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- LZ-String Compression Library (લિંક ટૂંકી કરવા માટે) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
         body { font-family: 'Hind Vadodara', sans-serif; background-color: #f1f5f9; }
         .selected-ans { background-color: #e0e7ff !important; border-color: #6366f1 !important; font-weight: bold; color: #4338ca !important; }
@@ -159,7 +161,6 @@
                                 <option value="Test 5">ટેસ્ટ ૫ (Test 5)</option>
                             </select>
                             
-                            <!-- 🔥 નવી સુવિધા: ટેસ્ટ ડિલીટ બટન -->
                             <button onclick="deleteEntireTest()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1 shadow">
                                 <i class="fa-solid fa-trash-can"></i> આ ટેસ્ટ ડિલીટ કરો
                             </button>
@@ -169,11 +170,11 @@
                         </button>
                     </div>
 
-                    <!-- Online Share Link Box -->
+                    <!-- Short Link Display Box -->
                     <div class="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <div class="w-full">
-                            <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> આ ટેસ્ટની શેર કરવા માટેની લિંક:</span>
-                            <input type="text" id="shareLinkInput" readonly class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-600 font-mono">
+                            <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> આ ટેસ્ટની શેર કરવા માટેની શોર્ટ લિંક:</span>
+                            <textarea id="shareLinkInput" readonly rows="2" class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-600 font-mono resize-none"></textarea>
                         </div>
                         <div class="flex gap-2 w-full sm:w-auto justify-end">
                             <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap">
@@ -208,7 +209,7 @@
                     </button>
                 </div>
 
-                <!-- 3 Options Selection Tabs -->
+                <!-- Mode Selection Tabs -->
                 <div class="flex border-b gap-2 overflow-x-auto">
                     <button id="mode1Btn" onclick="setBuilderMode(1)" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap">
                         વિકલ્પ ૧: સામાન્ય MCQ
@@ -249,7 +250,6 @@
                         <input type="file" id="m3FileInput" accept="image/*" onchange="handleImageUpload(event)" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
                         <p class="text-xs text-slate-400 mt-2">તમે સ્ક્રીનશોટ અથવા ઈમેજ કોપી કરીને અહિયાં સીધી **Ctrl + V** વડે પેસ્ટ પણ કરી શકો છો.</p>
                         
-                        <!-- Image Preview -->
                         <div id="imgPreviewContainer" class="hidden mt-3">
                             <img id="m3ImgPreview" src="" class="max-h-40 mx-auto rounded-lg border shadow">
                             <span id="uploadStatus" class="text-xs font-bold text-emerald-600 mt-1 block"></span>
@@ -276,7 +276,6 @@
                     <div id="adminQuestionsList" class="space-y-3"></div>
                 </div>
 
-                <!-- Teacher Only View: Student Submissions Results -->
                 <div class="mt-8 border-t pt-4">
                     <h4 class="font-bold text-slate-800 mb-3"><i class="fa-solid fa-users text-indigo-600"></i> વિદ્યાર્થીઓના પરિણામો (માર્ક્સ)</h4>
                     <div id="submissionsList" class="space-y-2 max-h-60 overflow-y-auto"></div>
@@ -299,30 +298,31 @@
         const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; 
 
         let currentUploadedImgUrl = "";
-        let allTestData = JSON.parse(localStorage.getItem('jnv_test_data_v4') || '{}');
+        let allTestData = JSON.parse(localStorage.getItem('jnv_test_data_v5') || '{}');
         let allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions') || '[]');
         let currentActiveTest = "Test 1";
         let activeTestData = { meta: {}, items: [] };
         let timerInterval = null;
 
-        // Base64 Encoding with Compact Stringify
-        function encodeTestData(obj) {
+        // 🔥 ultra-compact LZ-String Compression logic (૨-૩ લીટીમાં લિંક બનાવવા માટે)
+        function compressData(obj) {
             try {
                 let jsonStr = JSON.stringify(obj);
-                let bytes = new TextEncoder().encode(jsonStr);
-                let binaryStr = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
-                return btoa(binaryStr);
+                return LZString.compressToEncodedURIComponent(jsonStr);
             } catch (e) {
                 return "";
             }
         }
 
-        // Base64 Decoding
-        function decodeTestData(str) {
+        function decompressData(str) {
             try {
-                let binaryStr = atob(str);
-                let bytes = Uint8Array.from(binaryStr, char => char.charCodeAt(0));
-                let jsonStr = new TextDecoder().decode(bytes);
+                let jsonStr = LZString.decompressFromEncodedURIComponent(str);
+                if (!jsonStr) {
+                    // જૂના Base64 સાથે Backward Compatibility માટે
+                    let binaryStr = atob(str);
+                    let bytes = Uint8Array.from(binaryStr, char => char.charCodeAt(0));
+                    jsonStr = new TextDecoder().decode(bytes);
+                }
                 let decoded = JSON.parse(jsonStr);
 
                 if (decoded && decoded.items) {
@@ -370,14 +370,14 @@
             const dataParam = urlParams.get('data');
 
             if (dataParam) {
-                let loadedData = decodeTestData(dataParam);
+                let loadedData = decompressData(dataParam);
                 if (loadedData && loadedData.items && loadedData.items.length > 0) {
                     activeTestData = loadedData;
                     currentActiveTest = loadedData.title || "ઓનલાઇન કસોટી";
                     allTestData[currentActiveTest] = loadedData;
                     saveTestData();
                 } else {
-                    alert("લિંકમાંથી પ્રશ્નો લોડ થઈ શક્યા નથી. કૃપા કરીને શિક્ષક ડેશબોર્ડમાં પ્રશ્નો ઉમેરી નવી લિંક જનરેટ કરો.");
+                    alert("લિંકમાંથી પ્રશ્નો લોડ થઈ શક્યા નથી. કૃપા કરીને શિક્ષક ડેશબોર્ડમાંથી નવી શોર્ટ લિંક જનરેટ કરી મોકલો.");
                 }
             } else if (allTestData[currentActiveTest] && allTestData[currentActiveTest].items && allTestData[currentActiveTest].items.length > 0) {
                 activeTestData = allTestData[currentActiveTest];
@@ -563,27 +563,24 @@
                 items: minifiedItems
             };
 
-            let encodedStr = encodeTestData(fullDataObj);
-            let shareUrl = `${baseUrl}?data=${encodedStr}`;
+            let compressedStr = compressData(fullDataObj);
+            let shareUrl = `${baseUrl}?data=${compressedStr}`;
             document.getElementById('shareLinkInput').value = shareUrl;
 
             renderAdminQuestionsList();
             renderTeacherSubmissions();
         }
 
-        // 🔥 આખા ટેસ્ટને જ ડિલીટ કરવા માટેનું નવું ફંકશન
         function deleteEntireTest() {
             const testKey = document.getElementById('adminTestSelect').value;
             
-            if (confirm(`શું તમે ખરેખર "${testKey}" ને સંપૂર્ણપણે ડિલીટ કરવા માંગો છો? આ ટેસ્ટનો બધો ડેટા નાબૂદ થઈ જશે.`)) {
+            if (confirm(`શું તમે ખરેખર "${testKey}" ને સંપૂર્ણપણે ડિલીટ કરવા માંગો છો?`)) {
                 delete allTestData[testKey];
-                
-                // ડિલીટ થયેલી ટેસ્ટના સબમિશન પણ સાફ કરી શકીએ
                 allSubmissions = allSubmissions.filter(s => s.testName !== testKey);
                 localStorage.setItem('jnv_test_submissions', JSON.stringify(allSubmissions));
                 
                 saveTestData();
-                alert(`"${testKey}" સફળતાપૂર્વક ડિલીટ થઈ ગઈ છે!`);
+                alert(`"${testKey}" ડિલીટ થઈ ગઈ છે!`);
                 
                 refreshSelectDropdown();
                 loadAdminTestData();
@@ -595,7 +592,7 @@
             copyText.select();
             copyText.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(copyText.value);
-            alert("ટેસ્ટની લિંક કોપી થઈ ગઈ છે!");
+            alert("ટૂંકી લિંક કોપી થઈ ગઈ છે!");
         }
 
         function shareWhatsApp() {
@@ -630,7 +627,7 @@
                     refreshSelectDropdown();
                     loadAdminTestData();
                 } else {
-                    alert("આ નામની ટેસ્ટ પહેલાથી અસ્તિત્વમાં છે!");
+                    alert("આ નામની ટેસ્ટ પહેલેથી છે!");
                 }
             }
         }
@@ -753,7 +750,7 @@
         }
 
         function saveTestData() {
-            localStorage.setItem('jnv_test_data_v4', JSON.stringify(allTestData));
+            localStorage.setItem('jnv_test_data_v5', JSON.stringify(allTestData));
         }
 
         function renderAdminQuestionsList() {

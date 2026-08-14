@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- LZ-String Compression Library (લિંક ટૂંકી કરવા માટે) -->
+    <!-- LZ-String Compression Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
         body { font-family: 'Hind Vadodara', sans-serif; background-color: #f1f5f9; }
@@ -49,7 +49,6 @@
                 <p id="studentTestTitle" class="text-indigo-600 font-bold text-lg mt-1">ઓનલાઇન કસોટી</p>
             </div>
 
-            <!-- Test Info Box -->
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-sm space-y-2">
                 <div class="flex justify-between items-center">
                     <span class="text-slate-600 font-semibold"><i class="fa-solid fa-book text-indigo-600"></i> વિષય:</span>
@@ -148,7 +147,6 @@
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow border space-y-6">
-                <!-- Select Test & Meta Config -->
                 <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 space-y-4">
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         <div class="flex items-center gap-3">
@@ -170,26 +168,25 @@
                         </button>
                     </div>
 
-                    <!-- Short Link Display Box -->
+                    <!-- Short Link Generation Box -->
                     <div class="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <div class="w-full">
-                            <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> આ ટેસ્ટની શેર કરવા માટેની શોર્ટ લિંક:</span>
-                            <textarea id="shareLinkInput" readonly rows="2" class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-600 font-mono resize-none"></textarea>
+                            <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> શેર કરવા માટેની શોર્ટ લિંક (૧ લીટીની):</span>
+                            <input type="text" id="shareLinkInput" readonly value="લિંક જનરેટ થઈ રહી છે..." class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-700 font-bold resize-none">
                         </div>
                         <div class="flex gap-2 w-full sm:w-auto justify-end">
+                            <button onclick="generateShortUrlLink()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap">
+                                <i class="fa-solid fa-compress"></i> લિંક ટૂંકી કરો
+                            </button>
                             <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap">
-                                લિંક કોપી કરો
+                                કોપી કરો
                             </button>
                             <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap flex items-center gap-1">
                                 <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
                             </button>
-                            <button onclick="showQRCode()" class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap">
-                                QR કોડ
-                            </button>
                         </div>
                     </div>
 
-                    <!-- Test Details Controls -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-indigo-200">
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">વિષયનું નામ:</label>
@@ -267,7 +264,6 @@
                     </div>
                 </div>
 
-                <!-- Questions List & Submissions -->
                 <div class="mt-6 border-t pt-4">
                     <h4 class="font-bold text-slate-800 mb-3 flex justify-between">
                         <span>હાલના ઉમેરેલા પ્રશ્નો (<span id="qCountDisplay">0</span>)</span>
@@ -285,15 +281,6 @@
 
     </main>
 
-    <!-- QR Code Modal -->
-    <div id="qrModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white p-6 rounded-2xl max-w-sm w-full text-center space-y-4">
-            <h3 class="font-bold text-lg text-slate-800">ટેસ્ટ સ્કેન કરવા માટે QR કોડ</h3>
-            <div id="qrcode" class="flex justify-center my-4"></div>
-            <button onclick="closeQRModal()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold text-sm w-full">બંધ કરો</button>
-        </div>
-    </div>
-
     <script>
         const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; 
 
@@ -304,7 +291,6 @@
         let activeTestData = { meta: {}, items: [] };
         let timerInterval = null;
 
-        // 🔥 ultra-compact LZ-String Compression logic (૨-૩ લીટીમાં લિંક બનાવવા માટે)
         function compressData(obj) {
             try {
                 let jsonStr = JSON.stringify(obj);
@@ -318,7 +304,6 @@
             try {
                 let jsonStr = LZString.decompressFromEncodedURIComponent(str);
                 if (!jsonStr) {
-                    // જૂના Base64 સાથે Backward Compatibility માટે
                     let binaryStr = atob(str);
                     let bytes = Uint8Array.from(binaryStr, char => char.charCodeAt(0));
                     jsonStr = new TextDecoder().decode(bytes);
@@ -377,7 +362,7 @@
                     allTestData[currentActiveTest] = loadedData;
                     saveTestData();
                 } else {
-                    alert("લિંકમાંથી પ્રશ્નો લોડ થઈ શક્યા નથી. કૃપા કરીને શિક્ષક ડેશબોર્ડમાંથી નવી શોર્ટ લિંક જનરેટ કરી મોકલો.");
+                    alert("લિંકમાંથી પ્રશ્નો લોડ થઈ શક્યા નથી. કૃપા કરીને નવી શોર્ટ લિંક મેળવો.");
                 }
             } else if (allTestData[currentActiveTest] && allTestData[currentActiveTest].items && allTestData[currentActiveTest].items.length > 0) {
                 activeTestData = allTestData[currentActiveTest];
@@ -458,7 +443,7 @@
             .then(data => {
                 if (data.success) {
                     currentUploadedImgUrl = data.data.url;
-                    statusText.innerText = "✓ આકૃતિ સફળતાપૂર્વક ઓનલાઈન સેટ થઈ ગઈ!";
+                    statusText.innerText = "✓ આકૃતિ ઓનલાઈન સેટ થઈ ગઈ!";
                     statusText.className = "text-xs font-bold text-emerald-600 mt-1 block";
                 } else {
                     currentUploadedImgUrl = previewImg.src;
@@ -476,7 +461,7 @@
             const rawText = document.getElementById('m3RawText').value.trim();
             const correct = document.getElementById('m3Correct').value;
 
-            if (!currentUploadedImgUrl) return alert("કૃપા કરીને પહેલા આકૃતિ અપલોડ કરો!");
+            if (!currentUploadedImgUrl) return alert("કૃપા કરીને આકૃતિ અપલોડ કરો!");
             if (!rawText) return alert("પ્રશ્ન અને વિકલ્પો પેસ્ટ કરો!");
 
             const parsed = parseMcqText(rawText);
@@ -504,7 +489,7 @@
             if (pwd === "10101991") {
                 switchView('admin');
             } else if (pwd !== null) {
-                alert("ખોટો પાસવર્ડ! ફક્ત Admin શિક્ષક જ આ લૉગિન કરી શકે છે.");
+                alert("ખોટો પાસવર્ડ!");
             }
         }
 
@@ -532,17 +517,11 @@
             document.getElementById('dispTimeLimit').innerText = (data.meta?.timeLimit || '60') + ' મિનિટ';
         }
 
-        function loadAdminTestData() {
+        function getFullLongUrl() {
             const testKey = document.getElementById('adminTestSelect').value;
-            currentActiveTest = testKey;
             const data = allTestData[testKey] || { meta: {}, items: [] };
-
-            document.getElementById('adminSubject').value = data.meta?.subject || '';
-            document.getElementById('adminTotalMarks').value = data.meta?.totalMarks || '';
-            document.getElementById('adminTimeLimit').value = data.meta?.timeLimit || '';
-
             let baseUrl = window.location.origin + window.location.pathname;
-            
+
             let minifiedItems = (data.items || []).map(item => {
                 if(item.type === 'passage_group') {
                     return {
@@ -564,24 +543,53 @@
             };
 
             let compressedStr = compressData(fullDataObj);
-            let shareUrl = `${baseUrl}?data=${compressedStr}`;
-            document.getElementById('shareLinkInput').value = shareUrl;
+            return `${baseUrl}?data=${compressedStr}`;
+        }
+
+        function loadAdminTestData() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            currentActiveTest = testKey;
+            const data = allTestData[testKey] || { meta: {}, items: [] };
+
+            document.getElementById('adminSubject').value = data.meta?.subject || '';
+            document.getElementById('adminTotalMarks').value = data.meta?.totalMarks || '';
+            document.getElementById('adminTimeLimit').value = data.meta?.timeLimit || '';
+
+            document.getElementById('shareLinkInput').value = getFullLongUrl();
 
             renderAdminQuestionsList();
             renderTeacherSubmissions();
         }
 
+        // 🔥 ઓટોમેટિક TinyURL શોર્ટનર ફંકશન (૧ લીટીની લિંક બનાવવા માટે)
+        function generateShortUrlLink() {
+            let longUrl = getFullLongUrl();
+            let inputField = document.getElementById('shareLinkInput');
+            inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
+
+            fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`)
+                .then(res => res.text())
+                .then(shortUrl => {
+                    if (shortUrl && shortUrl.startsWith("http")) {
+                        inputField.value = shortUrl;
+                        alert("લિંક ૧ લીટીની શોર્ટ થઈ ગઈ છે!");
+                    } else {
+                        inputField.value = longUrl;
+                    }
+                })
+                .catch(err => {
+                    inputField.value = longUrl;
+                    alert("નેટવર્ક એરર! મોટી લિંક સેટ થઈ છે.");
+                });
+        }
+
         function deleteEntireTest() {
             const testKey = document.getElementById('adminTestSelect').value;
-            
-            if (confirm(`શું તમે ખરેખર "${testKey}" ને સંપૂર્ણપણે ડિલીટ કરવા માંગો છો?`)) {
+            if (confirm(`શું તમે ખરેખર "${testKey}" ને ડિલીટ કરવા માંગો છો?`)) {
                 delete allTestData[testKey];
                 allSubmissions = allSubmissions.filter(s => s.testName !== testKey);
                 localStorage.setItem('jnv_test_submissions', JSON.stringify(allSubmissions));
-                
                 saveTestData();
-                alert(`"${testKey}" ડિલીટ થઈ ગઈ છે!`);
-                
                 refreshSelectDropdown();
                 loadAdminTestData();
             }
@@ -592,7 +600,7 @@
             copyText.select();
             copyText.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(copyText.value);
-            alert("ટૂંકી લિંક કોપી થઈ ગઈ છે!");
+            alert("લિંક કોપી થઈ ગઈ છે!");
         }
 
         function shareWhatsApp() {
@@ -601,24 +609,8 @@
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        function showQRCode() {
-            const link = document.getElementById("shareLinkInput").value;
-            const qrcodeDiv = document.getElementById("qrcode");
-            qrcodeDiv.innerHTML = "";
-            new QRCode(qrcodeDiv, {
-                text: link,
-                width: 180,
-                height: 180
-            });
-            document.getElementById("qrModal").classList.remove("hidden");
-        }
-
-        function closeQRModal() {
-            document.getElementById("qrModal").classList.add("hidden");
-        }
-
         function createNewTest() {
-            let testName = prompt("નવી ટેસ્ટનું નામ આપો (દા.ત. Test 6, એકમ કસોટી 1):");
+            let testName = prompt("નવી ટેસ્ટનું નામ આપો:");
             if (testName) {
                 if (!allTestData[testName]) {
                     allTestData[testName] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
@@ -643,7 +635,7 @@
             };
 
             saveAndRefresh(testKey);
-            alert("ટેસ્ટ સેટિંગ્સ સેવ થઈ ગયા!");
+            alert("સેટિંગ્સ સેવ થઈ ગયા!");
         }
 
         function setBuilderMode(mode) {
@@ -706,7 +698,7 @@
             const passage = document.getElementById('m2Passage').value.trim();
             const rawQuestions = document.getElementById('m2Questions').value.trim();
 
-            if (!passage || !rawQuestions) return alert("ફકરો અને પ્રશ્નો બંને ઉમેરો!");
+            if (!passage || !rawQuestions) return alert("ફકરો અને પ્રશ્નો ઉમેરો!");
 
             initTestStructure(testKey);
 
@@ -746,7 +738,7 @@
             saveTestData();
             activeTestData = allTestData[testKey];
             loadAdminTestData();
-            alert("પ્રશ્ન સફળતાપૂર્વક ઉમેરાયો!");
+            alert("પ્રશ્ન ઉમેરાયો!");
         }
 
         function saveTestData() {
@@ -819,14 +811,13 @@
             }
         }
 
-        // --- STUDENT QUIZ & TIMER ---
         let userAnswers = {};
 
         function startStudentQuiz(e) {
             e.preventDefault();
             const testData = activeTestData;
 
-            if (!testData.items || testData.items.length === 0) return alert("આ ટેસ્ટમાં હજી સુધી કોઈ પ્રશ્નો ઉમેરાયા નથી!");
+            if (!testData.items || testData.items.length === 0) return alert("આ ટેસ્ટમાં કોઈ પ્રશ્નો નથી!");
 
             document.getElementById('quizTitleDisplay').innerText = currentActiveTest;
             document.getElementById('quizSubDisplay').innerText = "વિષય: " + (testData.meta?.subject || 'સામાન્ય');

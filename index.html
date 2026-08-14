@@ -3,125 +3,1259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URL Shortener</title>
+    <title>નિર્મળા નવોદય સ્ટડી ઝોન - ઓનલાઇન ટેસ્ટ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- LZ-String Compression Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-        }
-        h2 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        input {
-            width: 90%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .result-box {
-            margin-top: 20px;
-            padding: 10px;
-            background: #e9ecef;
-            border-radius: 5px;
-            word-break: break-all;
-            display: none;
-        }
-        .error {
-            color: red;
-            margin-top: 10px;
-            display: none;
-        }
+        body { font-family: 'Hind Vadodara', sans-serif; background-color: #f1f5f9; }
+        .selected-ans { background-color: #e0e7ff !important; border-color: #6366f1 !important; font-weight: bold; color: #4338ca !important; }
+        .sticky-passage { position: sticky; top: 85px; max-height: calc(100vh - 120px); overflow-y: auto; }
+        .correct-card { border-left: 6px solid #10b981 !important; background-color: #f0fdf4 !important; }
+        .wrong-card { border-left: 6px solid #ef4444 !important; background-color: #fef2f2 !important; }
     </style>
 </head>
-<body>
+<body class="text-slate-800">
 
-<div class="container">
-    <h2>લિંક શોર્ટનર (URL Shortener)</h2>
-    <input type="url" id="longUrl" placeholder="અહીં તમારી લાંબી લિંક પેસ્ટ કરો..." required>
-    <br>
-    <button onclick="shortenUrl()">લિંક શોર્ટ કરો</button>
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-graduation-cap text-2xl text-yellow-300"></i>
+                <h1 class="text-xl font-bold tracking-wide">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
+            </div>
+            <div>
+                <button onclick="promptTeacherLogin()" class="bg-indigo-800 hover:bg-indigo-900 px-3 py-1.5 rounded-lg text-sm font-semibold transition border border-indigo-500 flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-yellow-300"></i> શિક્ષક ડેશબોર્ડ (Admin)
+                </button>
+            </div>
+        </div>
+    </header>
 
-    <div id="errorMsg" class="error"></div>
+    <main class="max-w-7xl mx-auto px-4 py-6">
 
-    <div id="resultBox" class="result-box">
-        <p><strong>શોર્ટ લિંક:</strong></p>
-        <a id="shortUrl" href="#" target="_blank"></a>
-    </div>
-</div>
+        <!-- 1. STUDENT REGISTRATION SCREEN -->
+        <section id="studentRegScreen" class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl border border-slate-200 mt-6">
+            <div class="text-center mb-6">
+                <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-indigo-700 text-2xl">
+                    <i class="fa-solid fa-user-pen"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">નિર્મળા નવોદય સ્ટડી ઝોન</h2>
+                <p id="studentTestTitle" class="text-indigo-600 font-bold text-lg mt-1">ઓનલાઇન કસોટી</p>
+            </div>
 
-<script>
-async function shortenUrl() {
-    const longUrlInput = document.getElementById('longUrl').value.trim();
-    const resultBox = document.getElementById('resultBox');
-    const shortUrlAnchor = document.getElementById('shortUrl');
-    const errorMsg = document.getElementById('errorMsg');
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-sm space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-600 font-semibold"><i class="fa-solid fa-book text-indigo-600"></i> વિષય:</span>
+                    <span id="dispSubject" class="font-bold text-indigo-900">-</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-600 font-semibold"><i class="fa-solid fa-star text-amber-500"></i> કુલ ગુણ:</span>
+                    <span id="dispTotalMarks" class="font-bold text-amber-700">-</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-600 font-semibold"><i class="fa-solid fa-clock text-rose-500"></i> સમય:</span>
+                    <span id="dispTimeLimit" class="font-bold text-rose-700">-</span>
+                </div>
+            </div>
 
-    // Reset UI
-    resultBox.style.display = 'none';
-    errorMsg.style.display = 'none';
+            <form onsubmit="startStudentQuiz(event)" class="space-y-4">
+                <div>
+                    <label class="block text-slate-700 text-sm font-semibold mb-1">વિદ્યાર્થીનું પૂરું નામ *</label>
+                    <input type="text" id="studentName" required placeholder="દા.ત. રમેશભાઈ પટેલ" class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-700 text-sm font-semibold mb-1">ધોરણ *</label>
+                        <select id="studentStd" required class="w-full px-4 py-2 rounded-lg border bg-white font-semibold">
+                            <option value="ધોરણ 5" selected>ધોરણ 5</option>
+                            <option value="ધોરણ 6">ધોરણ 6</option>
+                            <option value="ધોરણ 7">ધોરણ 7</option>
+                            <option value="ધોરણ 8">ધોરણ 8</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 text-sm font-semibold mb-1">રોલ નંબર *</label>
+                        <input type="text" id="studentRoll" required placeholder="101" class="w-full px-4 py-2 rounded-lg border">
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow mt-2">
+                    ટેસ્ટ શરૂ કરો
+                </button>
+            </form>
+        </section>
 
-    // લિંક ચેક કરો
-    if (!longUrlInput) {
-        errorMsg.innerText = "કૃપા કરીને પહેલા લિંક દાખલ કરો!";
-        errorMsg.style.display = 'block';
-        return;
-    }
+        <!-- 2. LIVE QUIZ SCREEN -->
+        <section id="quizScreen" class="hidden">
+            <div class="bg-white p-4 rounded-xl shadow border border-slate-200 mb-6 flex justify-between items-center sticky top-16 z-40">
+                <div>
+                    <span class="font-bold text-indigo-600 text-lg block" id="quizTitleDisplay">ટેસ્ટ ચાલુ છે...</span>
+                    <span class="text-xs text-slate-500 font-semibold" id="quizSubDisplay">વિષય: -</span>
+                </div>
+                <div class="bg-red-50 border border-red-200 px-4 py-1.5 rounded-lg text-red-600 font-mono font-bold text-xl">
+                    <span id="timerDisplay">00:00</span>
+                </div>
+            </div>
 
-    try {
-        // CORS સમસ્યા ઉકેલવા માટે Corsproxy + TinyURL API નો ઉપયોગ
-        const apiUrl = `https://corsproxy.io/?${encodeURIComponent('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrlInput))}`;
+            <div id="quizQuestionsContainer"></div>
 
-        const response = await fetch(apiUrl);
+            <div class="mt-8 text-center pb-10">
+                <button onclick="confirmSubmitQuiz()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg">
+                    ટેસ્ટ સબમિટ કરો
+                </button>
+            </div>
+        </section>
+
+        <!-- 3. STUDENT RESULT SCREEN WITH FULL TEST REVIEW -->
+        <section id="resultScreen" class="hidden max-w-4xl mx-auto space-y-6">
+            <div class="bg-white p-8 rounded-2xl shadow border text-center space-y-4">
+                <div class="text-emerald-600 text-5xl mb-2"><i class="fa-solid fa-circle-check"></i></div>
+                <h2 class="text-2xl font-bold">ટેસ્ટ સફળતાપૂર્વક પૂર્ણ થઈ!</h2>
+                
+                <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto my-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border">
+                        <span class="text-xs text-slate-500 block">મેળવેલ ગુણ</span>
+                        <span id="resTotalScore" class="text-2xl font-bold text-indigo-600">0 / 0</span>
+                    </div>
+                    <div class="bg-amber-50 p-4 rounded-xl border">
+                        <span class="text-xs text-amber-700 block">ટકાવારી</span>
+                        <span id="resPercentage" class="text-2xl font-bold text-amber-600">0%</span>
+                    </div>
+                </div>
+                <p class="text-sm font-semibold text-slate-600">તમે આપેલી ટેસ્ટનું સોલ્યુશન નીચે મુજબ છે:</p>
+            </div>
+
+            <!-- Review Container -->
+            <div id="reviewContainer" class="space-y-4"></div>
+        </section>
+
+        <!-- 4. ADMIN PANEL (ONLY TEACHER) -->
+        <section id="adminScreen" class="hidden space-y-6">
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow border">
+                <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-sliders text-indigo-600"></i> શિક્ષક એડમિન પેનલ</h2>
+                <div class="flex gap-2">
+                    <button onclick="openQuestionBankModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-1.5 rounded border text-sm font-bold shadow flex items-center gap-1">
+                        <i class="fa-solid fa-boxes-stacked"></i> પ્રશ્ન બેંક (Question Bank)
+                    </button>
+                    <button onclick="switchView('student')" class="bg-slate-100 hover:bg-slate-200 px-4 py-1.5 rounded border text-sm font-semibold">
+                        <i class="fa-solid fa-eye"></i> વિદ્યાર્થી મોડ જુઓ
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow border space-y-6">
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <label class="font-bold text-slate-700">ટેસ્ટ પસંદ કરો:</label>
+                            <select id="adminTestSelect" onchange="loadAdminTestData()" class="p-2 border rounded-lg font-bold text-indigo-600 bg-white">
+                                <option value="Test 1">ટેસ્ટ ૧ (Test 1)</option>
+                            </select>
+                            
+                            <button onclick="deleteEntireTest()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1 shadow">
+                                <i class="fa-solid fa-trash-can"></i> આ ટેસ્ટ ડિલીટ કરો
+                            </button>
+                        </div>
+                        <button onclick="createNewTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm">
+                            <i class="fa-solid fa-plus"></i> નવી ટેસ્ટ બનાવો
+                        </button>
+                    </div>
+
+                    <!-- Short Link Box -->
+                    <div class="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="w-full">
+                            <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> શેર કરવા માટેની લિંક:</span>
+                            <input type="text" id="shareLinkInput" readonly value="લિંક જનરેટ થઈ રહી છે..." class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-700 font-bold resize-none">
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto justify-end">
+                            <button onclick="generateShortUrlLink()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow flex items-center gap-1">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> લિંક ટૂંકી કરો
+                            </button>
+                            <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow">
+                                કોપી કરો
+                            </button>
+                            <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap flex items-center gap-1 shadow">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-indigo-200">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">વિષયનું નામ:</label>
+                            <input type="text" id="adminSubject" placeholder="દા.ત. ગણિત" class="w-full p-2 border rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">કુલ ગુણ:</label>
+                            <input type="number" id="adminTotalMarks" placeholder="100" class="w-full p-2 border rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">સમય (મિનિટમાં):</label>
+                            <input type="number" id="adminTimeLimit" placeholder="60" class="w-full p-2 border rounded text-sm">
+                        </div>
+                    </div>
+                    <button onclick="saveTestMetaSettings()" class="bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow">
+                        સેટિંગ્સ સેવ કરો
+                    </button>
+                </div>
+
+                <!-- Builder Tabs -->
+                <div class="flex border-b gap-2 overflow-x-auto">
+                    <button id="mode1Btn" onclick="setBuilderMode(1)" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap">
+                        વિકલ્પ ૧: ગણિત / સામાન્ય MCQ
+                    </button>
+                    <button id="mode2Btn" onclick="setBuilderMode(2)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap">
+                        વિકલ્પ ૨: ફકરો + ૫ પ્રશ્નો
+                    </button>
+                    <button id="mode3Btn" onclick="setBuilderMode(3)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap">
+                        વિકલ્પ ૩: આકૃતિ વાળા પ્રશ્નો
+                    </button>
+                </div>
+
+                <!-- MODE 1 -->
+                <div id="builderMode1" class="space-y-4 bg-slate-50 p-4 rounded-xl border">
+                    <textarea id="m1RawText" rows="5" placeholder="પ્રશ્ન અને ૪ વિકલ્પો પેસ્ટ કરો...&#10;૧. 25 + 35 = ?&#10;(A) 50&#10;(B) 60&#10;(C) 70&#10;(D) 80" class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
+                    <div class="flex items-center gap-4">
+                        <label class="text-sm font-bold text-slate-700">સાચો જવાબ:</label>
+                        <select id="m1Correct" class="p-2 border rounded bg-white font-bold text-emerald-600">
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                        </select>
+                        <button onclick="addSingleMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">પ્રશ્ન ઉમેરો</button>
+                    </div>
+                </div>
+
+                <!-- MODE 2 -->
+                <div id="builderMode2" class="hidden space-y-4 bg-slate-50 p-4 rounded-xl border">
+                    <textarea id="m2Passage" rows="4" placeholder="અહીં ફકરો પેસ્ટ કરો..." class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
+                    <textarea id="m2Questions" rows="6" placeholder="૫ પ્રશ્નો (વિકલ્પો સાથે) અહી પેસ્ટ કરો..." class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
+                    <button onclick="addPassageGroup()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">ફકરો અને પ્રશ્નો ઉમેરો</button>
+                </div>
+
+                <!-- MODE 3 -->
+                <div id="builderMode3" class="hidden space-y-4 bg-slate-50 p-4 rounded-xl border">
+                    <div class="border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-4 rounded-xl text-center">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">
+                            <i class="fa-solid fa-image text-indigo-600"></i> આકૃતિ અપલોડ કરો અથવા ઈમેજ Paste (Ctrl+V) કરો:
+                        </label>
+                        <input type="file" id="m3FileInput" accept="image/*" onchange="handleImageUpload(event)" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                        
+                        <div id="imgPreviewContainer" class="hidden mt-3">
+                            <img id="m3ImgPreview" src="" class="max-h-40 mx-auto rounded-lg border shadow">
+                            <span id="uploadStatus" class="text-xs font-bold text-emerald-600 mt-1 block"></span>
+                        </div>
+                    </div>
+
+                    <textarea id="m3RawText" rows="4" placeholder="પ્રશ્ન અને વિકલ્પો કોપી-પેસ્ટ કરો..." class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
+                    
+                    <div class="flex items-center gap-4">
+                        <label class="text-sm font-bold text-slate-700">સાચો જવાબ:</label>
+                        <select id="m3Correct" class="p-2 border rounded bg-white font-bold text-emerald-600">
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                        </select>
+                        <button onclick="addImageMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">આકૃતિ પ્રશ્ન ઉમેરો</button>
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t pt-4">
+                    <h4 class="font-bold text-slate-800 mb-3 flex justify-between">
+                        <span>હાલના ટેસ્ટમાં ઉમેરેલા પ્રશ્નો (<span id="qCountDisplay">0</span>)</span>
+                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold">આ ટેસ્ટના પ્રશ્નો ભૂસી નાખો</button>
+                    </h4>
+                    <div id="adminQuestionsList" class="space-y-3"></div>
+                </div>
+
+                <div class="mt-8 border-t pt-4">
+                    <h4 class="font-bold text-slate-800 mb-3"><i class="fa-solid fa-users text-indigo-600"></i> વિદ્યાર્થીઓના પરિણામો (માર્ક્સ)</h4>
+                    <div id="submissionsList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. QUESTION BANK MODAL POPUP -->
+        <div id="qBankModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+                <div class="bg-indigo-700 text-white p-4 flex justify-between items-center">
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-boxes-stacked text-amber-300"></i> પ્રશ્ન બેંક (Question Bank)
+                    </h3>
+                    <button onclick="closeQuestionBankModal()" class="text-white hover:text-slate-200 text-xl font-bold">&times;</button>
+                </div>
+
+                <!-- Tabs inside Question Bank -->
+                <div class="flex border-b bg-slate-100 p-2 gap-2 overflow-x-auto">
+                    <button id="qbTab1Btn" onclick="switchQbTab('mcq')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-indigo-600 text-white">
+                        ૧. ગણિત / સામાન્ય MCQ (<span id="qbMcqCount">0</span>)
+                    </button>
+                    <button id="qbTab2Btn" onclick="switchQbTab('passage')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200">
+                        ૨. ફકરાઓ (<span id="qbPassageCount">0</span>)
+                    </button>
+                    <button id="qbTab3Btn" onclick="switchQbTab('image')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200">
+                        ૩. આકૃતિ વાળા (<span id="qbImageCount">0</span>)
+                    </button>
+                </div>
+
+                <div class="p-4 overflow-y-auto flex-1 space-y-3" id="qbQuestionsContainer">
+                    <!-- Dynamic Question Bank Items -->
+                </div>
+
+                <div class="p-4 border-t bg-slate-50 flex justify-between items-center">
+                    <span class="text-xs font-bold text-slate-600">પસંદ કરેલા પ્રશ્નો પ્રશ્ન બેંકમાં સચવાયેલા રહેશે અને હાલની ટેસ્ટમાં ઉમેરાશે.</span>
+                    <button onclick="importSelectedToCurrentTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-sm shadow">
+                        <i class="fa-solid fa-file-import"></i> હાલની ટેસ્ટમાં ઉમેરો
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; 
+
+        let currentUploadedImgUrl = "";
+        let allTestData = JSON.parse(localStorage.getItem('jnv_test_data_v5') || '{}');
+        let allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions') || '[]');
         
-        if (!response.ok) {
-            throw new Error('નેટવર્ક રિસપોન્સ બરાબર નથી');
+        let questionBank = JSON.parse(localStorage.getItem('jnv_question_bank') || '{"mcq":[], "passage":[], "image":[]}');
+
+        let currentActiveTest = "Test 1";
+        let activeTestData = { meta: {}, items: [] };
+        let timerInterval = null;
+        let userAnswers = {};
+        let flatQuestionsList = [];
+        let currentQbTab = 'mcq';
+
+        function generateUniqueId() {
+            return 'q_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
         }
 
-        const shortUrl = await response.text();
-
-        if (shortUrl && shortUrl.startsWith('http')) {
-            shortUrlAnchor.href = shortUrl;
-            shortUrlAnchor.innerText = shortUrl;
-            resultBox.style.display = 'block';
-        } else {
-            throw new Error('લિંક શોર્ટ થઈ શકી નથી. ફરી પ્રયાસ કરો.');
+        function compressData(obj) {
+            try {
+                let jsonStr = JSON.stringify(obj);
+                return LZString.compressToEncodedURIComponent(jsonStr);
+            } catch (e) {
+                return "";
+            }
         }
 
-    } catch (error) {
-        errorMsg.innerText = "ભૂલ: " + error.message;
-        errorMsg.style.display = 'block';
-    }
-}
-</script>
+        function decompressData(str) {
+            try {
+                let jsonStr = LZString.decompressFromEncodedURIComponent(str);
+                if (!jsonStr) {
+                    let binaryStr = atob(str);
+                    let bytes = Uint8Array.from(binaryStr, char => char.charCodeAt(0));
+                    jsonStr = new TextDecoder().decode(bytes);
+                }
+                let decoded = JSON.parse(jsonStr);
 
+                if (decoded && decoded.items) {
+                    decoded.items = decoded.items.map(item => {
+                        if (item.t === 'p' || item.type === 'passage_group') {
+                            return {
+                                id: item.id || generateUniqueId(),
+                                type: 'passage_group',
+                                passage: item.p || item.passage,
+                                questions: (item.q || item.questions || []).map(q => ({
+                                    id: q.id || generateUniqueId(),
+                                    question: q.q || q.question,
+                                    options: q.o || q.options,
+                                    correct: q.c || q.correct
+                                }))
+                            };
+                        } else if (item.t === 'i' || item.type === 'image_mcq') {
+                            return {
+                                id: item.id || generateUniqueId(),
+                                type: 'image_mcq',
+                                imageUrl: item.u || item.imageUrl,
+                                question: item.q || item.question,
+                                options: item.o || item.options,
+                                correct: item.c || item.correct
+                            };
+                        } else {
+                            return {
+                                id: item.id || generateUniqueId(),
+                                type: 'mcq',
+                                question: item.q || item.question,
+                                options: item.o || item.options,
+                                correct: item.c || item.correct
+                            };
+                        }
+                    });
+                }
+                return decoded;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataParam = urlParams.get('data');
+
+            if (dataParam) {
+                let loadedData = decompressData(dataParam);
+                if (loadedData && loadedData.items && loadedData.items.length > 0) {
+                    activeTestData = loadedData;
+                    currentActiveTest = loadedData.title || "ઓનલાઇન કસોટી";
+                    allTestData[currentActiveTest] = loadedData;
+                    saveTestData();
+                } else {
+                    alert("લિંકમાંથી પ્રશ્નો લોડ થઈ શક્યા નથી.");
+                }
+            } else if (allTestData[currentActiveTest] && allTestData[currentActiveTest].items && allTestData[currentActiveTest].items.length > 0) {
+                activeTestData = allTestData[currentActiveTest];
+            } else if (Object.keys(allTestData).length > 0) {
+                currentActiveTest = Object.keys(allTestData)[0];
+                activeTestData = allTestData[currentActiveTest];
+            }
+
+            refreshSelectDropdown();
+            setupStudentView();
+            setupPasteListener();
+        };
+
+        function refreshSelectDropdown() {
+            let select = document.getElementById('adminTestSelect');
+            select.innerHTML = "";
+            let keys = Object.keys(allTestData);
+            if(keys.length === 0) {
+                allTestData["Test 1"] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
+                keys = ["Test 1"];
+            }
+            keys.forEach(k => {
+                let opt = document.createElement('option');
+                opt.value = k;
+                opt.innerText = k;
+                select.appendChild(opt);
+            });
+            if(keys.includes(currentActiveTest)) {
+                select.value = currentActiveTest;
+            } else {
+                select.value = keys[0];
+                currentActiveTest = keys[0];
+            }
+        }
+
+        function setupPasteListener() {
+            document.addEventListener('paste', function (e) {
+                if (document.getElementById('builderMode3').classList.contains('hidden')) return;
+                let items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let index in items) {
+                    let item = items[index];
+                    if (item.kind === 'file' && item.type.includes('image')) {
+                        let blob = item.getAsFile();
+                        uploadImageToImgBB(blob);
+                    }
+                }
+            });
+        }
+
+        function handleImageUpload(e) {
+            let file = e.target.files[0];
+            if (file) {
+                uploadImageToImgBB(file);
+            }
+        }
+
+        function uploadImageToImgBB(file) {
+            const statusText = document.getElementById('uploadStatus');
+            const previewImg = document.getElementById('m3ImgPreview');
+            const previewBox = document.getElementById('imgPreviewContainer');
+
+            previewBox.classList.remove('hidden');
+            statusText.innerText = "આકૃતિ અપલોડ થઈ રહી છે...";
+            statusText.className = "text-xs font-bold text-amber-600 mt-1 block";
+
+            const reader = new FileReader();
+            reader.onload = function(e) { previewImg.src = e.target.result; }
+            reader.readAsDataURL(file);
+
+            let formData = new FormData();
+            formData.append("image", file);
+
+            fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    currentUploadedImgUrl = data.data.url;
+                    statusText.innerText = "✓ આકૃતિ સેટ થઈ ગઈ!";
+                    statusText.className = "text-xs font-bold text-emerald-600 mt-1 block";
+                } else {
+                    currentUploadedImgUrl = previewImg.src;
+                    statusText.innerText = "લોકલ ઈમેજ સેટ થઈ છે.";
+                }
+            })
+            .catch(() => {
+                currentUploadedImgUrl = previewImg.src;
+                statusText.innerText = "ઈમેજ સેટ થઈ ગઈ છે.";
+            });
+        }
+
+        function saveToQuestionBank(item) {
+            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
+            if (!questionBank.mcq) questionBank.mcq = [];
+            if (!questionBank.passage) questionBank.passage = [];
+            if (!questionBank.image) questionBank.image = [];
+
+            let qbItem = JSON.parse(JSON.stringify(item));
+            
+            if (qbItem.type === 'mcq') {
+                questionBank.mcq.push(qbItem);
+            } else if (qbItem.type === 'passage_group') {
+                questionBank.passage.push(qbItem);
+            } else if (qbItem.type === 'image_mcq') {
+                questionBank.image.push(qbItem);
+            }
+            localStorage.setItem('jnv_question_bank', JSON.stringify(questionBank));
+        }
+
+        function addSingleMCQ() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            const rawText = document.getElementById('m1RawText').value.trim();
+            const correct = document.getElementById('m1Correct').value;
+
+            if (!rawText) return alert("પ્રશ્ન પેસ્ટ કરો!");
+
+            const parsed = parseMcqText(rawText);
+            initTestStructure(testKey);
+
+            let newItem = {
+                id: generateUniqueId(),
+                type: 'mcq',
+                question: parsed.question,
+                options: parsed.options,
+                correct: correct
+            };
+
+            allTestData[testKey].items.push(newItem);
+            saveToQuestionBank(newItem); 
+
+            saveAndRefresh(testKey);
+            document.getElementById('m1RawText').value = "";
+        }
+
+        function addPassageGroup() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            const passage = document.getElementById('m2Passage').value.trim();
+            const rawQuestions = document.getElementById('m2Questions').value.trim();
+
+            if (!passage || !rawQuestions) return alert("ફકરો અને પ્રશ્નો ઉમેરો!");
+
+            initTestStructure(testKey);
+
+            let qBlocks = rawQuestions.split(/\n(?=\d+[\.\:\)])/);
+            let passageQuestions = [];
+
+            qBlocks.forEach((block) => {
+                if (block.trim()) {
+                    let parsed = parseMcqText(block);
+                    passageQuestions.push({
+                        id: generateUniqueId(),
+                        question: parsed.question,
+                        options: parsed.options,
+                        correct: 'A'
+                    });
+                }
+            });
+
+            let newItem = {
+                id: generateUniqueId(),
+                type: 'passage_group',
+                passage: passage,
+                questions: passageQuestions
+            };
+
+            allTestData[testKey].items.push(newItem);
+            saveToQuestionBank(newItem); 
+
+            saveAndRefresh(testKey);
+            document.getElementById('m2Passage').value = "";
+            document.getElementById('m2Questions').value = "";
+        }
+
+        function addImageMCQ() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            const rawText = document.getElementById('m3RawText').value.trim();
+            const correct = document.getElementById('m3Correct').value;
+
+            if (!currentUploadedImgUrl) return alert("આકૃતિ અપલોડ કરો!");
+            if (!rawText) return alert("પ્રશ્ન પેસ્ટ કરો!");
+
+            const parsed = parseMcqText(rawText);
+            initTestStructure(testKey);
+
+            let newItem = {
+                id: generateUniqueId(),
+                type: 'image_mcq',
+                imageUrl: currentUploadedImgUrl,
+                question: parsed.question,
+                options: parsed.options,
+                correct: correct
+            };
+
+            allTestData[testKey].items.push(newItem);
+            saveToQuestionBank(newItem); 
+
+            saveAndRefresh(testKey);
+            document.getElementById('m3RawText').value = "";
+            document.getElementById('m3FileInput').value = "";
+            document.getElementById('imgPreviewContainer').classList.add('hidden');
+            currentUploadedImgUrl = "";
+        }
+
+        function openQuestionBankModal() {
+            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
+            
+            document.getElementById('qbMcqCount').innerText = (questionBank.mcq || []).length;
+            document.getElementById('qbPassageCount').innerText = (questionBank.passage || []).length;
+            document.getElementById('qbImageCount').innerText = (questionBank.image || []).length;
+            
+            document.getElementById('qBankModal').classList.remove('hidden');
+            switchQbTab('mcq');
+        }
+
+        function closeQuestionBankModal() {
+            document.getElementById('qBankModal').classList.add('hidden');
+        }
+
+        function switchQbTab(tab) {
+            currentQbTab = tab;
+            ['mcq', 'passage', 'image'].forEach(t => {
+                let btn = document.getElementById(`qbTab${t === 'mcq' ? '1' : t === 'passage' ? '2' : '3'}Btn`);
+                if (t === tab) {
+                    btn.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-indigo-600 text-white";
+                } else {
+                    btn.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200";
+                }
+            });
+
+            renderQbQuestions();
+        }
+
+        function renderQbQuestions() {
+            const container = document.getElementById('qbQuestionsContainer');
+            container.innerHTML = "";
+            let list = (questionBank && questionBank[currentQbTab]) ? questionBank[currentQbTab] : [];
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 py-8">આ વિભાગમાં કોઈ પ્રશ્નો જમા થયેલ નથી.</div>`;
+                return;
+            }
+
+            list.forEach((item, index) => {
+                let card = document.createElement('div');
+                card.className = "p-3 bg-slate-50 border rounded-xl flex items-center justify-between gap-3 hover:bg-slate-100 transition";
+
+                let mainContent = "";
+                if (currentQbTab === 'mcq') {
+                    mainContent = `
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
+                            <div class="text-sm">
+                                <span class="font-bold text-indigo-700">${index + 1}. ${item.question}</span>
+                                <div class="text-xs text-slate-500 mt-1">(A) ${item.options[0] || ''} (B) ${item.options[1] || ''} (C) ${item.options[2] || ''} (D) ${item.options[3] || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (currentQbTab === 'passage') {
+                    mainContent = `
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
+                            <div class="text-sm">
+                                <span class="font-bold text-indigo-700">[ફકરો] ${(item.passage || '').substring(0, 80)}...</span>
+                                <div class="text-xs text-slate-500 mt-1 font-semibold">કુલ પ્રશ્નો: ${(item.questions || []).length}</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (currentQbTab === 'image') {
+                    mainContent = `
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
+                            <img src="${item.imageUrl}" class="w-12 h-12 object-cover rounded border">
+                            <div class="text-sm">
+                                <span class="font-bold text-indigo-700">${index + 1}. ${item.question}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    ${mainContent}
+                    <button onclick="deleteQbQuestion('${item.id}')" class="text-rose-600 hover:text-rose-800 p-2 rounded-lg hover:bg-rose-50 transition" title="પ્રશ્ન બેંકમાંથી કાયમી ડિલીટ કરો">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function deleteQbQuestion(id) {
+            if (confirm("શું તમે ખરેખર આ પ્રશ્નને પ્રશ્ન બેંકમાંથી કાયમી ડિલીટ કરવા માંગો છો?")) {
+                questionBank[currentQbTab] = questionBank[currentQbTab].filter(item => item.id !== id);
+                localStorage.setItem('jnv_question_bank', JSON.stringify(questionBank));
+                
+                document.getElementById('qbMcqCount').innerText = (questionBank.mcq || []).length;
+                document.getElementById('qbPassageCount').innerText = (questionBank.passage || []).length;
+                document.getElementById('qbImageCount').innerText = (questionBank.image || []).length;
+
+                renderQbQuestions();
+            }
+        }
+
+        function importSelectedToCurrentTest() {
+            let checkboxes = document.querySelectorAll('.qb-checkbox:checked');
+            if (checkboxes.length === 0) return alert("કૃપા કરીને ઇમ્પોર્ટ કરવા માટે પ્રશ્નો પસંદ કરો!");
+
+            let selectedIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-qb-id'));
+            let testKey = document.getElementById('adminTestSelect').value;
+
+            initTestStructure(testKey);
+
+            let importedCount = 0;
+            let list = (questionBank && questionBank[currentQbTab]) ? questionBank[currentQbTab] : [];
+
+            list.forEach(item => {
+                if (selectedIds.includes(item.id)) {
+                    let cloned = JSON.parse(JSON.stringify(item));
+                    cloned.id = generateUniqueId();
+                    
+                    allTestData[testKey].items.push(cloned);
+                    importedCount++;
+                }
+            });
+
+            saveTestData();
+            loadAdminTestData();
+            closeQuestionBankModal();
+
+            alert(`સફળતાપૂર્વક ${importedCount} પ્રશ્નો "${testKey}" માં ઉમેરાઈ ગયા છે! તે પ્રશ્ન બેંકમાં પણ સુરક્ષિત રહેશે.`);
+        }
+
+        function promptTeacherLogin() {
+            let pwd = prompt("શિક્ષક ડેશબોર્ડ ખોલવા માટે Admin પાસવર્ડ દાખલ કરો:");
+            if (pwd === "10101991") {
+                switchView('admin');
+            } else if (pwd !== null) {
+                alert("ખોટો પાસવર્ડ!");
+            }
+        }
+
+        function switchView(view) {
+            document.getElementById('studentRegScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('adminScreen').classList.add('hidden');
+
+            if (view === 'student') {
+                document.getElementById('studentRegScreen').classList.remove('hidden');
+                setupStudentView();
+            } else if (view === 'admin') {
+                document.getElementById('adminScreen').classList.remove('hidden');
+                refreshSelectDropdown();
+                loadAdminTestData();
+            }
+        }
+
+        function setupStudentView() {
+            const data = activeTestData || { meta: {}, items: [] };
+            document.getElementById('studentTestTitle').innerText = currentActiveTest + " - ઓનલાઇન કસોટી";
+            document.getElementById('dispSubject').innerText = data.meta?.subject || 'નિર્ધારિત નથી';
+            document.getElementById('dispTotalMarks').innerText = data.meta?.totalMarks || '100';
+            document.getElementById('dispTimeLimit').innerText = (data.meta?.timeLimit || '60') + ' મિનિટ';
+        }
+
+        function getFullLongUrl() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            const data = allTestData[testKey] || { meta: {}, items: [] };
+            let baseUrl = window.location.origin + window.location.pathname;
+
+            let minifiedItems = (data.items || []).map(item => {
+                if(item.type === 'passage_group') {
+                    return {
+                        id: item.id || generateUniqueId(),
+                        t: 'p',
+                        p: item.passage,
+                        q: (item.questions || []).map(q => ({ id: q.id || generateUniqueId(), q: q.question, o: q.options, c: q.correct }))
+                    };
+                } else if(item.type === 'image_mcq') {
+                    return { id: item.id || generateUniqueId(), t: 'i', u: item.imageUrl, q: item.question, o: item.options, c: item.correct };
+                } else {
+                    return { id: item.id || generateUniqueId(), t: 'm', q: item.question, o: item.options, c: item.correct };
+                }
+            });
+
+            let fullDataObj = {
+                title: testKey,
+                meta: data.meta || {},
+                items: minifiedItems
+            };
+
+            let compressedStr = compressData(fullDataObj);
+            return `${baseUrl}?data=${compressedStr}`;
+        }
+
+        function loadAdminTestData() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            currentActiveTest = testKey;
+            const data = allTestData[testKey] || { meta: {}, items: [] };
+
+            document.getElementById('adminSubject').value = data.meta?.subject || '';
+            document.getElementById('adminTotalMarks').value = data.meta?.totalMarks || '';
+            document.getElementById('adminTimeLimit').value = data.meta?.timeLimit || '';
+
+            document.getElementById('shareLinkInput').value = getFullLongUrl();
+
+            renderAdminQuestionsList();
+            renderTeacherSubmissions();
+        }
+
+        // 🌟 સુધારેલું શોર્ટ લિંક ફંક્શન (TinyURL API અને CORS Proxy સાથે)
+        async function generateShortUrlLink() {
+            let longUrl = getFullLongUrl();
+            let inputField = document.getElementById('shareLinkInput');
+            inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
+
+            try {
+                // TinyURL API
+                let apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
+                let response = await fetch(apiUrl);
+                
+                if (response.ok) {
+                    let shortUrl = await response.text();
+                    inputField.value = shortUrl.trim();
+                    alert("લિંક સફળતાપૂર્વક ટૂંકી થઈ ગઈ છે!");
+                    return shortUrl.trim();
+                } else {
+                    throw new Error("TinyURL Error");
+                }
+            } catch (error) {
+                // કેચ સર્વિસ નિષ્ફળ જાય તો is.gd નો બેકઅપ
+                try {
+                    let backupUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
+                    let res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(backupUrl)}`);
+                    let data = await res.json();
+                    let jsonData = JSON.parse(data.contents);
+                    if (jsonData.shorturl) {
+                        inputField.value = jsonData.shorturl;
+                        alert("લિંક સફળતાપૂર્વક ટૂંકી થઈ ગઈ છે!");
+                        return jsonData.shorturl;
+                    }
+                } catch (e) {}
+                
+                inputField.value = longUrl;
+                alert("લિંક શોર્ટ કરવાની પ્રક્રિયામાં ક્ષતિ આવી, મૂળ લિંક રાખવામાં આવી છે.");
+                return longUrl;
+            }
+        }
+
+        function deleteEntireTest() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            if (confirm(`શું તમે ખરેખર "${testKey}" ને ડિલીટ કરવા માંગો છો?`)) {
+                delete allTestData[testKey];
+                allSubmissions = allSubmissions.filter(s => s.testName !== testKey);
+                localStorage.setItem('jnv_test_submissions', JSON.stringify(allSubmissions));
+                saveTestData();
+                refreshSelectDropdown();
+                loadAdminTestData();
+            }
+        }
+
+        function copyShareLink() {
+            const copyText = document.getElementById("shareLinkInput");
+            copyText.select();
+            navigator.clipboard.writeText(copyText.value);
+            alert("લિંક કોપી થઈ ગઈ છે!");
+        }
+
+        // 🌟 સુધારેલું WhatsApp શેરિંગ ફંક્શન (આપોઆપ લિંક શોર્ટ કરીને સેન્ડ કરશે)
+        async function shareWhatsApp() {
+            let inputField = document.getElementById("shareLinkInput");
+            let link = inputField.value;
+
+            // જો લિંક હજુ ટૂંકી ન થઈ હોય અને લાંબી હોય, તો પહેલા ઓટોમેટિક શોર્ટ કરશે
+            if (link.includes("?data=") && link.length > 100) {
+                link = await generateShortUrlLink();
+            }
+
+            const msg = `*નિર્મળા નવોદય સ્ટડી ઝોન*\n\nઓનલાઇન કસોટી આપવા માટે નીચે આપેલી લિંક પર ક્લિક કરો:\n${link}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function createNewTest() {
+            let testName = prompt("નવી ટેસ્ટનું નામ આપો:");
+            if (testName) {
+                if (!allTestData[testName]) {
+                    allTestData[testName] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
+                    currentActiveTest = testName;
+                    saveTestData();
+                    refreshSelectDropdown();
+                    loadAdminTestData();
+                } else {
+                    alert("આ નામની ટેસ્ટ પહેલેથી છે!");
+                }
+            }
+        }
+
+        function saveTestMetaSettings() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            if (!allTestData[testKey]) allTestData[testKey] = { meta: {}, items: [] };
+
+            allTestData[testKey].meta = {
+                subject: document.getElementById('adminSubject').value || 'સામાન્ય કસોટી',
+                totalMarks: document.getElementById('adminTotalMarks').value || '100',
+                timeLimit: document.getElementById('adminTimeLimit').value || '60'
+            };
+
+            saveAndRefresh(testKey);
+            alert("સેટિંગ્સ સેવ થઈ ગયા!");
+        }
+
+        function setBuilderMode(mode) {
+            [1, 2, 3].forEach(m => {
+                document.getElementById(`builderMode${m}`).classList.add('hidden');
+                document.getElementById(`mode${m}Btn`).className = "px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap";
+            });
+            document.getElementById(`builderMode${mode}`).classList.remove('hidden');
+            document.getElementById(`mode${mode}Btn`).className = "px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap";
+        }
+
+        function parseMcqText(text) {
+            let lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
+            let question = lines[0] || '';
+            let options = ['', '', '', ''];
+
+            let fullText = text;
+            let aPos = fullText.search(/\(?A\)?[\.\:\s\-]/i);
+            let bPos = fullText.search(/\(?B\)?[\.\:\s\-]/i);
+            let cPos = fullText.search(/\(?C\)?[\.\:\s\-]/i);
+            let dPos = fullText.search(/\(?D\)?[\.\:\s\-]/i);
+
+            if (aPos !== -1 && bPos !== -1 && cPos !== -1 && dPos !== -1) {
+                question = fullText.substring(0, aPos).trim();
+                options[0] = fullText.substring(aPos, bPos).replace(/^\(?A\)?[\.\:\s\-]*/i, '').trim();
+                options[1] = fullText.substring(bPos, cPos).replace(/^\(?B\)?[\.\:\s\-]*/i, '').trim();
+                options[2] = fullText.substring(cPos, dPos).replace(/^\(?C\)?[\.\:\s\-]*/i, '').trim();
+                options[3] = fullText.substring(dPos).replace(/^\(?D\)?[\.\:\s\-]*/i, '').trim();
+            } else if (lines.length >= 5) {
+                question = lines[0];
+                options = [lines[1], lines[2], lines[3], lines[4]];
+            } else {
+                question = fullText;
+            }
+            return { question, options };
+        }
+
+        function initTestStructure(key) {
+            if (!allTestData[key]) allTestData[key] = { meta: {}, items: [] };
+            if (!allTestData[key].items) allTestData[key].items = [];
+        }
+
+        function saveAndRefresh(testKey) {
+            saveTestData();
+            activeTestData = allTestData[testKey];
+            loadAdminTestData();
+            alert("પ્રશ્ન ઉમેરાયો!");
+        }
+
+        function saveTestData() {
+            localStorage.setItem('jnv_test_data_v5', JSON.stringify(allTestData));
+        }
+
+        function renderAdminQuestionsList() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            const container = document.getElementById('adminQuestionsList');
+            const items = allTestData[testKey]?.items || [];
+
+            document.getElementById('qCountDisplay').innerText = items.length;
+            container.innerHTML = "";
+
+            items.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = "p-3 bg-slate-50 border rounded-lg text-sm flex justify-between items-center";
+
+                if (item.type === 'passage_group' || item.t === 'p') {
+                    let passageText = item.passage || item.p || '';
+                    let qCount = item.questions ? item.questions.length : (item.q ? item.q.length : 0);
+                    div.innerHTML = `<div><b class="text-indigo-600">[ફકરો]</b> ${passageText.substring(0, 50)}... (${qCount} પ્રશ્નો)</div>
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                } else if(item.type === 'image_mcq' || item.t === 'i') {
+                    let img = item.imageUrl || item.u;
+                    let qText = item.question || item.q;
+                    div.innerHTML = `<div class="flex items-center gap-2"><img src="${img}" class="w-10 h-10 object-cover rounded"> <b>${idx+1}. ${qText}</b></div>
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                } else {
+                    let qText = item.question || item.q;
+                    div.innerHTML = `<div><b>${idx+1}. ${qText}</b></div>
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                }
+                container.appendChild(div);
+            });
+        }
+
+        function renderTeacherSubmissions() {
+            const container = document.getElementById('submissionsList');
+            const currentTestSubmissions = allSubmissions.filter(s => s.testName === currentActiveTest);
+
+            if (currentTestSubmissions.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400">હજી સુધી આ ટેસ્ટ કોઈ વિદ્યાર્થીએ આપી નથી.</p>`;
+                return;
+            }
+
+            container.innerHTML = currentTestSubmissions.map(s => `
+                <div class="p-2 border rounded bg-slate-50 text-xs flex justify-between items-center">
+                    <div>
+                        <span class="font-bold text-slate-800">${s.studentName}</span> 
+                        <span class="text-slate-500">(${s.std} - રોલ: ${s.roll})</span>
+                    </div>
+                    <div class="font-bold text-indigo-700">
+                        ગુણ: ${s.score}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteItem(testKey, id) {
+            allTestData[testKey].items = allTestData[testKey].items.filter(i => i.id !== id);
+            saveAndRefresh(testKey);
+        }
+
+        function clearCurrentTest() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            if(confirm("આ ટેસ્ટના બધા પ્રશ્નો ભૂસી નાખવા છે?")) {
+                allTestData[testKey].items = [];
+                saveAndRefresh(testKey);
+            }
+        }
+
+        function startStudentQuiz(e) {
+            e.preventDefault();
+            const testData = activeTestData;
+            userAnswers = {};
+            flatQuestionsList = [];
+
+            if (!testData.items || testData.items.length === 0) return alert("આ ટેસ્ટમાં કોઈ પ્રશ્નો નથી!");
+
+            document.getElementById('quizTitleDisplay').innerText = currentActiveTest;
+            document.getElementById('quizSubDisplay').innerText = "વિષય: " + (testData.meta?.subject || 'સામાન્ય');
+
+            document.getElementById('studentRegScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+
+            startTimer(parseInt(testData.meta?.timeLimit || 60) * 60);
+            renderStudentQuestions(testData.items);
+        }
+
+        function startTimer(duration) {
+            let timer = duration, minutes, seconds;
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                document.getElementById('timerDisplay').textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    clearInterval(timerInterval);
+                    alert("સમય પૂરો થઈ ગયો છે!");
+                    confirmSubmitQuiz();
+                }
+            }, 1000);
+        }
+
+        function renderStudentQuestions(items) {
+            const container = document.getElementById('quizQuestionsContainer');
+            container.innerHTML = "";
+            let globalQuestionIndex = 1;
+
+            items.forEach((item) => {
+                let type = item.type || item.t;
+                if (type === 'passage_group' || type === 'p') {
+                    let passage = item.passage || item.p;
+                    let questions = item.questions || item.q;
+                    
+                    const pBox = document.createElement('div');
+                    pBox.className = "grid grid-cols-1 md:grid-cols-12 gap-6 bg-white p-6 rounded-2xl shadow border my-6";
+                    
+                    let questionsHtml = questions.map((q) => {
+                        let qObj = { ...q, labelText: `પ્રશ્ન ${globalQuestionIndex}`, type: 'mcq' };
+                        flatQuestionsList.push(qObj);
+                        let html = renderMcqCard(qObj, `પ્રશ્ન ${globalQuestionIndex}`);
+                        globalQuestionIndex++;
+                        return html;
+                    }).join('');
+
+                    pBox.innerHTML = `
+                        <div class="md:col-span-5 bg-amber-50 p-4 rounded-xl border border-amber-200 sticky-passage">
+                            <h4 class="font-bold text-amber-900 border-b pb-2 mb-2"><i class="fa-solid fa-book-open"></i> ફકરો વાંચી પ્રશ્નોના જવાબ આપો:</h4>
+                            <p class="text-sm leading-relaxed text-slate-800 whitespace-pre-line">${passage}</p>
+                        </div>
+                        <div class="md:col-span-7 space-y-6">
+                            ${questionsHtml}
+                        </div>
+                    `;
+                    container.appendChild(pBox);
+                } else {
+                    let img = item.imageUrl || item.u;
+                    let qObj = { ...item, labelText: `પ્રશ્ન ${globalQuestionIndex}` };
+                    flatQuestionsList.push(qObj);
+
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-6 rounded-2xl shadow border my-4 max-w-3xl mx-auto";
+                    card.innerHTML = `
+                        ${img ? `<img src="${img}" class="max-h-60 mx-auto mb-4 rounded-lg border shadow">` : ''}
+                        ${renderMcqCard(qObj, `પ્રશ્ન ${globalQuestionIndex}`)}
+                    `;
+                    globalQuestionIndex++;
+                    container.appendChild(card);
+                }
+            });
+        }
+
+        function renderMcqCard(q, labelText) {
+            let qText = q.question || q.q;
+            let options = q.options || q.o;
+            let correct = q.correct || q.c;
+            let qId = q.id || generateUniqueId();
+
+            return `
+                <div class="space-y-3">
+                    <h3 class="font-bold text-slate-800">${labelText}: ${qText}</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="opts_${qId}">
+                        ${['A', 'B', 'C', 'D'].map((key, i) => `
+                            <button onclick="selectAns('${qId}', '${key}', '${correct}')" id="btn_${qId}_${key}" class="p-3 border rounded-xl text-left font-medium hover:bg-indigo-50 flex items-center gap-2 transition-all">
+                                <span class="font-bold text-slate-400">${key}.</span>
+                                <span>${options[i] || ''}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAns(qId, selectedOpt, correctOpt) {
+            userAnswers[qId] = { selected: selectedOpt, correct: correctOpt };
+
+            ['A', 'B', 'C', 'D'].forEach(k => {
+                const b = document.getElementById(`btn_${qId}_${k}`);
+                if (b) b.classList.remove('selected-ans');
+            });
+
+            const selBtn = document.getElementById(`btn_${qId}_${selectedOpt}`);
+            if (selBtn) {
+                selBtn.classList.add('selected-ans');
+            }
+        }
+
+        function confirmSubmitQuiz() {
+            clearInterval(timerInterval);
+
+            let totalQuestions = flatQuestionsList.length;
+            let correctCount = 0;
+
+            flatQuestionsList.forEach(q => {
+                let qId = q.id;
+                let userAns = userAnswers[qId]?.selected;
+                let correctAns = q.correct || q.c;
+                if (userAns === correctAns) {
+                    correctCount++;
+                }
+            });
+
+            const name = document.getElementById('studentName').value;
+            const std = document.getElementById('studentStd').value;
+            const roll = document.getElementById('studentRoll').value;
+
+            allSubmissions.push({
+                testName: currentActiveTest,
+                studentName: name,
+                std: std,
+                roll: roll,
+                score: `${correctCount} / ${totalQuestions}`,
+                date: new Date().toLocaleDateString('gu-IN')
+            });
+            localStorage.setItem('jnv_test_submissions', JSON.stringify(allSubmissions));
+
+            document.getElementById('resTotalScore').innerText = `${correctCount} / ${totalQuestions}`;
+            let percentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+            document.getElementById('resPercentage').innerText = percentage + "%";
+
+            renderTestReview();
+
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+        }
+
+        function renderTestReview() {
+            const reviewContainer = document.getElementById('reviewContainer');
+            reviewContainer.innerHTML = "";
+
+            flatQuestionsList.forEach(q => {
+                let qId = q.id;
+                let qText = q.question || q.q;
+                let options = q.options || q.o;
+                let correct = q.correct || q.c;
+                let userAns = userAnswers[qId]?.selected;
+                let isCorrect = userAns === correct;
+                let img = q.imageUrl || q.u;
+
+                const card = document.createElement('div');
+                card.className = `p-6 rounded-2xl shadow border ${isCorrect ? 'correct-card' : 'wrong-card'}`;
+
+                let optionsHtml = ['A', 'B', 'C', 'D'].map((key, i) => {
+                    let optStyle = "bg-white border-slate-200 text-slate-700";
+                    let icon = "";
+
+                    if (key === correct) {
+                        optStyle = "bg-emerald-100 border-emerald-500 font-bold text-emerald-800";
+                        icon = `<i class="fa-solid fa-circle-check text-emerald-600 ml-auto"></i> (સાચો જવાબ)`;
+                    }
+                    if (key === userAns && !isCorrect) {
+                        optStyle = "bg-rose-100 border-rose-500 font-bold text-rose-800";
+                        icon = `<i class="fa-solid fa-circle-xmark text-rose-600 ml-auto"></i> (તમારો ખોટો જવાબ)`;
+                    }
+
+                    return `
+                        <div class="p-3 border rounded-xl flex items-center gap-2 ${optStyle}">
+                            <span class="font-bold">${key}.</span>
+                            <span>${options[i] || ''}</span>
+                            ${icon}
+                        </div>
+                    `;
+                }).join('');
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-bold text-slate-800 text-lg">${q.labelText}: ${qText}</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold ${isCorrect ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-200 text-rose-800'}">
+                            ${isCorrect ? '✓ સાચો' : '✕ ખોટો'}
+                        </span>
+                    </div>
+
+                    ${img ? `<img src="${img}" class="max-h-56 mx-auto mb-4 rounded-lg border shadow">` : ''}
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 my-2">
+                        ${optionsHtml}
+                    </div>
+
+                    ${!userAns ? `<p class="text-xs font-bold text-amber-600 mt-2"><i class="fa-solid fa-circle-exclamation"></i> તમે આ પ્રશ્નનો જવાબ આપ્યો નથી.</p>` : ''}
+                `;
+
+                reviewContainer.appendChild(card);
+            });
+        }
+    </script>
 </body>
 </html>

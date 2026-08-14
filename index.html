@@ -162,7 +162,7 @@
                                 <i class="fa-solid fa-trash-can"></i> આ ટેસ્ટ ડિલીટ કરો
                             </button>
                         </div>
-                        <button onclick="createNewTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm">
+                        <button onclick="openNewTestModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm">
                             <i class="fa-solid fa-plus"></i> નવી ટેસ્ટ બનાવો
                         </button>
                     </div>
@@ -277,7 +277,38 @@
             </div>
         </section>
 
-        <!-- 5. QUESTION BANK MODAL POPUP -->
+        <!-- 5. ADMIN LOGIN MODAL -->
+        <div id="adminLoginModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
+                <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-indigo-700 text-2xl">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">શિક્ષક લૉગિન (Admin)</h3>
+                <p class="text-sm text-slate-500">એડમિન પેનલ ખોલવા માટે પાસવર્ડ દાખલ કરો:</p>
+                
+                <input type="password" id="adminPasswordInput" placeholder="પાસવર્ડ દાખલ કરો" class="w-full px-4 py-2.5 rounded-xl border text-center font-bold text-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                <p id="adminLoginError" class="text-xs text-rose-600 font-bold hidden"><i class="fa-solid fa-circle-exclamation"></i> ખોટો પાસવર્ડ! ફરી પ્રયત્ન કરો.</p>
+                
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeAdminLoginModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-sm">કેન્સલ</button>
+                    <button onclick="verifyAdminPassword()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm shadow">લૉગિન કરો</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. NEW TEST CREATION MODAL -->
+        <div id="newTestModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
+                <h3 class="text-xl font-bold text-slate-800">નવી ટેસ્ટ બનાવો</h3>
+                <input type="text" id="newTestNameInput" placeholder="ટેસ્ટનું નામ (દા.ત. ટેસ્ટ ૨)" class="w-full px-4 py-2 rounded-xl border font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeNewTestModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl text-sm">કેન્સલ</button>
+                    <button onclick="createNewTestConfirm()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-sm shadow">બનાવો</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. QUESTION BANK MODAL POPUP -->
         <div id="qBankModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
             <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
                 <div class="bg-indigo-700 text-white p-4 flex justify-between items-center">
@@ -740,12 +771,24 @@
             alert(`સફળતાપૂર્વક ${importedCount} પ્રશ્નો "${testKey}" માં ઉમેરાઈ ગયા છે! તે પ્રશ્ન બેંકમાં પણ સુરક્ષિત રહેશે.`);
         }
 
+        // 🌟 સુધારેલું એડમિન લોગિન પૉપઅપ (Custom Modal)
         function promptTeacherLogin() {
-            let pwd = prompt("શિક્ષક ડેશબોર્ડ ખોલવા માટે Admin પાસવર્ડ દાખલ કરો:");
+            document.getElementById('adminPasswordInput').value = "";
+            document.getElementById('adminLoginError').classList.add('hidden');
+            document.getElementById('adminLoginModal').classList.remove('hidden');
+        }
+
+        function closeAdminLoginModal() {
+            document.getElementById('adminLoginModal').classList.add('hidden');
+        }
+
+        function verifyAdminPassword() {
+            let pwd = document.getElementById('adminPasswordInput').value;
             if (pwd === "10101991") {
+                closeAdminLoginModal();
                 switchView('admin');
-            } else if (pwd !== null) {
-                alert("ખોટો પાસવર્ડ!");
+            } else {
+                document.getElementById('adminLoginError').classList.remove('hidden');
             }
         }
 
@@ -818,14 +861,12 @@
             renderTeacherSubmissions();
         }
 
-        // 🌟 સુધારેલું શોર્ટ લિંક ફંક્શન (TinyURL API અને CORS Proxy સાથે)
         async function generateShortUrlLink() {
             let longUrl = getFullLongUrl();
             let inputField = document.getElementById('shareLinkInput');
             inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
 
             try {
-                // TinyURL API
                 let apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
                 let response = await fetch(apiUrl);
                 
@@ -838,7 +879,6 @@
                     throw new Error("TinyURL Error");
                 }
             } catch (error) {
-                // કેચ સર્વિસ નિષ્ફળ જાય તો is.gd નો બેકઅપ
                 try {
                     let backupUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
                     let res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(backupUrl)}`);
@@ -876,12 +916,10 @@
             alert("લિંક કોપી થઈ ગઈ છે!");
         }
 
-        // 🌟 સુધારેલું WhatsApp શેરિંગ ફંક્શન (આપોઆપ લિંક શોર્ટ કરીને સેન્ડ કરશે)
         async function shareWhatsApp() {
             let inputField = document.getElementById("shareLinkInput");
             let link = inputField.value;
 
-            // જો લિંક હજુ ટૂંકી ન થઈ હોય અને લાંબી હોય, તો પહેલા ઓટોમેટિક શોર્ટ કરશે
             if (link.includes("?data=") && link.length > 100) {
                 link = await generateShortUrlLink();
             }
@@ -890,8 +928,18 @@
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        function createNewTest() {
-            let testName = prompt("નવી ટેસ્ટનું નામ આપો:");
+        // 🌟 નવી ટેસ્ટ બનાવવાનું મોડલ (Modal Handle)
+        function openNewTestModal() {
+            document.getElementById('newTestNameInput').value = "";
+            document.getElementById('newTestModal').classList.remove('hidden');
+        }
+
+        function closeNewTestModal() {
+            document.getElementById('newTestModal').classList.add('hidden');
+        }
+
+        function createNewTestConfirm() {
+            let testName = document.getElementById('newTestNameInput').value.trim();
             if (testName) {
                 if (!allTestData[testName]) {
                     allTestData[testName] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
@@ -899,9 +947,12 @@
                     saveTestData();
                     refreshSelectDropdown();
                     loadAdminTestData();
+                    closeNewTestModal();
                 } else {
                     alert("આ નામની ટેસ્ટ પહેલેથી છે!");
                 }
+            } else {
+                alert("કૃપા કરીને ટેસ્ટનું નામ લખો.");
             }
         }
 

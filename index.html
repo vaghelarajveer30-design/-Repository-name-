@@ -1,18 +1,4 @@
 <!DOCTYPE html>
-
-<html>
-<head>
-  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <link rel="stylesheet" href="styles/style.css"/>
-  <title>Hello, World!</title>
-</head>
-<body>
-  <h1>
-    Hello, World!
-  </h1>
-</body>
-</html>
-<!DOCTYPE html>
 <html lang="gu">
 <head>
     <meta charset="UTF-8">
@@ -169,7 +155,7 @@
                     <!-- Online Share Link Box -->
                     <div class="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <div class="w-full">
-                            <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> આ ટેસ્ટની Online Link (વિદ્યાર્થીઓને મોકલવા માટે):</span>
+                            <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> આ ટેસ્ટની Dynamic Online Link (વિદ્યાર્થીઓને મોકલવા માટે):</span>
                             <input type="text" id="shareLinkInput" readonly class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-600 font-mono">
                         </div>
                         <button onclick="copyShareLink()" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded text-xs whitespace-nowrap">
@@ -229,9 +215,8 @@
                     <button onclick="addPassageGroup()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">ફકરો અને પ્રશ્નો ઉમેરો</button>
                 </div>
 
-                <!-- MODE 3 (સુધારેલું: આકૃતિ અપલોડ/કોપી-પેસ્ટ) -->
+                <!-- MODE 3 -->
                 <div id="builderMode3" class="hidden space-y-4 bg-slate-50 p-4 rounded-xl border">
-                    
                     <div class="border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-4 rounded-xl text-center">
                         <label class="block text-sm font-bold text-slate-700 mb-2">
                             <i class="fa-solid fa-image text-indigo-600"></i> આકૃતિ અપલોડ કરો અથવા ઈમેજ Paste (Ctrl+V) કરો:
@@ -277,34 +262,60 @@
     </main>
 
     <script>
-        // --- અહીં તમારી IMGBB API KEY મૂકો ---
-        const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; // અહિયાં તમારી ImgBB API Key ઉમેરવી
+        const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; 
 
         let currentUploadedImgUrl = "";
         let allTestData = JSON.parse(localStorage.getItem('jnv_test_data_v3') || '{}');
         let allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions') || '[]');
         let currentActiveTest = "Test 1";
+        let activeTestData = { meta: {}, items: [] };
         let timerInterval = null;
+
+        // Base64 Encoding Helpers for Gujarati / Unicode Support
+        function encodeTestData(obj) {
+            try {
+                let str = JSON.stringify(obj);
+                return encodeURIComponent(btoa(unescape(encodeURIComponent(str))));
+            } catch (e) {
+                return "";
+            }
+        }
+
+        function decodeTestData(str) {
+            try {
+                let decoded = decodeURIComponent(escape(atob(decodeURIComponent(str))));
+                return JSON.parse(decoded);
+            } catch (e) {
+                return null;
+            }
+        }
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
+            const dataParam = urlParams.get('data');
             const testFromUrl = urlParams.get('test');
 
-            if (testFromUrl && allTestData[testFromUrl]) {
+            if (dataParam) {
+                let loadedData = decodeTestData(dataParam);
+                if (loadedData && loadedData.items && loadedData.items.length > 0) {
+                    activeTestData = loadedData;
+                    currentActiveTest = loadedData.title || "ઓનલાઇન કસોટી";
+                }
+            } else if (testFromUrl && allTestData[testFromUrl]) {
                 currentActiveTest = testFromUrl;
+                activeTestData = allTestData[testFromUrl];
             } else if (Object.keys(allTestData).length > 0) {
                 currentActiveTest = Object.keys(allTestData)[0];
+                activeTestData = allTestData[currentActiveTest];
             }
 
-            setupStudentView(currentActiveTest);
+            setupStudentView();
             setupPasteListener();
         };
 
-        // Clipboard Paste Listener (Ctrl + V વડે ઈમેજ પેસ્ટ કરવા)
         function setupPasteListener() {
             document.addEventListener('paste', function (e) {
                 if (document.getElementById('builderMode3').classList.contains('hidden')) return;
-                
                 let items = (e.clipboardData || e.originalEvent.clipboardData).items;
                 for (let index in items) {
                     let item = items[index];
@@ -329,15 +340,13 @@
             const previewBox = document.getElementById('imgPreviewContainer');
 
             previewBox.classList.remove('hidden');
-            statusText.innerText = "આકૃતિ અપલોડ થઈ રહી છે... મહેરબાની કરીને રાહ જુઓ.";
+            statusText.innerText = "આકૃતિ અપલોડ થઈ રહી છે...";
             statusText.className = "text-xs font-bold text-amber-600 mt-1 block";
 
-            // Local Preview
             const reader = new FileReader();
             reader.onload = function(e) { previewImg.src = e.target.result; }
             reader.readAsDataURL(file);
 
-            // API Upload
             let formData = new FormData();
             formData.append("image", file);
 
@@ -352,12 +361,12 @@
                     statusText.innerText = "✓ આકૃતિ સફળતાપૂર્વક ઓનલાઈન સેટ થઈ ગઈ!";
                     statusText.className = "text-xs font-bold text-emerald-600 mt-1 block";
                 } else {
-                    currentUploadedImgUrl = previewImg.src; // Fallback to Base64
-                    statusText.innerText = "ઓનલાઈન અપલોડ નિષ્ફળ, લોકલ ઈમેજ સેટ થઈ છે.";
+                    currentUploadedImgUrl = previewImg.src;
+                    statusText.innerText = "લોકલ ઈમેજ સેટ થઈ છે.";
                 }
             })
             .catch(err => {
-                currentUploadedImgUrl = previewImg.src; // Fallback
+                currentUploadedImgUrl = previewImg.src;
                 statusText.innerText = "ઈમેજ પ્રોસેસ થઈ ગઈ છે.";
             });
         }
@@ -367,7 +376,7 @@
             const rawText = document.getElementById('m3RawText').value.trim();
             const correct = document.getElementById('m3Correct').value;
 
-            if (!currentUploadedImgUrl) return alert("કૃપા કરીને પહેલા આકૃતિ અપલોડ કરો અથવા પેસ્ટ કરો!");
+            if (!currentUploadedImgUrl) return alert("કૃપા કરીને પહેલા આકૃતિ અપલોડ કરો!");
             if (!rawText) return alert("પ્રશ્ન અને વિકલ્પો પેસ્ટ કરો!");
 
             const parsed = parseMcqText(rawText);
@@ -384,7 +393,6 @@
 
             saveAndRefresh(testKey);
             
-            // Reset Mode 3 Form
             document.getElementById('m3RawText').value = "";
             document.getElementById('m3FileInput').value = "";
             document.getElementById('imgPreviewContainer').classList.add('hidden');
@@ -408,16 +416,16 @@
 
             if (view === 'student') {
                 document.getElementById('studentRegScreen').classList.remove('hidden');
-                setupStudentView(currentActiveTest);
+                setupStudentView();
             } else if (view === 'admin') {
                 document.getElementById('adminScreen').classList.remove('hidden');
                 loadAdminTestData();
             }
         }
 
-        function setupStudentView(testKey) {
-            const data = allTestData[testKey] || { meta: {}, items: [] };
-            document.getElementById('studentTestTitle').innerText = testKey + " - ઓનલાઇન કસોટી";
+        function setupStudentView() {
+            const data = activeTestData || { meta: {}, items: [] };
+            document.getElementById('studentTestTitle').innerText = currentActiveTest + " - ઓનલાઇન કસોટી";
             document.getElementById('dispSubject').innerText = data.meta?.subject || 'નિર્ધારિત નથી';
             document.getElementById('dispTotalMarks').innerText = data.meta?.totalMarks || '100';
             document.getElementById('dispTimeLimit').innerText = (data.meta?.timeLimit || '60') + ' મિનિટ';
@@ -432,11 +440,16 @@
             document.getElementById('adminTotalMarks').value = data.meta?.totalMarks || '';
             document.getElementById('adminTimeLimit').value = data.meta?.timeLimit || '';
 
+            // Generate Encoded Full Dynamic Link
             let baseUrl = window.location.origin + window.location.pathname;
-            if (window.location.protocol === 'file:') {
-                baseUrl = "https://yourwebsite.com/index.html"; 
-            }
-            const shareUrl = `${baseUrl}?test=${encodeURIComponent(testKey)}`;
+            let fullDataObj = {
+                title: testKey,
+                meta: data.meta || {},
+                items: data.items || []
+            };
+
+            let encodedStr = encodeTestData(fullDataObj);
+            let shareUrl = `${baseUrl}?data=${encodedStr}`;
             document.getElementById('shareLinkInput').value = shareUrl;
 
             renderAdminQuestionsList();
@@ -445,13 +458,10 @@
 
         function copyShareLink() {
             const copyText = document.getElementById("shareLinkInput");
-            if (window.location.protocol === 'file:') {
-                alert("ધ્યાન આપો: આ ફાઇલ તમારા ફોનમાં લોકલ સચવાયેલી છે (file:///). બીજા વિદ્યાર્થીઓને આ લિંક મોકલવા માટે તમારે આ HTML ફાઇલ GitHub Pages પર અપલોડ કરવી પડશે.");
-            }
             copyText.select();
             copyText.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(copyText.value);
-            alert("ટેસ્ટની લિંક કોપી થઈ ગઈ છે!");
+            alert("ટેસ્ટની સંપૂર્ણ ડાયનેમિક લિંક કોપી થઈ ગઈ છે! હવે આ લિંક વિદ્યાર્થીઓને વોટ્સએપમાં મોકલો.");
         }
 
         function createNewTest() {
@@ -485,7 +495,7 @@
                 timeLimit: document.getElementById('adminTimeLimit').value || '60'
             };
 
-            saveTestData();
+            saveAndRefresh(testKey);
             alert("ટેસ્ટ સેટિંગ્સ સેવ થઈ ગયા!");
         }
 
@@ -587,8 +597,8 @@
 
         function saveAndRefresh(testKey) {
             saveTestData();
-            renderAdminQuestionsList();
-            alert("પ્રશ્ન સફળતાપૂર્વક ઉમેરાયો!");
+            loadAdminTestData();
+            alert("પ્રશ્ન સફળતાપૂર્વક ઉમેરાયો અને લિંક અપડેટ થઈ ગઈ!");
         }
 
         function saveTestData() {
@@ -645,16 +655,14 @@
 
         function deleteItem(testKey, id) {
             allTestData[testKey].items = allTestData[testKey].items.filter(i => i.id !== id);
-            saveTestData();
-            renderAdminQuestionsList();
+            saveAndRefresh(testKey);
         }
 
         function clearCurrentTest() {
             const testKey = document.getElementById('adminTestSelect').value;
             if(confirm("બધા પ્રશ્નો ભૂસી નાખવા છે?")) {
                 allTestData[testKey].items = [];
-                saveTestData();
-                renderAdminQuestionsList();
+                saveAndRefresh(testKey);
             }
         }
 
@@ -663,7 +671,7 @@
 
         function startStudentQuiz(e) {
             e.preventDefault();
-            const testData = allTestData[currentActiveTest] || { meta: {}, items: [] };
+            const testData = activeTestData;
 
             if (!testData.items || testData.items.length === 0) return alert("આ ટેસ્ટમાં હજી સુધી કોઈ પ્રશ્નો ઉમેરાયા નથી!");
 
@@ -792,4 +800,7 @@
         }
     </script>
 </body>
-</html>
+</html>                
+
+                            
+        

@@ -501,8 +501,13 @@
             });
         }
 
-        // 🔥 પ્રશ્ન બેંકમાં ઓટો સેવ કરવાનું ફંક્શન
+        // 🔥 પ્રશ્ન બેંકમાં ઓટો સેવ કરવાનું સુધારેલું ફંક્શન
         function saveToQuestionBank(item) {
+            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
+            if (!questionBank.mcq) questionBank.mcq = [];
+            if (!questionBank.passage) questionBank.passage = [];
+            if (!questionBank.image) questionBank.image = [];
+
             if (item.type === 'mcq') {
                 questionBank.mcq.push(item);
             } else if (item.type === 'passage_group') {
@@ -532,7 +537,7 @@
             };
 
             allTestData[testKey].items.push(newItem);
-            saveToQuestionBank(newItem); // ઓટો સેવ
+            saveToQuestionBank(newItem); // પ્રશ્ન બેંકમાં ઓટો સેવ
 
             saveAndRefresh(testKey);
             document.getElementById('m1RawText').value = "";
@@ -570,7 +575,7 @@
             };
 
             allTestData[testKey].items.push(newItem);
-            saveToQuestionBank(newItem); // ઓટો સેવ
+            saveToQuestionBank(newItem); // પ્રશ્ન બેંકમાં ઓટો સેવ
 
             saveAndRefresh(testKey);
             document.getElementById('m2Passage').value = "";
@@ -598,7 +603,7 @@
             };
 
             allTestData[testKey].items.push(newItem);
-            saveToQuestionBank(newItem); // ઓટો સેવ
+            saveToQuestionBank(newItem); // પ્રશ્ન બેંકમાં ઓટો સેવ
 
             saveAndRefresh(testKey);
             document.getElementById('m3RawText').value = "";
@@ -609,9 +614,11 @@
 
         // 🔥 QUESTION BANK MODAL FUNCTIONS
         function openQuestionBankModal() {
-            document.getElementById('qbMcqCount').innerText = questionBank.mcq.length;
-            document.getElementById('qbPassageCount').innerText = questionBank.passage.length;
-            document.getElementById('qbImageCount').innerText = questionBank.image.length;
+            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
+            
+            document.getElementById('qbMcqCount').innerText = (questionBank.mcq || []).length;
+            document.getElementById('qbPassageCount').innerText = (questionBank.passage || []).length;
+            document.getElementById('qbImageCount').innerText = (questionBank.image || []).length;
             
             document.getElementById('qBankModal').classList.remove('hidden');
             switchQbTab('mcq');
@@ -638,7 +645,7 @@
         function renderQbQuestions() {
             const container = document.getElementById('qbQuestionsContainer');
             container.innerHTML = "";
-            let list = questionBank[currentQbTab] || [];
+            let list = (questionBank && questionBank[currentQbTab]) ? questionBank[currentQbTab] : [];
 
             if (list.length === 0) {
                 container.innerHTML = `<div class="text-center text-slate-400 py-8">આ વિભાગમાં કોઈ પ્રશ્નો જમા થયેલ નથી.</div>`;
@@ -647,35 +654,63 @@
 
             list.forEach((item, index) => {
                 let card = document.createElement('div');
-                card.className = "p-3 bg-slate-50 border rounded-xl flex items-start gap-3 hover:bg-slate-100 transition";
+                card.className = "p-3 bg-slate-50 border rounded-xl flex items-center justify-between gap-3 hover:bg-slate-100 transition";
 
+                let mainContent = "";
                 if (currentQbTab === 'mcq') {
-                    card.innerHTML = `
-                        <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded">
-                        <div class="text-sm">
-                            <span class="font-bold text-indigo-700">${index + 1}. ${item.question}</span>
-                            <div class="text-xs text-slate-500 mt-1">(A) ${item.options[0]} (B) ${item.options[1]} (C) ${item.options[2]} (D) ${item.options[3]}</div>
+                    mainContent = `
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded">
+                            <div class="text-sm">
+                                <span class="font-bold text-indigo-700">${index + 1}. ${item.question}</span>
+                                <div class="text-xs text-slate-500 mt-1">(A) ${item.options[0] || ''} (B) ${item.options[1] || ''} (C) ${item.options[2] || ''} (D) ${item.options[3] || ''}</div>
+                            </div>
                         </div>
                     `;
                 } else if (currentQbTab === 'passage') {
-                    card.innerHTML = `
-                        <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded">
-                        <div class="text-sm">
-                            <span class="font-bold text-indigo-700">[ફકરો] ${item.passage.substring(0, 80)}...</span>
-                            <div class="text-xs text-slate-500 mt-1 font-semibold">કુલ પ્રશ્નો: ${item.questions.length}</div>
+                    mainContent = `
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded">
+                            <div class="text-sm">
+                                <span class="font-bold text-indigo-700">[ફકરો] ${(item.passage || '').substring(0, 80)}...</span>
+                                <div class="text-xs text-slate-500 mt-1 font-semibold">કુલ પ્રશ્નો: ${(item.questions || []).length}</div>
+                            </div>
                         </div>
                     `;
                 } else if (currentQbTab === 'image') {
-                    card.innerHTML = `
-                        <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded">
-                        <img src="${item.imageUrl}" class="w-12 h-12 object-cover rounded border">
-                        <div class="text-sm">
-                            <span class="font-bold text-indigo-700">${index + 1}. ${item.question}</span>
+                    mainContent = `
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded">
+                            <img src="${item.imageUrl}" class="w-12 h-12 object-cover rounded border">
+                            <div class="text-sm">
+                                <span class="font-bold text-indigo-700">${index + 1}. ${item.question}</span>
+                            </div>
                         </div>
                     `;
                 }
+
+                card.innerHTML = `
+                    ${mainContent}
+                    <button onclick="deleteQbQuestion('${item.id}')" class="text-rose-600 hover:text-rose-800 p-2 rounded-lg hover:bg-rose-50 transition" title="પ્રશ્ન બેંકમાંથી ડિલીટ કરો">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
                 container.appendChild(card);
             });
+        }
+
+        // 🔥 પ્રશ્ન બેંકમાંથી પ્રશ્ન ડિલીટ કરવાનું નવું ફંક્શન
+        function deleteQbQuestion(id) {
+            if (confirm("શું તમે ખરેખર આ પ્રશ્નને પ્રશ્ન બેંકમાંથી કાયમી ડિલીટ કરવા માંગો છો?")) {
+                questionBank[currentQbTab] = questionBank[currentQbTab].filter(item => item.id !== id);
+                localStorage.setItem('jnv_question_bank', JSON.stringify(questionBank));
+                
+                document.getElementById('qbMcqCount').innerText = (questionBank.mcq || []).length;
+                document.getElementById('qbPassageCount').innerText = (questionBank.passage || []).length;
+                document.getElementById('qbImageCount').innerText = (questionBank.image || []).length;
+
+                renderQbQuestions();
+            }
         }
 
         function importSelectedToTest() {
@@ -688,11 +723,10 @@
             if (!newTestName) return;
 
             let importedItems = [];
-            let list = questionBank[currentQbTab] || [];
+            let list = (questionBank && questionBank[currentQbTab]) ? questionBank[currentQbTab] : [];
 
             list.forEach(item => {
                 if (selectedIds.includes(item.id)) {
-                    // નવો આઈડી આપીને કોપી કરીશું
                     let cloned = JSON.parse(JSON.stringify(item));
                     cloned.id = generateUniqueId();
                     importedItems.push(cloned);
@@ -875,26 +909,29 @@
             document.getElementById(`mode${mode}Btn`).className = "px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap";
         }
 
+        // 🔥 પર્સિંગ ફંક્શનમાં મજબૂત સુધારો
         function parseMcqText(text) {
             let lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
             let question = lines[0] || '';
             let options = ['', '', '', ''];
 
             let fullText = text;
-            let aPos = fullText.search(/\(?A\)?[\.\:\s]/i);
-            let bPos = fullText.search(/\(?B\)?[\.\:\s]/i);
-            let cPos = fullText.search(/\(?C\)?[\.\:\s]/i);
-            let dPos = fullText.search(/\(?D\)?[\.\:\s]/i);
+            let aPos = fullText.search(/\(?A\)?[\.\:\s\-]/i);
+            let bPos = fullText.search(/\(?B\)?[\.\:\s\-]/i);
+            let cPos = fullText.search(/\(?C\)?[\.\:\s\-]/i);
+            let dPos = fullText.search(/\(?D\)?[\.\:\s\-]/i);
 
             if (aPos !== -1 && bPos !== -1 && cPos !== -1 && dPos !== -1) {
                 question = fullText.substring(0, aPos).trim();
-                options[0] = fullText.substring(aPos, bPos).replace(/^\(?A\)?[\.\:\s]*/i, '').trim();
-                options[1] = fullText.substring(bPos, cPos).replace(/^\(?B\)?[\.\:\s]*/i, '').trim();
-                options[2] = fullText.substring(cPos, dPos).replace(/^\(?C\)?[\.\:\s]*/i, '').trim();
-                options[3] = fullText.substring(dPos).replace(/^\(?D\)?[\.\:\s]*/i, '').trim();
+                options[0] = fullText.substring(aPos, bPos).replace(/^\(?A\)?[\.\:\s\-]*/i, '').trim();
+                options[1] = fullText.substring(bPos, cPos).replace(/^\(?B\)?[\.\:\s\-]*/i, '').trim();
+                options[2] = fullText.substring(cPos, dPos).replace(/^\(?C\)?[\.\:\s\-]*/i, '').trim();
+                options[3] = fullText.substring(dPos).replace(/^\(?D\)?[\.\:\s\-]*/i, '').trim();
             } else if (lines.length >= 5) {
                 question = lines[0];
                 options = [lines[1], lines[2], lines[3], lines[4]];
+            } else {
+                question = fullText;
             }
             return { question, options };
         }

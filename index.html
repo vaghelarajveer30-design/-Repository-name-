@@ -175,13 +175,13 @@
                             <input type="text" id="shareLinkInput" readonly value="લિંક જનરેટ થઈ રહી છે..." class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-700 font-bold resize-none">
                         </div>
                         <div class="flex gap-2 w-full sm:w-auto justify-end">
-                            <button onclick="generateShortUrlLink()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap">
+                            <button onclick="generateShortUrlLink()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow">
                                 <i class="fa-solid fa-compress"></i> લિંક ટૂંકી કરો
                             </button>
-                            <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap">
+                            <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow">
                                 કોપી કરો
                             </button>
-                            <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap flex items-center gap-1">
+                            <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap flex items-center gap-1 shadow">
                                 <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
                             </button>
                         </div>
@@ -561,25 +561,40 @@
             renderTeacherSubmissions();
         }
 
-        // 🔥 ઓટોમેટિક TinyURL શોર્ટનર ફંકશન (૧ લીટીની લિંક બનાવવા માટે)
+        // 🔥 સુધારેલું ઓટોમેટિક શોર્ટનર ફંક્શન (is.gd API સાથે)
         function generateShortUrlLink() {
             let longUrl = getFullLongUrl();
             let inputField = document.getElementById('shareLinkInput');
-            inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
+            inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે, થોડી રાહ જુઓ...";
 
-            fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`)
-                .then(res => res.text())
-                .then(shortUrl => {
-                    if (shortUrl && shortUrl.startsWith("http")) {
-                        inputField.value = shortUrl;
-                        alert("લિંક ૧ લીટીની શોર્ટ થઈ ગઈ છે!");
+            fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://is.gd/create.php?format=json&url=' + encodeURIComponent(longUrl))}`)
+                .then(res => res.json())
+                .then(data => {
+                    let resData = JSON.parse(data.contents);
+                    if (resData.shorturl) {
+                        inputField.value = resData.shorturl;
+                        alert("લિંક સફળતાપૂર્વક ૧ લીટીની શોર્ટ થઈ ગઈ છે!");
                     } else {
                         inputField.value = longUrl;
+                        alert("લિંક શોર્ટ ન થઈ શકી! મેન્યુઅલી TinyURL.com વાપરો.");
                     }
                 })
                 .catch(err => {
-                    inputField.value = longUrl;
-                    alert("નેટવર્ક એરર! મોટી લિંક સેટ થઈ છે.");
+                    // બેકઅપ TinyURL API
+                    fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`)
+                        .then(r => r.text())
+                        .then(shortUrl => {
+                            if (shortUrl.startsWith("http")) {
+                                inputField.value = shortUrl;
+                                alert("લિંક ટૂંકી થઈ ગઈ છે!");
+                            } else {
+                                inputField.value = longUrl;
+                            }
+                        })
+                        .catch(() => {
+                            inputField.value = longUrl;
+                            alert("એરર! કૃપા કરીને મોટી લિંક કોપી કરી TinyURL.com પર શોર્ટ કરો.");
+                        });
                 });
         }
 

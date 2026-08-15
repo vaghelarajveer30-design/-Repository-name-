@@ -21,28 +21,39 @@
         .correct-card { border-left: 6px solid #10b981 !important; background-color: #f0fdf4 !important; }
         .wrong-card { border-left: 6px solid #ef4444 !important; background-color: #fef2f2 !important; }
 
-        /* Fraction CSS Formatting */
+        /* Fraction CSS Formatting Fix (અંશ અને છેદ સ્પષ્ટ ઉપર-નીચે દેખાય તે માટે) */
         .frac {
             display: inline-flex;
             flex-direction: column;
             vertical-align: middle;
             text-align: center;
-            font-size: 0.95em;
+            font-size: 0.9em;
             padding: 0 4px;
             line-height: 1.1;
         }
         .frac-num {
             border-bottom: 1.5px solid currentColor;
-            padding-bottom: 1px;
+            padding-bottom: 2px;
             font-weight: bold;
+            display: block;
         }
         .frac-den {
-            padding-top: 1px;
+            padding-top: 2px;
             font-weight: bold;
+            display: block;
         }
     </style>
 </head>
 <body class="text-slate-800">
+
+    <!-- Admin Alert Toast (નોટિફિકેશન) -->
+    <div id="adminNotification" class="hidden fixed top-20 right-5 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 border-2 border-white animate-bounce">
+        <i class="fa-solid fa-bell text-2xl text-yellow-300"></i>
+        <div>
+            <h4 class="font-bold text-sm">નવું પરિણામ પ્રાપ્ત થયું!</h4>
+            <p id="notifText" class="text-xs"></p>
+        </div>
+    </div>
 
     <!-- Header -->
     <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
@@ -284,9 +295,7 @@
                         
                         <div class="space-y-3 pt-2">
                             <label class="block text-xs font-bold text-slate-700">૨. આ ફકરાના ૫ પ્રશ્નો ઉમેરો:</label>
-                            <div id="m2QuestionsInputContainer" class="space-y-4">
-                                <!-- 5 Question inputs will be dynamically generated -->
-                            </div>
+                            <div id="m2QuestionsInputContainer" class="space-y-4"></div>
                         </div>
 
                         <button onclick="addPassageWith5Questions()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-lg text-sm shadow">
@@ -328,8 +337,47 @@
                     <div id="adminQuestionsList" class="space-y-3"></div>
                 </div>
 
+                <!-- 10+ TESTS SINGLE STUDENT RESULT DISPLAY MODULE -->
+                <div class="mt-8 border-t pt-6 bg-slate-100 p-5 rounded-xl space-y-4">
+                    <h4 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-id-card text-indigo-600"></i> વિદ્યાર્થીવાર ઓલ ટેસ્ટ માર્ક્સ (10+ રિપોર્ટ)
+                    </h4>
+                    <p class="text-xs text-slate-500">કોઈપણ વિદ્યાર્થીએ આપેલી ૧૦ કે તેથી વધુ તમામ ટેસ્ટના પરિણામો એકસાથે જોવા માટે નામ પસંદ કરો:</p>
+                    <div class="flex gap-3">
+                        <select id="studentFilterSelect" onchange="renderStudentMultiTestReport()" class="p-2.5 border rounded-lg font-bold text-indigo-700 bg-white flex-1 text-sm">
+                            <option value="">-- વિદ્યાર્થી પસંદ કરો --</option>
+                        </select>
+                    </div>
+
+                    <div id="studentMultiReportContainer" class="hidden bg-white p-4 rounded-xl border space-y-3">
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <h5 id="selectedStudentTitle" class="font-bold text-indigo-900 text-base"></h5>
+                            <span id="selectedStudentTotalCount" class="bg-indigo-100 text-indigo-700 font-bold text-xs px-3 py-1 rounded-full"></span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-indigo-50 text-indigo-900 font-bold">
+                                        <th class="p-2 border">તારીખ / સમય</th>
+                                        <th class="p-2 border">ટેસ્ટનું નામ</th>
+                                        <th class="p-2 border">ધોરણ</th>
+                                        <th class="p-2 border">મેળવેલ ગુણ</th>
+                                        <th class="p-2 border">ટકાવારી</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentMultiReportTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mt-8 border-t pt-4">
-                    <h4 class="font-bold text-slate-800 mb-3"><i class="fa-solid fa-users text-indigo-600"></i> વિદ્યાર્થીઓના પરિણામો (માર્ક્સ)</h4>
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-users text-indigo-600"></i> તાજેતરના બધા જ વિદ્યાર્થીઓના પરિણામો (હાલની ટેસ્ટ)
+                        </h4>
+                        <button onclick="clearAllSubmissionsHistory()" class="text-xs text-rose-600 font-bold">બધા જ પરિણામો ડિલીટ કરો</button>
+                    </div>
                     <div id="submissionsList" class="space-y-2 max-h-60 overflow-y-auto"></div>
                 </div>
             </div>
@@ -377,7 +425,7 @@
         let currentUploadedImgUrl = "";
         let customLogoBase64 = localStorage.getItem('jnv_custom_logo') || "";
         let allTestData = JSON.parse(localStorage.getItem('jnv_test_data_v6') || '{}');
-        let allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions') || '[]');
+        let allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions_v2') || '[]');
         let questionBank = JSON.parse(localStorage.getItem('jnv_question_bank_v6') || '{"mcq":[], "passage":[], "image":[]}');
 
         let currentActiveTest = "Test 1";
@@ -391,11 +439,12 @@
             return 'q_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
         }
 
+        /* --- FRACTION REGEX FIX: અંશ અને છેદ સ્પષ્ટ ઉપર-નીચે આવવા માટે --- */
         function formatFractions(text) {
             if (!text) return "";
             return text
                 .replace(/\{(\d+)\/(\d+)\}/g, '<span class="frac"><span class="frac-num">$1</span><span class="frac-den">$2</span></span>')
-                .replace(/\b(\d+)\/(\d+)\b/g, '<span class="frac"><span class="frac-num">$1</span><span class="frac-den">$2</span></span>');
+                .replace(/(\d+)\/(\d+)/g, '<span class="frac"><span class="frac-num">$1</span><span class="frac-den">$2</span></span>');
         }
 
         function compressData(obj) {
@@ -844,43 +893,29 @@
 
             renderAdminQuestionsList();
             renderTeacherSubmissions();
+            populateStudentFilterDropdown();
         }
 
-        /* --- ADVANCED RELIABLE SHORTENER (MULTI-API FALLBACK) --- */
         async function generateShortUrlLink() {
             let longUrl = getFullLongUrl();
             let inputField = document.getElementById('shareLinkInput');
             inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
 
-            // API 1: TinyURL API Try
             try {
-                let apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
+                let apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
                 let response = await fetch(apiUrl);
-                if (response.ok) {
-                    let shortUrl = await response.text();
-                    if (shortUrl && shortUrl.startsWith("http")) {
-                        inputField.value = shortUrl;
-                        return shortUrl;
-                    }
+                let resData = await response.json();
+                
+                if (resData.shorturl) {
+                    inputField.value = resData.shorturl;
+                    return resData.shorturl;
+                } else {
+                    throw new Error("Shortening failed");
                 }
-            } catch (e) {}
-
-            // API 2: clck.ru API Try (Fallback for very long URL support)
-            try {
-                let apiUrl = `https://clck.ru/--?url=${encodeURIComponent(longUrl)}`;
-                let response = await fetch(apiUrl);
-                if (response.ok) {
-                    let shortUrl = await response.text();
-                    if (shortUrl && shortUrl.startsWith("http")) {
-                        inputField.value = shortUrl;
-                        return shortUrl;
-                    }
-                }
-            } catch (e) {}
-
-            // જો બંને API નિષ્ફળ જાય, તો પણ ટેસ્ટ બગડશે નહીં - કમ્પ્રેસ થયેલી મૂળ મોટી લિંક જશે
-            inputField.value = longUrl;
-            return longUrl;
+            } catch (error) {
+                inputField.value = longUrl;
+                return longUrl;
+            }
         }
 
         function deleteEntireTest() {
@@ -897,15 +932,14 @@
             const copyText = document.getElementById("shareLinkInput");
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
-            alert("લિંક સફળતાપૂર્વક કોપી થઈ ગઈ છે!");
+            alert("લિંક કોપી થઈ ગઈ છે!");
         }
 
-        /* --- UPDATED SAFE WHATSAPP SHARE --- */
         async function shareWhatsApp() {
             let inputField = document.getElementById("shareLinkInput");
             let link = inputField.value;
 
-            if (link.includes("?data=") || link === "લિંક જનરેટ થઈ રહી છે...") {
+            if (link.includes("?data=")) {
                 link = await generateShortUrlLink();
             }
 
@@ -1036,10 +1070,65 @@
 
             container.innerHTML = currentTestSubmissions.map(s => `
                 <div class="p-2 border rounded bg-slate-50 text-xs flex justify-between items-center">
-                    <div><b>${s.studentName}</b> <span class="text-slate-500">(${s.std})</span></div>
-                    <div class="font-bold text-indigo-700">ગુણ: ${s.score}</div>
+                    <div><b>${s.studentName}</b> <span class="text-slate-500">(${s.std})</span> <span class="text-[10px] text-slate-400 ml-2">${s.date}</span></div>
+                    <div class="font-bold text-indigo-700">ગુણ: ${s.score} (${s.percentage}%)</div>
                 </div>
             `).join('');
+        }
+
+        /* --- 10+ TESTS SINGLE STUDENT MULTI-REPORT LOGIC --- */
+        function populateStudentFilterDropdown() {
+            const select = document.getElementById('studentFilterSelect');
+            select.innerHTML = '<option value="">-- વિદ્યાર્થી પસંદ કરો --</option>';
+
+            let studentNames = [...new Set(allSubmissions.map(s => s.studentName.trim()))];
+            studentNames.forEach(name => {
+                let opt = document.createElement('option');
+                opt.value = name;
+                opt.innerText = name;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderStudentMultiTestReport() {
+            const studentName = document.getElementById('studentFilterSelect').value;
+            const container = document.getElementById('studentMultiReportContainer');
+            const tbody = document.getElementById('studentMultiReportTableBody');
+
+            if (!studentName) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            let studentTests = allSubmissions.filter(s => s.studentName.trim().toLowerCase() === studentName.toLowerCase());
+            document.getElementById('selectedStudentTitle').innerText = studentName + " નું પરિણામ પત્રક";
+            document.getElementById('selectedStudentTotalCount').innerText = `કુલ ટેસ્ટ: ${studentTests.length}`;
+
+            tbody.innerHTML = "";
+            studentTests.forEach(st => {
+                let tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="p-2 border text-slate-500 font-mono">${st.date}</td>
+                    <td class="p-2 border font-bold text-indigo-700">${st.testName}</td>
+                    <td class="p-2 border">${st.std}</td>
+                    <td class="p-2 border font-bold text-emerald-600">${st.score}</td>
+                    <td class="p-2 border font-bold text-amber-600">${st.percentage}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            container.classList.remove('hidden');
+        }
+
+        function clearAllSubmissionsHistory() {
+            if(confirm("શું તમે બધા વિદ્યાર્થીઓનો હિસ્ટ્રી ડેટા ડીલીટ કરવા માંગો છો?")) {
+                allSubmissions = [];
+                localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
+                renderTeacherSubmissions();
+                populateStudentFilterDropdown();
+                document.getElementById('studentMultiReportContainer').classList.add('hidden');
+            }
         }
 
         function deleteItem(testKey, id) {
@@ -1172,6 +1261,7 @@
             if (selBtn) selBtn.classList.add('selected-ans');
         }
 
+        /* --- SUBMIT QUIZ & NOTIFY ADMIN --- */
         function confirmSubmitQuiz() {
             clearInterval(timerInterval);
             let totalQuestions = flatQuestionsList.length;
@@ -1186,23 +1276,40 @@
 
             const name = document.getElementById('studentName').value;
             const std = document.getElementById('studentStd').value;
+            let percentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+            let nowTime = new Date().toLocaleString('gu-IN');
 
-            allSubmissions.push({
+            let submissionObj = {
                 testName: currentActiveTest,
                 studentName: name,
                 std: std,
                 score: `${correctCount} / ${totalQuestions}`,
-                date: new Date().toLocaleDateString('gu-IN')
-            });
-            localStorage.setItem('jnv_test_submissions', JSON.stringify(allSubmissions));
+                percentage: percentage,
+                date: nowTime
+            };
+
+            // ૧. માર્ક્સ કાયમી સેવ (Local Storage Persistence)
+            allSubmissions.push(submissionObj);
+            localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
+
+            // ૨. Admin ને Toast નોટિફિકેશન આપવી
+            triggerAdminNotification(`${name} (${std}) એ ટેસ્ટ આપી માર્ક્સ: ${correctCount}/${totalQuestions} (${percentage}%) મેળવ્યા.`);
 
             document.getElementById('resTotalScore').innerText = `${correctCount} / ${totalQuestions}`;
-            let percentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
             document.getElementById('resPercentage').innerText = percentage + "%";
 
             renderTestReview();
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('resultScreen').classList.remove('hidden');
+        }
+
+        function triggerAdminNotification(msg) {
+            const notifBox = document.getElementById('adminNotification');
+            document.getElementById('notifText').innerText = msg;
+            notifBox.classList.remove('hidden');
+            setTimeout(() => {
+                notifBox.classList.add('hidden');
+            }, 6000);
         }
 
         function renderTestReview() {

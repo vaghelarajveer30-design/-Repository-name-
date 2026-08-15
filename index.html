@@ -285,7 +285,7 @@
                         <div class="space-y-3 pt-2">
                             <label class="block text-xs font-bold text-slate-700">૨. આ ફકરાના ૫ પ્રશ્નો ઉમેરો:</label>
                             <div id="m2QuestionsInputContainer" class="space-y-4">
-                                <!-- 5 Question inputs will be dynamically generated or hardcoded -->
+                                <!-- 5 Question inputs will be dynamically generated -->
                             </div>
                         </div>
 
@@ -846,19 +846,20 @@
             renderTeacherSubmissions();
         }
 
+        /* --- UPDATED LINK SHORTENER (TINYURL API) --- */
         async function generateShortUrlLink() {
             let longUrl = getFullLongUrl();
             let inputField = document.getElementById('shareLinkInput');
             inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
 
             try {
-                let apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
+                let apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
                 let response = await fetch(apiUrl);
-                let resData = await response.json();
+                let shortUrl = await response.text();
                 
-                if (resData.shorturl) {
-                    inputField.value = resData.shorturl;
-                    return resData.shorturl;
+                if (shortUrl && shortUrl.startsWith("http")) {
+                    inputField.value = shortUrl;
+                    return shortUrl;
                 } else {
                     throw new Error("Shortening failed");
                 }
@@ -885,11 +886,13 @@
             alert("લિંક કોપી થઈ ગઈ છે!");
         }
 
+        /* --- UPDATED WHATSAPP SHARE --- */
         async function shareWhatsApp() {
             let inputField = document.getElementById("shareLinkInput");
             let link = inputField.value;
 
-            if (link.includes("?data=")) {
+            // જો લિંક હજુ શોર્ટ ન થઈ હોય તો ટૂંકી કરો
+            if (link.includes("?data=") || link === "લિંક જનરેટ થઈ રહી છે...") {
                 link = await generateShortUrlLink();
             }
 
@@ -1076,7 +1079,6 @@
             }, 1000);
         }
 
-        /* --- DISPLAY PASSAGES AND THEIR 5 QUESTIONS INDIVIDUALLY --- */
         function renderStudentQuestions(items) {
             const container = document.getElementById('quizQuestionsContainer');
             container.innerHTML = "";

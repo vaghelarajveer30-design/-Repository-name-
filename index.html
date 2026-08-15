@@ -21,7 +21,7 @@
         .correct-card { border-left: 6px solid #10b981 !important; background-color: #f0fdf4 !important; }
         .wrong-card { border-left: 6px solid #ef4444 !important; background-color: #fef2f2 !important; }
 
-        /* Fraction CSS Formatting */
+        /* Fraction CSS Formatting Fix */
         .frac {
             display: inline-flex;
             flex-direction: column;
@@ -61,7 +61,7 @@
             <div class="flex items-center space-x-3">
                 <div id="headerLogoContainer" class="w-10 h-10 rounded-full bg-indigo-800 flex items-center justify-center overflow-hidden border border-amber-300">
                     <i class="fa-solid fa-graduation-cap text-xl text-yellow-300" id="headerDefaultLogo"></i>
-                    <img id="headerCustomLogo" src="" class="hidden w-full h-full object-cover">
+                    <img id="headerCustomLogo" src="" class="hidden w-full h-full object-cover" alt="Logo">
                 </div>
                 <h1 class="text-xl font-bold tracking-wide" id="mainHeaderTitle">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
             </div>
@@ -80,7 +80,7 @@
             <div class="text-center mb-6">
                 <div id="studentLogoContainer" class="w-20 h-20 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-3 text-indigo-700 text-3xl shadow overflow-hidden border-2 border-indigo-300">
                     <i class="fa-solid fa-user-pen" id="studentDefaultLogo"></i>
-                    <img id="studentCustomLogo" src="" class="hidden w-full h-full object-cover">
+                    <img id="studentCustomLogo" src="" class="hidden w-full h-full object-cover" alt="Student Logo">
                 </div>
                 <h2 class="text-2xl font-bold text-slate-800">નિર્મળા નવોદય સ્ટડી ઝોન</h2>
                 <p id="studentTestTitle" class="text-indigo-600 font-bold text-lg mt-1">ઓનલાઇન કસોટી</p>
@@ -126,7 +126,7 @@
         <section id="quizScreen" class="hidden">
             <div class="bg-white p-4 rounded-xl shadow border border-slate-200 mb-6 flex justify-between items-center sticky top-16 z-40">
                 <div class="flex items-center gap-3">
-                    <img id="quizHeaderCustomLogo" src="" class="hidden w-8 h-8 rounded-full object-cover">
+                    <img id="quizHeaderCustomLogo" src="" class="hidden w-8 h-8 rounded-full object-cover" alt="Quiz Logo">
                     <div>
                         <span class="font-bold text-indigo-600 text-lg block" id="quizTitleDisplay">ટેસ્ટ ચાલુ છે...</span>
                         <span class="text-xs text-slate-500 font-semibold" id="quizSubDisplay">વિષય: -</span>
@@ -165,6 +165,7 @@
                 <p class="text-sm font-semibold text-slate-600">તમે આપેલી ટેસ્ટનું સોલ્યુશન નીચે મુજબ છે:</p>
             </div>
 
+            <!-- Review Container -->
             <div id="reviewContainer" class="space-y-4"></div>
         </section>
 
@@ -185,12 +186,12 @@
                 </div>
             </div>
 
-            <!-- LOGO UPLOAD SECTION -->
+            <!-- CUSTOM LOGO UPLOAD SECTION -->
             <div class="bg-white p-6 rounded-xl shadow border space-y-4">
                 <h3 class="font-bold text-indigo-700 border-b pb-2"><i class="fa-solid fa-image text-indigo-600"></i> શાળા / ક્લાસનો લોગો અપલોડ કરો</h3>
                 <div class="flex flex-col sm:flex-row items-center gap-6">
                     <div class="w-24 h-24 rounded-2xl border-2 border-dashed border-indigo-300 flex items-center justify-center overflow-hidden bg-slate-50 relative">
-                        <img id="adminLogoPreview" src="" class="hidden w-full h-full object-cover">
+                        <img id="adminLogoPreview" src="" class="hidden w-full h-full object-cover" alt="Preview">
                         <i id="adminLogoPlaceholder" class="fa-solid fa-school text-3xl text-indigo-400"></i>
                     </div>
                     <div class="space-y-2 flex-1">
@@ -219,7 +220,7 @@
                         </button>
                     </div>
 
-                    <!-- Link Box -->
+                    <!-- Link Box (Fixed Link & WhatsApp Integration) -->
                     <div class="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <div class="w-full">
                             <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> શેર કરવા માટેની લિંક:</span>
@@ -312,7 +313,7 @@
                         <input type="file" id="m3FileInput" accept="image/*" onchange="handleImageUploadDirect(event)" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
                         
                         <div id="imgPreviewContainer" class="hidden mt-3">
-                            <img id="m3ImgPreview" src="" class="max-h-40 mx-auto rounded-lg border shadow">
+                            <img id="m3ImgPreview" src="" class="max-h-40 mx-auto rounded-lg border shadow" alt="Preview">
                             <span id="uploadStatus" class="text-xs font-bold text-emerald-600 mt-1 block"></span>
                         </div>
                     </div>
@@ -776,7 +777,7 @@
                     mainContent = `
                         <div class="flex items-center gap-3">
                             <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
-                            <img src="${item.imageUrl}" class="w-12 h-12 object-cover rounded border">
+                            <img src="${item.imageUrl}" class="w-12 h-12 object-cover rounded border" alt="Question Image">
                             <div class="text-sm"><span class="font-bold text-indigo-700">${index + 1}. ${formatFractions(item.question)}</span></div>
                         </div>`;
                 }
@@ -888,6 +889,8 @@
             document.getElementById('adminSubject').value = data.meta?.subject || '';
             document.getElementById('adminTotalMarks').value = data.meta?.totalMarks || '';
             document.getElementById('adminTimeLimit').value = data.meta?.timeLimit || '';
+            
+            // Set initial shareable URL directly
             document.getElementById('shareLinkInput').value = getFullLongUrl();
 
             renderAdminQuestionsList();
@@ -895,27 +898,25 @@
             populateStudentFilterDropdown();
         }
 
-        /* --- UPDATED URL SHORTENER FUNCTION (TinyURL API + Fallback) --- */
+        /* --- FIXED: SHORT URL GENERATOR USING TINYURL API & FALLBACK --- */
         async function generateShortUrlLink() {
             let longUrl = getFullLongUrl();
             let inputField = document.getElementById('shareLinkInput');
             inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
 
             try {
-                // TinyURL API Call
                 let apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
                 let response = await fetch(apiUrl);
-                
                 if (response.ok) {
                     let shortUrl = await response.text();
-                    if (shortUrl && shortUrl.startsWith('http')) {
-                        inputField.value = shortUrl.trim();
-                        return shortUrl.trim();
+                    if(shortUrl && shortUrl.startsWith("http")) {
+                        inputField.value = shortUrl;
+                        return shortUrl;
                     }
                 }
-                throw new Error("TinyURL Shortening failed");
+                throw new Error("Shortening failed");
             } catch (error) {
-                // Failure fallback to long URL
+                // If shortening service is unavailable, fallback gracefully to full URL
                 inputField.value = longUrl;
                 return longUrl;
             }
@@ -938,12 +939,13 @@
             alert("લિંક કોપી થઈ ગઈ છે!");
         }
 
+        /* --- FIXED: WHATSAPP DIRECT SHARE API --- */
         async function shareWhatsApp() {
             let inputField = document.getElementById("shareLinkInput");
             let link = inputField.value;
 
-            if (link.includes("?data=")) {
-                link = await generateShortUrlLink();
+            if (!link || link === "લિંક જનરેટ થઈ રહી છે...") {
+                link = getFullLongUrl();
             }
 
             const msg = `*નિર્મળા નવોદય સ્ટડી ઝોન*\n\nઓનલાઇન કસોટી આપવા માટે નીચે આપેલી લિંક પર ક્લિક કરો:\n${link}`;
@@ -1051,7 +1053,7 @@
                 } else if(item.type === 'image_mcq' || item.t === 'i') {
                     let img = item.imageUrl || item.u;
                     let qText = item.question || item.q;
-                    div.innerHTML = `<div class="flex items-center gap-2"><img src="${img}" class="w-10 h-10 object-cover rounded"> <b>${idx+1}. ${formatFractions(qText)}</b></div>
+                    div.innerHTML = `<div class="flex items-center gap-2"><img src="${img}" class="w-10 h-10 object-cover rounded" alt="Thumb"> <b>${idx+1}. ${formatFractions(qText)}</b></div>
                     <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
                 } else {
                     let qText = item.question || item.q;
@@ -1223,7 +1225,7 @@
                     const card = document.createElement('div');
                     card.className = "bg-white p-6 rounded-2xl shadow border my-4 max-w-3xl mx-auto";
                     card.innerHTML = `
-                        ${img ? `<img src="${img}" class="max-h-60 mx-auto mb-4 rounded-lg border shadow">` : ''}
+                        ${img ? `<img src="${img}" class="max-h-60 mx-auto mb-4 rounded-lg border shadow" alt="Question Image">` : ''}
                         ${renderMcqCard(qObj, `પ્રશ્ન ${globalQuestionIndex}`)}
                     `;
                     globalQuestionIndex++;
@@ -1356,7 +1358,7 @@
                             ${isCorrect ? '✓ સાચો' : '✕ ખોટો'}
                         </span>
                     </div>
-                    ${img ? `<img src="${img}" class="max-h-56 mx-auto mb-4 rounded-lg border shadow">` : ''}
+                    ${img ? `<img src="${img}" class="max-h-56 mx-auto mb-4 rounded-lg border shadow" alt="Review Image">` : ''}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 my-2">${optionsHtml}</div>
                 `;
                 reviewContainer.appendChild(card);

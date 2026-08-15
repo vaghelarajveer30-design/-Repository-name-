@@ -3,8 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>નિર્મળા નવોદય સ્ટડી ઝોન - ઓનલાઇન ટેસ્ટ</title>
-    <!-- Tailwind CSS CDN -->
+   <title>નિર્મળા નવોદય સ્ટડી ઝોન - ઓનલાઇન ટેસ્ટ</title>
+
+    <!-- Firebase SDK Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDmDK-BcWaw92SfhDYLYDrK1vwjaEEGi0s",
+        authDomain: "nirmala-navoday-online-test.firebaseapp.com",
+        databaseURL: "https://nirmala-navoday-online-test-default-rtdb.firebaseio.com",
+        projectId: "nirmala-navoday-online-test",
+        storageBucket: "nirmala-navoday-online-test.firebasestorage.app",
+        messagingSenderId: "1094616857029",
+        appId: "1:1094616857029:web:33318c768d1ff70d5773ac"
+      };
+      
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+    </script>
+
+    <!-- Tailwind CSS CDN --> 
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

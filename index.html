@@ -87,9 +87,9 @@
                 <h1 class="text-xl font-bold tracking-wide" id="mainHeaderTitle">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
             </div>
             <div>
-                <!-- Admin Button: ડીફોલ્ટ છુપાયેલું રહેશે, ફક્ત તમારા મોબાઈલમાં કે URL માજ દેખાશે -->
-                <button id="adminBtn" onclick="promptTeacherLogin()" class="hidden bg-indigo-800 hover:bg-indigo-900 px-3 py-1.5 rounded-lg text-sm font-semibold transition border border-indigo-500 flex items-center gap-2">
-                    <i class="fa-solid fa-user-shield text-yellow-300"></i> શિક્ષક ડેશબોર્ડ (Admin)
+                <!-- Admin Photo Icon: ફોટા પર ક્લિક કરવાથી પાસવર્ડ પૂછશે -->
+                <button onclick="promptTeacherLogin()" title="Admin Login" class="focus:outline-none">
+                    <img src="https://i.ibb.co/L5Q852p/profile.jpg" alt="Admin Icon" class="w-9 h-9 rounded-full object-cover border-2 border-amber-300 shadow hover:opacity-80 transition">
                 </button>
             </div>
         </div>
@@ -544,13 +544,7 @@
             renderCustomLogoUI();
             buildMode2Inputs();
 
-            // શરત: Admin નું બટન ફક્ત ?admin=true અથવા સ્થાનિક ફ્લેગ હોય ત્યારે જ દેખાશે
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('admin') === 'true' || localStorage.getItem('is_admin') === 'true') {
-                document.getElementById('adminBtn').classList.remove('hidden');
-                localStorage.setItem('is_admin', 'true');
-            }
-
             const dataParam = urlParams.get('data');
             if (dataParam) {
                 let loadedData = decompressData(dataParam);

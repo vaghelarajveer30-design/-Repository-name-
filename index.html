@@ -880,11 +880,27 @@
             alert(`સફળતાપૂર્વક ઇમ્પોર્ટ થઈ ગયું!`);
         }
 
-        function promptTeacherLogin() {
-            let pwd = prompt("Admin પાસવર્ડ દાખલ કરો:");
-            if (pwd === "10101991") switchView('admin');
-            else if (pwd !== null) alert("ખોટો પાસવર્ડ!");
+        // જૂના promptTeacherLogin() ના જગ્યાએ આ કોડ મૂકો
+function promptTeacherLogin() {
+    let pwd = prompt("Admin પાસવર્ડ દાખલ કરો:");
+    if (!pwd) return;
+
+    // Firebase Database માંથી પાસવર્ડ ચકાસવા માટે
+    firebase.database().ref('admin_config/password').once('value')
+    .then((snapshot) => {
+        const dbPassword = snapshot.val();
+        if (pwd === dbPassword) {
+            localStorage.setItem('is_admin', 'true');
+            switchView('admin');
+        } else {
+            alert("ખોટો પાસવર્ડ!");
         }
+    })
+    .catch((error) => {
+        console.error("Login Error:", error);
+        alert("લોગિન કરવામાં સમસ્યા આવી!");
+    });
+}
 
         function switchView(view) {
             document.getElementById('studentRegScreen').classList.add('hidden');

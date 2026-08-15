@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>નિર્મળા નવોદય સ્ટડી ઝોન - ઓનલાઇન ટેસ્ટ</title>
+    <title>નિર્મળા નવોદય સ્ટડી ઝોન - ઓનલાઇન ટેસ્ટ</title>
 
-    <!-- Firebase SDK Scripts -->
+    <!-- Firebase SDK Scripts (CDN Compatible) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <script>
+      // ઈમેજ મુજબ અપડેટ કરેલ Firebase Config
       const firebaseConfig = {
         apiKey: "AIzaSyDmDK-BcWaw92SfhDYLYDrK1vwjaEEGi0s",
         authDomain: "nirmala-navoday-online-test.firebaseapp.com",
@@ -17,7 +18,7 @@
         projectId: "nirmala-navoday-online-test",
         storageBucket: "nirmala-navoday-online-test.firebasestorage.app",
         messagingSenderId: "1094616857029",
-        appId: "1:1094616857029:web:33318c768d1ff70d5773ac"
+        appId: "1:1094616857029:web:5a0d5584100140285773ac"
       };
       
       firebase.initializeApp(firebaseConfig);
@@ -34,6 +35,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <!-- html2pdf Library for generating PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         body { font-family: 'Hind Vadodara', sans-serif; background-color: #f1f5f9; }
         .selected-ans { background-color: #e0e7ff !important; border-color: #6366f1 !important; font-weight: bold; color: #4338ca !important; }
@@ -41,7 +43,6 @@
         .correct-card { border-left: 6px solid #10b981 !important; background-color: #f0fdf4 !important; }
         .wrong-card { border-left: 6px solid #ef4444 !important; background-color: #fef2f2 !important; }
 
-        /* Fraction CSS Formatting Fix */
         .frac {
             display: inline-flex;
             flex-direction: column;
@@ -86,7 +87,8 @@
                 <h1 class="text-xl font-bold tracking-wide" id="mainHeaderTitle">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
             </div>
             <div>
-                <button onclick="promptTeacherLogin()" class="bg-indigo-800 hover:bg-indigo-900 px-3 py-1.5 rounded-lg text-sm font-semibold transition border border-indigo-500 flex items-center gap-2">
+                <!-- Admin Button: ડીફોલ્ટ છુપાયેલું રહેશે, ફક્ત તમારા મોબાઈલમાં કે URL માજ દેખાશે -->
+                <button id="adminBtn" onclick="promptTeacherLogin()" class="hidden bg-indigo-800 hover:bg-indigo-900 px-3 py-1.5 rounded-lg text-sm font-semibold transition border border-indigo-500 flex items-center gap-2">
                     <i class="fa-solid fa-user-shield text-yellow-300"></i> શિક્ષક ડેશબોર્ડ (Admin)
                 </button>
             </div>
@@ -542,9 +544,14 @@
             renderCustomLogoUI();
             buildMode2Inputs();
 
+            // શરત: Admin નું બટન ફક્ત ?admin=true અથવા સ્થાનિક ફ્લેગ હોય ત્યારે જ દેખાશે
             const urlParams = new URLSearchParams(window.location.search);
-            const dataParam = urlParams.get('data');
+            if (urlParams.get('admin') === 'true' || localStorage.getItem('is_admin') === 'true') {
+                document.getElementById('adminBtn').classList.remove('hidden');
+                localStorage.setItem('is_admin', 'true');
+            }
 
+            const dataParam = urlParams.get('data');
             if (dataParam) {
                 let loadedData = decompressData(dataParam);
                 if (loadedData && loadedData.items && loadedData.items.length > 0) {
@@ -565,7 +572,27 @@
             refreshSelectDropdown();
             setupStudentView();
             setupPasteListener();
+            listenToFirebaseRealtime();
         };
+
+        // Firebase માંથી તમારા મોબાઈલમાં રિયલ-ટાઇમ નોટિફિકેશન મેળવવા માટે
+        function listenToFirebaseRealtime() {
+            if (typeof database !== 'undefined') {
+                database.ref('jnv_test_submissions').on('child_added', (snapshot) => {
+                    const submission = snapshot.val();
+                    if (submission) {
+                        let exists = allSubmissions.some(s => s.id === submission.id);
+                        if (!exists) {
+                            allSubmissions.push(submission);
+                            localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
+                            renderTeacherSubmissions();
+                            populateStudentFilterDropdown();
+                            triggerAdminNotification(`${submission.studentName} (${submission.std}) - સાચા: ${submission.correctCount}/${submission.totalQuestions}`);
+                        }
+                    }
+                });
+            }
+        }
 
         function buildMode2Inputs() {
             const container = document.getElementById('m2QuestionsInputContainer');
@@ -928,27 +955,28 @@
             populateStudentFilterDropdown();
         }
 
-async function generateShortUrlLink() {
-    let longUrl = getFullLongUrl();
-    let inputField = document.getElementById('shareLinkInput');
-    inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
+        async function generateShortUrlLink() {
+            let longUrl = getFullLongUrl();
+            let inputField = document.getElementById('shareLinkInput');
+            inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
 
-    try {
-        let apiUrl = "https://tinyurl.com/api-create.php?url=" + encodeURIComponent(longUrl);
-        let response = await fetch(apiUrl);
-        
-        if (response.ok) {
-            let shortUrl = await response.text();
-            inputField.value = shortUrl;
-            return shortUrl;
-        } else {
-            throw new Error("Shortening failed");
+            try {
+                let apiUrl = "https://tinyurl.com/api-create.php?url=" + encodeURIComponent(longUrl);
+                let response = await fetch(apiUrl);
+                
+                if (response.ok) {
+                    let shortUrl = await response.text();
+                    inputField.value = shortUrl;
+                    return shortUrl;
+                } else {
+                    throw new Error("Shortening failed");
+                }
+            } catch (error) {
+                inputField.value = longUrl;
+                return longUrl;
+            }
         }
-    } catch (error) {
-        inputField.value = longUrl;
-        return longUrl;
-    }
-}
+
         function deleteEntireTest() {
             const testKey = document.getElementById('adminTestSelect').value;
             if (confirm(`શું તમે "${testKey}" ને ડિલીટ કરવા માંગો છો?`)) {
@@ -1110,7 +1138,6 @@ async function generateShortUrlLink() {
             `).join('');
         }
 
-        /* --- 10+ TESTS SINGLE STUDENT MULTI-REPORT LOGIC --- */
         function populateStudentFilterDropdown() {
             const select = document.getElementById('studentFilterSelect');
             select.innerHTML = '<option value="">-- વિદ્યાર્થી પસંદ કરો --</option>';
@@ -1204,6 +1231,9 @@ async function generateShortUrlLink() {
             if(confirm("શું તમે બધા વિદ્યાર્થીઓનો હિસ્ટ્રી ડેટા ડીલીટ કરવા માંગો છો?")) {
                 allSubmissions = [];
                 localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
+                if (typeof database !== 'undefined') {
+                    database.ref('jnv_test_submissions').remove();
+                }
                 renderTeacherSubmissions();
                 populateStudentFilterDropdown();
                 document.getElementById('studentMultiReportContainer').classList.add('hidden');
@@ -1384,15 +1414,16 @@ async function generateShortUrlLink() {
                 details: studentDetails
             };
 
-            // ૧. માર્ક્સ કાયમી સેવ (Local Storage Persistence)
+            // ૧. Local Storage Persistence
             allSubmissions.push(submissionObj);
             localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
 
-  // Firebase માં પરિણામ સેવ કરો
-if (typeof database !== 'undefined') {
-    database.ref('jnv_test_submissions').push(submissionObj);
-}          
-            // ૨. Admin ને Toast નોટિફિકેશન આપવી
+            // ૨. Firebase માં પરિણામ સેવ કરો (જેથી તમારા મોબાઇલમાં રિયલ-ટાઇમ દેખાય)
+            if (typeof database !== 'undefined') {
+                database.ref('jnv_test_submissions').push(submissionObj);
+            }          
+
+            // ૩. Admin Notification
             triggerAdminNotification(`${name} (${std}) - સાચા: ${correctCount}, ખોટા: ${wrongCount} (${percentage}%)`);
 
             document.getElementById('resTotalScore').innerText = `${correctCount} / ${totalQuestions}`;

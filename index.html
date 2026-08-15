@@ -21,7 +21,7 @@
         .correct-card { border-left: 6px solid #10b981 !important; background-color: #f0fdf4 !important; }
         .wrong-card { border-left: 6px solid #ef4444 !important; background-color: #fef2f2 !important; }
 
-        /* Fraction CSS Formatting Fix (અંશ અને છેદ સ્પષ્ટ ઉપર-નીચે દેખાય તે માટે) */
+        /* Fraction CSS Formatting */
         .frac {
             display: inline-flex;
             flex-direction: column;
@@ -165,7 +165,6 @@
                 <p class="text-sm font-semibold text-slate-600">તમે આપેલી ટેસ્ટનું સોલ્યુશન નીચે મુજબ છે:</p>
             </div>
 
-            <!-- Review Container -->
             <div id="reviewContainer" class="space-y-4"></div>
         </section>
 
@@ -186,7 +185,7 @@
                 </div>
             </div>
 
-            <!-- CUSTOM LOGO UPLOAD SECTION -->
+            <!-- LOGO UPLOAD SECTION -->
             <div class="bg-white p-6 rounded-xl shadow border space-y-4">
                 <h3 class="font-bold text-indigo-700 border-b pb-2"><i class="fa-solid fa-image text-indigo-600"></i> શાળા / ક્લાસનો લોગો અપલોડ કરો</h3>
                 <div class="flex flex-col sm:flex-row items-center gap-6">
@@ -439,7 +438,7 @@
             return 'q_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
         }
 
-        /* --- FRACTION REGEX FIX: અંશ અને છેદ સ્પષ્ટ ઉપર-નીચે આવવા માટે --- */
+        /* --- FRACTION REGEX FIX --- */
         function formatFractions(text) {
             if (!text) return "";
             return text
@@ -896,23 +895,27 @@
             populateStudentFilterDropdown();
         }
 
+        /* --- UPDATED URL SHORTENER FUNCTION (TinyURL API + Fallback) --- */
         async function generateShortUrlLink() {
             let longUrl = getFullLongUrl();
             let inputField = document.getElementById('shareLinkInput');
             inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
 
             try {
-                let apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
+                // TinyURL API Call
+                let apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
                 let response = await fetch(apiUrl);
-                let resData = await response.json();
                 
-                if (resData.shorturl) {
-                    inputField.value = resData.shorturl;
-                    return resData.shorturl;
-                } else {
-                    throw new Error("Shortening failed");
+                if (response.ok) {
+                    let shortUrl = await response.text();
+                    if (shortUrl && shortUrl.startsWith('http')) {
+                        inputField.value = shortUrl.trim();
+                        return shortUrl.trim();
+                    }
                 }
+                throw new Error("TinyURL Shortening failed");
             } catch (error) {
+                // Failure fallback to long URL
                 inputField.value = longUrl;
                 return longUrl;
             }
@@ -1076,7 +1079,6 @@
             `).join('');
         }
 
-        /* --- 10+ TESTS SINGLE STUDENT MULTI-REPORT LOGIC --- */
         function populateStudentFilterDropdown() {
             const select = document.getElementById('studentFilterSelect');
             select.innerHTML = '<option value="">-- વિદ્યાર્થી પસંદ કરો --</option>';
@@ -1261,7 +1263,6 @@
             if (selBtn) selBtn.classList.add('selected-ans');
         }
 
-        /* --- SUBMIT QUIZ & NOTIFY ADMIN --- */
         function confirmSubmitQuiz() {
             clearInterval(timerInterval);
             let totalQuestions = flatQuestionsList.length;
@@ -1288,11 +1289,9 @@
                 date: nowTime
             };
 
-            // ૧. માર્ક્સ કાયમી સેવ (Local Storage Persistence)
             allSubmissions.push(submissionObj);
             localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
 
-            // ૨. Admin ને Toast નોટિફિકેશન આપવી
             triggerAdminNotification(`${name} (${std}) એ ટેસ્ટ આપી માર્ક્સ: ${correctCount}/${totalQuestions} (${percentage}%) મેળવ્યા.`);
 
             document.getElementById('resTotalScore').innerText = `${correctCount} / ${totalQuestions}`;

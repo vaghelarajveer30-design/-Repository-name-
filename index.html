@@ -1388,7 +1388,10 @@ async function generateShortUrlLink() {
             allSubmissions.push(submissionObj);
             localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
 
-            // ૨. Admin ને Toast નોટિફિકેશન આપવી
+  // Firebase માં પરિણામ સેવ કરો
+if (typeof database !== 'undefined') {
+    database.ref('jnv_test_submissions').push(submissionObj);
+}          // ૨. Admin ને Toast નોટિફિકેશન આપવી
             triggerAdminNotification(`${name} (${std}) - સાચા: ${correctCount}, ખોટા: ${wrongCount} (${percentage}%)`);
 
             document.getElementById('resTotalScore').innerText = `${correctCount} / ${totalQuestions}`;

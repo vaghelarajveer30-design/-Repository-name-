@@ -220,7 +220,7 @@
                         </button>
                     </div>
 
-                    <!-- Link Box (Fixed Link & WhatsApp Integration) -->
+                    <!-- Link Box -->
                     <div class="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <div class="w-full">
                             <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> શેર કરવા માટેની લિંક:</span>
@@ -890,7 +890,6 @@
             document.getElementById('adminTotalMarks').value = data.meta?.totalMarks || '';
             document.getElementById('adminTimeLimit').value = data.meta?.timeLimit || '';
             
-            // Set initial shareable URL directly
             document.getElementById('shareLinkInput').value = getFullLongUrl();
 
             renderAdminQuestionsList();
@@ -898,7 +897,6 @@
             populateStudentFilterDropdown();
         }
 
-        /* --- FIXED: SHORT URL GENERATOR USING TINYURL API & FALLBACK --- */
         async function generateShortUrlLink() {
             let longUrl = getFullLongUrl();
             let inputField = document.getElementById('shareLinkInput');
@@ -916,7 +914,6 @@
                 }
                 throw new Error("Shortening failed");
             } catch (error) {
-                // If shortening service is unavailable, fallback gracefully to full URL
                 inputField.value = longUrl;
                 return longUrl;
             }
@@ -939,7 +936,6 @@
             alert("લિંક કોપી થઈ ગઈ છે!");
         }
 
-        /* --- FIXED: WHATSAPP DIRECT SHARE API --- */
         async function shareWhatsApp() {
             let inputField = document.getElementById("shareLinkInput");
             let link = inputField.value;
@@ -1066,6 +1062,7 @@
 
         function renderTeacherSubmissions() {
             const container = document.getElementById('submissionsList');
+            allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions_v2') || '[]');
             const currentTestSubmissions = allSubmissions.filter(s => s.testName === currentActiveTest);
 
             if (currentTestSubmissions.length === 0) {
@@ -1085,7 +1082,8 @@
             const select = document.getElementById('studentFilterSelect');
             select.innerHTML = '<option value="">-- વિદ્યાર્થી પસંદ કરો --</option>';
 
-            let studentNames = [...new Set(allSubmissions.map(s => s.studentName.trim()))];
+            allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions_v2') || '[]');
+            let studentNames = [...new Set(allSubmissions.map(s => s.studentName ? s.studentName.trim() : ''))].filter(n => n !== '');
             studentNames.forEach(name => {
                 let opt = document.createElement('option');
                 opt.value = name;
@@ -1104,7 +1102,8 @@
                 return;
             }
 
-            let studentTests = allSubmissions.filter(s => s.studentName.trim().toLowerCase() === studentName.toLowerCase());
+            allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions_v2') || '[]');
+            let studentTests = allSubmissions.filter(s => s.studentName && s.studentName.trim().toLowerCase() === studentName.toLowerCase());
             document.getElementById('selectedStudentTitle').innerText = studentName + " નું પરિણામ પત્રક";
             document.getElementById('selectedStudentTotalCount').innerText = `કુલ ટેસ્ટ: ${studentTests.length}`;
 
@@ -1265,6 +1264,7 @@
             if (selBtn) selBtn.classList.add('selected-ans');
         }
 
+        /* --- ACCURATE RESULT & SUBMISSION RECORD FIX --- */
         function confirmSubmitQuiz() {
             clearInterval(timerInterval);
             let totalQuestions = flatQuestionsList.length;
@@ -1272,17 +1272,23 @@
 
             flatQuestionsList.forEach(q => {
                 let qId = q.id;
-                let userAns = userAnswers[qId]?.selected;
+                let userAns = userAnswers[qId] ? userAnswers[qId].selected : null;
                 let correctAns = q.correct || q.c;
-                if (userAns === correctAns) correctCount++;
+                if (userAns && userAns === correctAns) {
+                    correctCount++;
+                }
             });
 
-            const name = document.getElementById('studentName').value;
-            const std = document.getElementById('studentStd').value;
+            const nameInput = document.getElementById('studentName');
+            const stdInput = document.getElementById('studentStd');
+            const name = nameInput ? nameInput.value.trim() : "અજ્ઞાત વિદ્યાર્થી";
+            const std = stdInput ? stdInput.value : "ધોરણ 5";
+            
             let percentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
             let nowTime = new Date().toLocaleString('gu-IN');
 
             let submissionObj = {
+                id: generateUniqueId(),
                 testName: currentActiveTest,
                 studentName: name,
                 std: std,
@@ -1291,6 +1297,7 @@
                 date: nowTime
             };
 
+            allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions_v2') || '[]');
             allSubmissions.push(submissionObj);
             localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
 

@@ -12,12 +12,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- LZ-String Compression Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <!-- html2pdf Library for generating PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Hind Vadodara', sans-serif; background-color: #f1f5f9; }
         .selected-ans { background-color: #e0e7ff !important; border-color: #6366f1 !important; font-weight: bold; color: #4338ca !important; }
         .sticky-passage { position: sticky; top: 85px; max-height: calc(100vh - 120px); overflow-y: auto; }
         .correct-card { border-left: 6px solid #10b981 !important; background-color: #f0fdf4 !important; }
         .wrong-card { border-left: 6px solid #ef4444 !important; background-color: #fef2f2 !important; }
+
+        /* Fraction CSS Formatting */
+        .frac {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            font-size: 0.95em;
+            padding: 0 4px;
+            line-height: 1.1;
+        }
+        .frac-num {
+            border-bottom: 1.5px solid currentColor;
+            padding-bottom: 1px;
+            font-weight: bold;
+        }
+        .frac-den {
+            padding-top: 1px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="text-slate-800">
@@ -26,11 +48,14 @@
     <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-graduation-cap text-2xl text-yellow-300"></i>
-                <h1 class="text-xl font-bold tracking-wide">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
+                <div id="headerLogoContainer" class="w-10 h-10 rounded-full bg-indigo-800 flex items-center justify-center overflow-hidden border border-amber-300">
+                    <i class="fa-solid fa-graduation-cap text-xl text-yellow-300" id="headerDefaultLogo"></i>
+                    <img id="headerCustomLogo" src="" class="hidden w-full h-full object-cover">
+                </div>
+                <h1 class="text-xl font-bold tracking-wide" id="mainHeaderTitle">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
             </div>
             <div>
-                <button onclick="promptTeacherLogin()" class="bg-indigo-800 hover:bg-indigo-900 px-3 py-1.5 rounded-lg text-sm font-semibold transition border border-indigo-500 flex items-center gap-2 cursor-pointer">
+                <button onclick="promptTeacherLogin()" class="bg-indigo-800 hover:bg-indigo-900 px-3 py-1.5 rounded-lg text-sm font-semibold transition border border-indigo-500 flex items-center gap-2">
                     <i class="fa-solid fa-user-shield text-yellow-300"></i> શિક્ષક ડેશબોર્ડ (Admin)
                 </button>
             </div>
@@ -42,8 +67,9 @@
         <!-- 1. STUDENT REGISTRATION SCREEN -->
         <section id="studentRegScreen" class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl border border-slate-200 mt-6">
             <div class="text-center mb-6">
-                <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-indigo-700 text-2xl">
-                    <i class="fa-solid fa-user-pen"></i>
+                <div id="studentLogoContainer" class="w-20 h-20 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-3 text-indigo-700 text-3xl shadow overflow-hidden border-2 border-indigo-300">
+                    <i class="fa-solid fa-user-pen" id="studentDefaultLogo"></i>
+                    <img id="studentCustomLogo" src="" class="hidden w-full h-full object-cover">
                 </div>
                 <h2 class="text-2xl font-bold text-slate-800">નિર્મળા નવોદય સ્ટડી ઝોન</h2>
                 <p id="studentTestTitle" class="text-indigo-600 font-bold text-lg mt-1">ઓનલાઇન કસોટી</p>
@@ -69,23 +95,17 @@
                     <label class="block text-slate-700 text-sm font-semibold mb-1">વિદ્યાર્થીનું પૂરું નામ *</label>
                     <input type="text" id="studentName" required placeholder="દા.ત. રમેશભાઈ પટેલ" class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500">
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-slate-700 text-sm font-semibold mb-1">ધોરણ *</label>
-                        <select id="studentStd" required class="w-full px-4 py-2 rounded-lg border bg-white font-semibold">
-                            <option value="ધોરણ 5" selected>ધોરણ 5</option>
-                            <option value="ધોરણ 6">ધોરણ 6</option>
-                            <option value="ધોરણ 7">ધોરણ 7</option>
-                            <option value="ધોરણ 8">ધોરણ 8</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-slate-700 text-sm font-semibold mb-1">રોલ નંબર *</label>
-                        <input type="text" id="studentRoll" required placeholder="101" class="w-full px-4 py-2 rounded-lg border">
-                    </div>
+                <div>
+                    <label class="block text-slate-700 text-sm font-semibold mb-1">ધોરણ *</label>
+                    <select id="studentStd" required class="w-full px-4 py-2 rounded-lg border bg-white font-semibold">
+                        <option value="ધોરણ 5" selected>ધોરણ 5</option>
+                        <option value="ધોરણ 6">ધોરણ 6</option>
+                        <option value="ધોરણ 7">ધોરણ 7</option>
+                        <option value="ધોરણ 8">ધોરણ 8</option>
+                    </select>
                 </div>
                 
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow mt-2 cursor-pointer">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow mt-2">
                     ટેસ્ટ શરૂ કરો
                 </button>
             </form>
@@ -94,25 +114,28 @@
         <!-- 2. LIVE QUIZ SCREEN -->
         <section id="quizScreen" class="hidden">
             <div class="bg-white p-4 rounded-xl shadow border border-slate-200 mb-6 flex justify-between items-center sticky top-16 z-40">
-                <div>
-                    <span class="font-bold text-indigo-600 text-lg block" id="quizTitleDisplay">ટેસ્ટ ચાલુ છે...</span>
-                    <span class="text-xs text-slate-500 font-semibold" id="quizSubDisplay">વિષય: -</span>
+                <div class="flex items-center gap-3">
+                    <img id="quizHeaderCustomLogo" src="" class="hidden w-8 h-8 rounded-full object-cover">
+                    <div>
+                        <span class="font-bold text-indigo-600 text-lg block" id="quizTitleDisplay">ટેસ્ટ ચાલુ છે...</span>
+                        <span class="text-xs text-slate-500 font-semibold" id="quizSubDisplay">વિષય: -</span>
+                    </div>
                 </div>
                 <div class="bg-red-50 border border-red-200 px-4 py-1.5 rounded-lg text-red-600 font-mono font-bold text-xl">
                     <span id="timerDisplay">00:00</span>
                 </div>
             </div>
 
-            <div id="quizQuestionsContainer"></div>
+            <div id="quizQuestionsContainer" class="space-y-8"></div>
 
             <div class="mt-8 text-center pb-10">
-                <button onclick="confirmSubmitQuiz()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg cursor-pointer">
+                <button onclick="confirmSubmitQuiz()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg">
                     ટેસ્ટ સબમિટ કરો
                 </button>
             </div>
         </section>
 
-        <!-- 3. STUDENT RESULT SCREEN WITH FULL TEST REVIEW -->
+        <!-- 3. STUDENT RESULT SCREEN -->
         <section id="resultScreen" class="hidden max-w-4xl mx-auto space-y-6">
             <div class="bg-white p-8 rounded-2xl shadow border text-center space-y-4">
                 <div class="text-emerald-600 text-5xl mb-2"><i class="fa-solid fa-circle-check"></i></div>
@@ -131,20 +154,40 @@
                 <p class="text-sm font-semibold text-slate-600">તમે આપેલી ટેસ્ટનું સોલ્યુશન નીચે મુજબ છે:</p>
             </div>
 
+            <!-- Review Container -->
             <div id="reviewContainer" class="space-y-4"></div>
         </section>
 
-        <!-- 4. ADMIN PANEL (ONLY TEACHER) -->
+        <!-- 4. ADMIN PANEL (TEACHER) -->
         <section id="adminScreen" class="hidden space-y-6">
             <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow border">
                 <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-sliders text-indigo-600"></i> શિક્ષક એડમિન પેનલ</h2>
-                <div class="flex gap-2">
-                    <button onclick="openQuestionBankModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-1.5 rounded border text-sm font-bold shadow flex items-center gap-1 cursor-pointer">
-                        <i class="fa-solid fa-boxes-stacked"></i> પ્રશ્ન બેંક (Question Bank)
+                <div class="flex gap-2 flex-wrap">
+                    <button onclick="exportTestToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded border text-sm font-bold shadow flex items-center gap-1">
+                        <i class="fa-solid fa-file-pdf"></i> PDF ડાઉનલોડ
                     </button>
-                    <button onclick="switchView('student')" class="bg-slate-100 hover:bg-slate-200 px-4 py-1.5 rounded border text-sm font-semibold cursor-pointer">
-                        <i class="fa-solid fa-eye"></i> વિદ્યાર્થી મોડ જુઓ
+                    <button onclick="openQuestionBankModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded border text-sm font-bold shadow flex items-center gap-1">
+                        <i class="fa-solid fa-boxes-stacked"></i> પ્રશ્ન બેંક
                     </button>
+                    <button onclick="switchView('student')" class="bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded border text-sm font-semibold">
+                        <i class="fa-solid fa-eye"></i> વિદ્યાર્થી મોડ
+                    </button>
+                </div>
+            </div>
+
+            <!-- CUSTOM LOGO UPLOAD SECTION -->
+            <div class="bg-white p-6 rounded-xl shadow border space-y-4">
+                <h3 class="font-bold text-indigo-700 border-b pb-2"><i class="fa-solid fa-image text-indigo-600"></i> શાળા / ક્લાસનો લોગો અપલોડ કરો</h3>
+                <div class="flex flex-col sm:flex-row items-center gap-6">
+                    <div class="w-24 h-24 rounded-2xl border-2 border-dashed border-indigo-300 flex items-center justify-center overflow-hidden bg-slate-50 relative">
+                        <img id="adminLogoPreview" src="" class="hidden w-full h-full object-cover">
+                        <i id="adminLogoPlaceholder" class="fa-solid fa-school text-3xl text-indigo-400"></i>
+                    </div>
+                    <div class="space-y-2 flex-1">
+                        <label class="block text-xs font-bold text-slate-700">તમારા ઉપકરણમાંથી લોગો પસંદ કરો:</label>
+                        <input type="file" id="customLogoInput" accept="image/*" onchange="handleLogoUpload(event)" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                        <button onclick="resetCustomLogo()" class="text-xs text-rose-600 font-bold hover:underline">ડિફોલ્ટ લોગો પાછો લાવો</button>
+                    </div>
                 </div>
             </div>
 
@@ -157,29 +200,29 @@
                                 <option value="Test 1">ટેસ્ટ ૧ (Test 1)</option>
                             </select>
                             
-                            <button onclick="deleteEntireTest()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1 shadow cursor-pointer">
+                            <button onclick="deleteEntireTest()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1 shadow">
                                 <i class="fa-solid fa-trash-can"></i> આ ટેસ્ટ ડિલીટ કરો
                             </button>
                         </div>
-                        <button onclick="openNewTestModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm cursor-pointer">
+                        <button onclick="createNewTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm">
                             <i class="fa-solid fa-plus"></i> નવી ટેસ્ટ બનાવો
                         </button>
                     </div>
 
-                    <!-- Short Link Box -->
+                    <!-- Link Box -->
                     <div class="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <div class="w-full">
                             <span class="text-xs font-bold text-indigo-700 block mb-1"><i class="fa-solid fa-link"></i> શેર કરવા માટેની લિંક:</span>
                             <input type="text" id="shareLinkInput" readonly value="લિંક જનરેટ થઈ રહી છે..." class="w-full bg-slate-100 p-2 text-xs rounded border text-slate-700 font-bold resize-none">
                         </div>
                         <div class="flex gap-2 w-full sm:w-auto justify-end">
-                            <button onclick="generateShortUrlLink()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow flex items-center gap-1 cursor-pointer">
+                            <button onclick="generateShortUrlLink()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow flex items-center gap-1">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i> લિંક ટૂંકી કરો
                             </button>
-                            <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow cursor-pointer">
+                            <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap shadow">
                                 કોપી કરો
                             </button>
-                            <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap flex items-center gap-1 shadow cursor-pointer">
+                            <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-2 rounded text-xs whitespace-nowrap flex items-center gap-1 shadow">
                                 <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
                             </button>
                         </div>
@@ -199,50 +242,66 @@
                             <input type="number" id="adminTimeLimit" placeholder="60" class="w-full p-2 border rounded text-sm">
                         </div>
                     </div>
-                    <button onclick="saveTestMetaSettings()" class="bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow cursor-pointer">
+                    <button onclick="saveTestMetaSettings()" class="bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow">
                         સેટિંગ્સ સેવ કરો
                     </button>
                 </div>
 
                 <!-- Builder Tabs -->
                 <div class="flex border-b gap-2 overflow-x-auto">
-                    <button id="mode1Btn" onclick="setBuilderMode(1)" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap cursor-pointer">
+                    <button id="mode1Btn" onclick="setBuilderMode(1)" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap">
                         વિકલ્પ ૧: ગણિત / સામાન્ય MCQ
                     </button>
-                    <button id="mode2Btn" onclick="setBuilderMode(2)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap cursor-pointer">
-                        વિકલ્પ ૨: ફકરો + ૫ પ્રશ્નો
+                    <button id="mode2Btn" onclick="setBuilderMode(2)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap">
+                        વિકલ્પ ૨: ફકરા વાળા પ્રશ્નો (૫ પ્રશ્નો એક ફકરા સાથે)
                     </button>
-                    <button id="mode3Btn" onclick="setBuilderMode(3)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap cursor-pointer">
+                    <button id="mode3Btn" onclick="setBuilderMode(3)" class="px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap">
                         વિકલ્પ ૩: આકૃતિ વાળા પ્રશ્નો
                     </button>
                 </div>
 
                 <!-- MODE 1 -->
                 <div id="builderMode1" class="space-y-4 bg-slate-50 p-4 rounded-xl border">
-                    <textarea id="m1RawText" rows="5" placeholder="પ્રશ્ન અને ૪ વિકલ્પો પેસ્ટ કરો...&#10;૧. 25 + 35 = ?&#10;(A) 50&#10;(B) 60&#10;(C) 70&#10;(D) 80" class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
+                    <p class="text-xs text-indigo-700 font-bold"><i class="fa-solid fa-circle-info"></i> ગણિતમાં અપૂર્ણાંક માટે તમે 3/4 અથવા {3/4} લખશો તો તે અંશ અને છેદમાં ડિસ્પ્લે થશે.</p>
+                    <textarea id="m1RawText" rows="5" placeholder="પ્રશ્ન અને ૪ વિકલ્પો પેસ્ટ કરો...&#10;૧. 2/4 + 1/4 = ?&#10;(A) 3/4&#10;(B) 1/2&#10;(C) 2/4&#10;(D) 1" class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
                     <div class="flex items-center gap-4">
                         <label class="text-sm font-bold text-slate-700">સાચો જવાબ:</label>
                         <select id="m1Correct" class="p-2 border rounded bg-white font-bold text-emerald-600">
                             <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
                         </select>
-                        <button onclick="addSingleMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm cursor-pointer">પ્રશ્ન ઉમેરો</button>
+                        <button onclick="addSingleMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">પ્રશ્ન ઉમેરો</button>
                     </div>
                 </div>
 
-                <!-- MODE 2 -->
-                <div id="builderMode2" class="hidden space-y-4 bg-slate-50 p-4 rounded-xl border">
-                    <textarea id="m2Passage" rows="4" placeholder="અહીં ફકરો પેસ્ટ કરો..." class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
-                    <textarea id="m2Questions" rows="6" placeholder="૫ પ્રશ્નો (વિકલ્પો સાથે) અહી પેસ્ટ કરો..." class="w-full p-3 border rounded-lg bg-white text-sm"></textarea>
-                    <button onclick="addPassageGroup()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm cursor-pointer">ફકરો અને પ્રશ્નો ઉમેરો</button>
+                <!-- MODE 2 (Passage + 5 Questions) -->
+                <div id="builderMode2" class="hidden space-y-6 bg-slate-50 p-4 rounded-xl border">
+                    <div class="bg-white p-4 rounded-lg border space-y-4">
+                        <h4 class="font-bold text-indigo-700 border-b pb-2"><i class="fa-solid fa-paragraph"></i> ફકરો અને તેના ૫ પ્રશ્નો એકસાથે ઉમેરો</h4>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">૧. ફકરાનું લખાણ:</label>
+                            <textarea id="m2PassageText" rows="4" placeholder="અહીં ફકરાનું લખાણ પેસ્ટ કરો..." class="w-full p-3 border rounded-lg text-sm bg-slate-50"></textarea>
+                        </div>
+                        
+                        <div class="space-y-3 pt-2">
+                            <label class="block text-xs font-bold text-slate-700">૨. આ ફકરાના ૫ પ્રશ્નો ઉમેરો:</label>
+                            <div id="m2QuestionsInputContainer" class="space-y-4">
+                                <!-- 5 Question inputs will be dynamically generated or hardcoded -->
+                            </div>
+                        </div>
+
+                        <button onclick="addPassageWith5Questions()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-lg text-sm shadow">
+                            <i class="fa-solid fa-plus-circle"></i> આ ફકરો + ૫ પ્રશ્નો સેવ કરો અને પ્રશ્ન બેંકમાં ઉમેરો
+                        </button>
+                    </div>
                 </div>
 
                 <!-- MODE 3 -->
                 <div id="builderMode3" class="hidden space-y-4 bg-slate-50 p-4 rounded-xl border">
                     <div class="border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-4 rounded-xl text-center">
                         <label class="block text-sm font-bold text-slate-700 mb-2">
-                            <i class="fa-solid fa-image text-indigo-600"></i> આકૃતિ અપલોડ કરો અથવા ઈમેજ Paste (Ctrl+V) કરો:
+                            <i class="fa-solid fa-image text-indigo-600"></i> ઉપકરણમાંથી આકૃતિ પસંદ કરો (Ctrl+V પણ ચાલશે):
                         </label>
-                        <input type="file" id="m3FileInput" accept="image/*" onchange="handleImageUpload(event)" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                        <input type="file" id="m3FileInput" accept="image/*" onchange="handleImageUploadDirect(event)" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
                         
                         <div id="imgPreviewContainer" class="hidden mt-3">
                             <img id="m3ImgPreview" src="" class="max-h-40 mx-auto rounded-lg border shadow">
@@ -257,14 +316,14 @@
                         <select id="m3Correct" class="p-2 border rounded bg-white font-bold text-emerald-600">
                             <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
                         </select>
-                        <button onclick="addImageMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm cursor-pointer">આકૃતિ પ્રશ્ન ઉમેરો</button>
+                        <button onclick="addImageMCQ()" class="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg text-sm">આકૃતિ પ્રશ્ન ઉમેરો</button>
                     </div>
                 </div>
 
                 <div class="mt-6 border-t pt-4">
                     <h4 class="font-bold text-slate-800 mb-3 flex justify-between">
                         <span>હાલના ટેસ્ટમાં ઉમેરેલા પ્રશ્નો (<span id="qCountDisplay">0</span>)</span>
-                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold cursor-pointer">આ ટેસ્ટના પ્રશ્નો ભૂસી નાખો</button>
+                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold">આ ટેસ્ટના બધા પ્રશ્નો ભૂસી નાખો</button>
                     </h4>
                     <div id="adminQuestionsList" class="space-y-3"></div>
                 </div>
@@ -276,83 +335,50 @@
             </div>
         </section>
 
+        <!-- 5. QUESTION BANK MODAL POPUP -->
+        <div id="qBankModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+                <div class="bg-indigo-700 text-white p-4 flex justify-between items-center">
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-boxes-stacked text-amber-300"></i> પ્રશ્ન બેંક (Question Bank)
+                    </h3>
+                    <button onclick="closeQuestionBankModal()" class="text-white hover:text-slate-200 text-xl font-bold">&times;</button>
+                </div>
+
+                <div class="flex border-b bg-slate-100 p-2 gap-2 overflow-x-auto">
+                    <button id="qbTab1Btn" onclick="switchQbTab('mcq')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-indigo-600 text-white">
+                        ૧. ગણિત / સામાન્ય MCQ (<span id="qbMcqCount">0</span>)
+                    </button>
+                    <button id="qbTab2Btn" onclick="switchQbTab('passage')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200">
+                        ૨. ફકરાઓ + ૫ પ્રશ્નો (<span id="qbPassageCount">0</span>)
+                    </button>
+                    <button id="qbTab3Btn" onclick="switchQbTab('image')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200">
+                        ૩. આકૃતિ વાળા (<span id="qbImageCount">0</span>)
+                    </button>
+                </div>
+
+                <div class="p-4 overflow-y-auto flex-1 space-y-3" id="qbQuestionsContainer"></div>
+
+                <div class="p-4 border-t bg-slate-50 flex justify-between items-center">
+                    <span class="text-xs font-bold text-slate-600">પસંદ કરેલા ફકરા/પ્રશ્નો ૧-ક્લિકમાં હાલની ટેસ્ટમાં ઉમેરાશે.</span>
+                    <button onclick="importSelectedToCurrentTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-sm shadow">
+                        <i class="fa-solid fa-file-import"></i> હાલની ટેસ્ટમાં ઇમ્પોર્ટ કરો
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HIDDEN DIV FOR PDF PRINTING -->
+        <div id="pdfExportContainer" class="hidden p-8 bg-white text-slate-800"></div>
+
     </main>
 
-    <!-- 5. ADMIN LOGIN MODAL -->
-    <div id="adminLoginModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
-            <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-indigo-700 text-2xl">
-                <i class="fa-solid fa-user-shield"></i>
-            </div>
-            <h3 class="text-xl font-bold text-slate-800">શિક્ષક લૉગિન (Admin)</h3>
-            <p class="text-sm text-slate-500">એડમિન પેનલ ખોલવા માટે પાસવર્ડ દાખલ કરો:</p>
-            
-            <input type="password" id="adminPasswordInput" placeholder="પાસવર્ડ દાખલ કરો" class="w-full px-4 py-2.5 rounded-xl border text-center font-bold text-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-            <p id="adminLoginError" class="text-xs text-rose-600 font-bold hidden"><i class="fa-solid fa-circle-exclamation"></i> ખોટો પાસવર્ડ! ફરી પ્રયત્ન કરો.</p>
-            
-            <div class="flex gap-3 pt-2">
-                <button onclick="closeAdminLoginModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-sm cursor-pointer">કેન્સલ</button>
-                <button onclick="verifyAdminPassword()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm shadow cursor-pointer">લૉગિન કરો</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 6. NEW TEST CREATION MODAL -->
-    <div id="newTestModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
-            <h3 class="text-xl font-bold text-slate-800">નવી ટેસ્ટ બનાવો</h3>
-            <input type="text" id="newTestNameInput" placeholder="ટેસ્ટનું નામ (દા.ત. ટેસ્ટ ૨)" class="w-full px-4 py-2 rounded-xl border font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none">
-            <div class="flex gap-3 pt-2">
-                <button onclick="closeNewTestModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl text-sm cursor-pointer">કેન્સલ</button>
-                <button onclick="createNewTestConfirm()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-sm shadow cursor-pointer">બનાવો</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 7. QUESTION BANK MODAL POPUP -->
-    <div id="qBankModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="bg-indigo-700 text-white p-4 flex justify-between items-center">
-                <h3 class="text-lg font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-boxes-stacked text-amber-300"></i> પ્રશ્ન બેંક (Question Bank)
-                </h3>
-                <button onclick="closeQuestionBankModal()" class="text-white hover:text-slate-200 text-xl font-bold cursor-pointer">&times;</button>
-            </div>
-
-            <!-- Tabs inside Question Bank -->
-            <div class="flex border-b bg-slate-100 p-2 gap-2 overflow-x-auto">
-                <button id="qbTab1Btn" onclick="switchQbTab('mcq')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-indigo-600 text-white cursor-pointer">
-                    ૧. ગણિત / સામાન્ય MCQ (<span id="qbMcqCount">0</span>)
-                </button>
-                <button id="qbTab2Btn" onclick="switchQbTab('passage')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200 cursor-pointer">
-                    ૨. ફકરાઓ (<span id="qbPassageCount">0</span>)
-                </button>
-                <button id="qbTab3Btn" onclick="switchQbTab('image')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200 cursor-pointer">
-                    ૩. આકૃતિ વાળા (<span id="qbImageCount">0</span>)
-                </button>
-            </div>
-
-            <div class="p-4 overflow-y-auto flex-1 space-y-3" id="qbQuestionsContainer">
-                <!-- Dynamic Question Bank Items -->
-            </div>
-
-            <div class="p-4 border-t bg-slate-50 flex justify-between items-center">
-                <span class="text-xs font-bold text-slate-600">પસંદ કરેલા પ્રશ્નો પ્રશ્ન બેંકમાં હંમેશા સુરક્ષિત રહેશે અને ટેસ્ટમાં ઉમેરાશે.</span>
-                <button onclick="importSelectedToCurrentTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-sm shadow cursor-pointer">
-                    <i class="fa-solid fa-file-import"></i> હાલની ટેસ્ટમાં ઉમેરો
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; 
-
         let currentUploadedImgUrl = "";
-        let allTestData = JSON.parse(localStorage.getItem('jnv_test_data_v5') || '{}');
+        let customLogoBase64 = localStorage.getItem('jnv_custom_logo') || "";
+        let allTestData = JSON.parse(localStorage.getItem('jnv_test_data_v6') || '{}');
         let allSubmissions = JSON.parse(localStorage.getItem('jnv_test_submissions') || '[]');
-        
-        let questionBank = JSON.parse(localStorage.getItem('jnv_question_bank') || '{"mcq":[], "passage":[], "image":[]}');
+        let questionBank = JSON.parse(localStorage.getItem('jnv_question_bank_v6') || '{"mcq":[], "passage":[], "image":[]}');
 
         let currentActiveTest = "Test 1";
         let activeTestData = { meta: {}, items: [] };
@@ -363,6 +389,13 @@
 
         function generateUniqueId() {
             return 'q_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        }
+
+        function formatFractions(text) {
+            if (!text) return "";
+            return text
+                .replace(/\{(\d+)\/(\d+)\}/g, '<span class="frac"><span class="frac-num">$1</span><span class="frac-den">$2</span></span>')
+                .replace(/\b(\d+)\/(\d+)\b/g, '<span class="frac"><span class="frac-num">$1</span><span class="frac-den">$2</span></span>');
         }
 
         function compressData(obj) {
@@ -424,35 +457,10 @@
             }
         }
 
-        function syncExistingQuestionsToBank() {
-            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
-            let hasNew = false;
-
-            Object.keys(allTestData).forEach(testKey => {
-                let items = allTestData[testKey]?.items || [];
-                items.forEach(item => {
-                    let targetArr = [];
-                    if (item.type === 'mcq' || item.t === 'm') targetArr = questionBank.mcq;
-                    else if (item.type === 'passage_group' || item.t === 'p') targetArr = questionBank.passage;
-                    else if (item.type === 'image_mcq' || item.t === 'i') targetArr = questionBank.image;
-
-                    let exists = targetArr.some(qb => qb.question === (item.question || item.q) && JSON.stringify(qb.options || qb.o) === JSON.stringify(item.options || item.o));
-                    
-                    if (!exists) {
-                        let newItem = JSON.parse(JSON.stringify(item));
-                        if (!newItem.type) newItem.type = newItem.t === 'p' ? 'passage_group' : newItem.t === 'i' ? 'image_mcq' : 'mcq';
-                        targetArr.push(newItem);
-                        hasNew = true;
-                    }
-                });
-            });
-
-            if (hasNew) {
-                localStorage.setItem('jnv_question_bank', JSON.stringify(questionBank));
-            }
-        }
-
         window.onload = function() {
+            renderCustomLogoUI();
+            buildMode2Inputs();
+
             const urlParams = new URLSearchParams(window.location.search);
             const dataParam = urlParams.get('data');
 
@@ -473,175 +481,171 @@
                 activeTestData = allTestData[currentActiveTest];
             }
 
-            syncExistingQuestionsToBank();
             refreshSelectDropdown();
             setupStudentView();
             setupPasteListener();
         };
 
-        function refreshSelectDropdown() {
-            let select = document.getElementById('adminTestSelect');
-            if(!select) return;
-            select.innerHTML = "";
-            let keys = Object.keys(allTestData);
-            if(keys.length === 0) {
-                allTestData["Test 1"] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
-                keys = ["Test 1"];
+        function buildMode2Inputs() {
+            const container = document.getElementById('m2QuestionsInputContainer');
+            container.innerHTML = "";
+            for (let i = 1; i <= 5; i++) {
+                container.innerHTML += `
+                    <div class="p-3 border rounded-lg bg-slate-50 space-y-2">
+                        <span class="font-bold text-xs text-indigo-700">પ્રશ્ન ${i}</span>
+                        <textarea id="m2QText_${i}" rows="2" placeholder="પ્રશ્ન અને વિકલ્પો...&#10;${i}. પ્રશ્ન લખાણ&#10;(A) વિકલ્પ ૧ (B) વિકલ્પ ૨ (C) વિકલ્પ ૩ (D) વિકલ્પ ૪" class="w-full p-2 border rounded text-xs bg-white"></textarea>
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="font-bold text-slate-600">સાચો જવાબ:</span>
+                            <select id="m2QAns_${i}" class="p-1 border rounded font-bold text-emerald-600">
+                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
             }
-            keys.forEach(k => {
-                let opt = document.createElement('option');
-                opt.value = k;
-                opt.innerText = k;
-                select.appendChild(opt);
-            });
-            if(keys.includes(currentActiveTest)) {
-                select.value = currentActiveTest;
+        }
+
+        function renderCustomLogoUI() {
+            const hDef = document.getElementById('headerDefaultLogo');
+            const hCust = document.getElementById('headerCustomLogo');
+            const sDef = document.getElementById('studentDefaultLogo');
+            const sCust = document.getElementById('studentCustomLogo');
+            const qCust = document.getElementById('quizHeaderCustomLogo');
+            const aPrev = document.getElementById('adminLogoPreview');
+            const aPlace = document.getElementById('adminLogoPlaceholder');
+
+            if (customLogoBase64) {
+                hDef.classList.add('hidden'); hCust.src = customLogoBase64; hCust.classList.remove('hidden');
+                sDef.classList.add('hidden'); sCust.src = customLogoBase64; sCust.classList.remove('hidden');
+                qCust.src = customLogoBase64; qCust.classList.remove('hidden');
+                aPlace.classList.add('hidden'); aPrev.src = customLogoBase64; aPrev.classList.remove('hidden');
             } else {
-                select.value = keys[0];
-                currentActiveTest = keys[0];
+                hDef.classList.remove('hidden'); hCust.classList.add('hidden');
+                sDef.classList.remove('hidden'); sCust.classList.add('hidden');
+                qCust.classList.add('hidden');
+                aPlace.classList.remove('hidden'); aPrev.classList.add('hidden');
             }
+        }
+
+        function handleLogoUpload(e) {
+            let file = e.target.files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function(evt) {
+                    customLogoBase64 = evt.target.result;
+                    localStorage.setItem('jnv_custom_logo', customLogoBase64);
+                    renderCustomLogoUI();
+                    alert("લોગો સફળતાપૂર્વક અપલોડ થઈ ગયો છે!");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function resetCustomLogo() {
+            if (confirm("ડિફોલ્ટ લોગો રાખવો છે?")) {
+                customLogoBase64 = "";
+                localStorage.removeItem('jnv_custom_logo');
+                renderCustomLogoUI();
+            }
+        }
+
+        function processFileToBase64(file) {
+            const statusText = document.getElementById('uploadStatus');
+            const previewImg = document.getElementById('m3ImgPreview');
+            const previewBox = document.getElementById('imgPreviewContainer');
+            previewBox.classList.remove('hidden');
+            statusText.innerText = "ઈમેજ પ્રોસેસ થઈ રહી છે...";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentUploadedImgUrl = e.target.result;
+                previewImg.src = currentUploadedImgUrl;
+                statusText.innerText = "✓ ઈમેજ સફળતાપૂર્વક લોડ થઈ ગઈ!";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleImageUploadDirect(e) {
+            let file = e.target.files[0];
+            if (file) processFileToBase64(file);
         }
 
         function setupPasteListener() {
             document.addEventListener('paste', function (e) {
-                const mode3 = document.getElementById('builderMode3');
-                if (mode3 && mode3.classList.contains('hidden')) return;
+                if (document.getElementById('builderMode3').classList.contains('hidden')) return;
                 let items = (e.clipboardData || e.originalEvent.clipboardData).items;
                 for (let index in items) {
                     let item = items[index];
                     if (item.kind === 'file' && item.type.includes('image')) {
-                        let blob = item.getAsFile();
-                        uploadImageToImgBB(blob);
+                        processFileToBase64(item.getAsFile());
                     }
                 }
             });
         }
 
-        function handleImageUpload(e) {
-            let file = e.target.files[0];
-            if (file) {
-                uploadImageToImgBB(file);
-            }
-        }
-
-        function uploadImageToImgBB(file) {
-            const statusText = document.getElementById('uploadStatus');
-            const previewImg = document.getElementById('m3ImgPreview');
-            const previewBox = document.getElementById('imgPreviewContainer');
-
-            previewBox.classList.remove('hidden');
-            statusText.innerText = "આકૃતિ અપલોડ થઈ રહી છે...";
-            statusText.className = "text-xs font-bold text-amber-600 mt-1 block";
-
-            const reader = new FileReader();
-            reader.onload = function(e) { previewImg.src = e.target.result; }
-            reader.readAsDataURL(file);
-
-            let formData = new FormData();
-            formData.append("image", file);
-
-            fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                method: "POST",
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    currentUploadedImgUrl = data.data.url;
-                    statusText.innerText = "✓ આકૃતિ સેટ થઈ ગઈ!";
-                    statusText.className = "text-xs font-bold text-emerald-600 mt-1 block";
-                } else {
-                    currentUploadedImgUrl = previewImg.src;
-                    statusText.innerText = "લોકલ ઈમેજ સેટ થઈ છે.";
-                }
-            })
-            .catch(() => {
-                currentUploadedImgUrl = previewImg.src;
-                statusText.innerText = "ઈમેજ સેટ થઈ ગઈ છે.";
-            });
-        }
-
         function saveToQuestionBank(item) {
             if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
-            if (!questionBank.mcq) questionBank.mcq = [];
-            if (!questionBank.passage) questionBank.passage = [];
-            if (!questionBank.image) questionBank.image = [];
-
             let qbItem = JSON.parse(JSON.stringify(item));
-            qbItem.id = generateUniqueId();
-            
-            if (qbItem.type === 'mcq' || qbItem.t === 'm') {
-                questionBank.mcq.push(qbItem);
-            } else if (qbItem.type === 'passage_group' || qbItem.t === 'p') {
-                questionBank.passage.push(qbItem);
-            } else if (qbItem.type === 'image_mcq' || qbItem.t === 'i') {
-                questionBank.image.push(qbItem);
-            }
-            localStorage.setItem('jnv_question_bank', JSON.stringify(questionBank));
+            if (qbItem.type === 'mcq') questionBank.mcq.push(qbItem);
+            else if (qbItem.type === 'passage_group') questionBank.passage.push(qbItem);
+            else if (qbItem.type === 'image_mcq') questionBank.image.push(qbItem);
+            localStorage.setItem('jnv_question_bank_v6', JSON.stringify(questionBank));
         }
 
         function addSingleMCQ() {
             const testKey = document.getElementById('adminTestSelect').value;
             const rawText = document.getElementById('m1RawText').value.trim();
             const correct = document.getElementById('m1Correct').value;
-
             if (!rawText) return alert("પ્રશ્ન પેસ્ટ કરો!");
 
             const parsed = parseMcqText(rawText);
             initTestStructure(testKey);
 
-            let newItem = {
-                id: generateUniqueId(),
-                type: 'mcq',
-                question: parsed.question,
-                options: parsed.options,
-                correct: correct
-            };
-
+            let newItem = { id: generateUniqueId(), type: 'mcq', question: parsed.question, options: parsed.options, correct: correct };
             allTestData[testKey].items.push(newItem);
             saveToQuestionBank(newItem); 
-
             saveAndRefresh(testKey);
             document.getElementById('m1RawText').value = "";
         }
 
-        function addPassageGroup() {
+        function addPassageWith5Questions() {
             const testKey = document.getElementById('adminTestSelect').value;
-            const passage = document.getElementById('m2Passage').value.trim();
-            const rawQuestions = document.getElementById('m2Questions').value.trim();
+            const passageText = document.getElementById('m2PassageText').value.trim();
+            if (!passageText) return alert("કૃપા કરીને ફકરાનું લખાણ દાખલ કરો!");
 
-            if (!passage || !rawQuestions) return alert("ફકરો અને પ્રશ્નો ઉમેરો!");
-
-            initTestStructure(testKey);
-
-            let qBlocks = rawQuestions.split(/\n(?=\d+[\.\:\)])/);
-            let passageQuestions = [];
-
-            qBlocks.forEach((block) => {
-                if (block.trim()) {
-                    let parsed = parseMcqText(block);
-                    passageQuestions.push({
+            let questions = [];
+            for (let i = 1; i <= 5; i++) {
+                let qText = document.getElementById(`m2QText_${i}`).value.trim();
+                let qAns = document.getElementById(`m2QAns_${i}`).value;
+                if (qText) {
+                    let parsed = parseMcqText(qText);
+                    questions.push({
                         id: generateUniqueId(),
                         question: parsed.question,
                         options: parsed.options,
-                        correct: 'A'
+                        correct: qAns
                     });
                 }
-            });
+            }
 
-            let newItem = {
+            if (questions.length === 0) return alert("કૃપા કરીને ફકરાના ઓછામાં ઓછો ૧ પ્રશ્ન તો ઉમેરો!");
+
+            initTestStructure(testKey);
+
+            let passageGroupItem = {
                 id: generateUniqueId(),
                 type: 'passage_group',
-                passage: passage,
-                questions: passageQuestions
+                passage: passageText,
+                questions: questions
             };
 
-            allTestData[testKey].items.push(newItem);
-            saveToQuestionBank(newItem); 
+            allTestData[testKey].items.push(passageGroupItem);
+            saveToQuestionBank(passageGroupItem);
 
             saveAndRefresh(testKey);
-            document.getElementById('m2Passage').value = "";
-            document.getElementById('m2Questions').value = "";
+            document.getElementById('m2PassageText').value = "";
+            buildMode2Inputs();
+            alert("ફકરો અને તેના પ્રશ્નો સફળતાપૂર્વક સેવ થઈ ગયા!");
         }
 
         function addImageMCQ() {
@@ -649,21 +653,13 @@
             const rawText = document.getElementById('m3RawText').value.trim();
             const correct = document.getElementById('m3Correct').value;
 
-            if (!currentUploadedImgUrl) return alert("આકૃતિ અપલોડ કરો!");
+            if (!currentUploadedImgUrl) return alert("આકૃતિ પસંદ કરો!");
             if (!rawText) return alert("પ્રશ્ન પેસ્ટ કરો!");
 
             const parsed = parseMcqText(rawText);
             initTestStructure(testKey);
 
-            let newItem = {
-                id: generateUniqueId(),
-                type: 'image_mcq',
-                imageUrl: currentUploadedImgUrl,
-                question: parsed.question,
-                options: parsed.options,
-                correct: correct
-            };
-
+            let newItem = { id: generateUniqueId(), type: 'image_mcq', imageUrl: currentUploadedImgUrl, question: parsed.question, options: parsed.options, correct: correct };
             allTestData[testKey].items.push(newItem);
             saveToQuestionBank(newItem); 
 
@@ -675,14 +671,12 @@
         }
 
         function openQuestionBankModal() {
-            syncExistingQuestionsToBank();
-            
+            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
             document.getElementById('qbMcqCount').innerText = (questionBank.mcq || []).length;
             document.getElementById('qbPassageCount').innerText = (questionBank.passage || []).length;
             document.getElementById('qbImageCount').innerText = (questionBank.image || []).length;
-            
             document.getElementById('qBankModal').classList.remove('hidden');
-            switchQbTab(currentQbTab || 'mcq');
+            switchQbTab('mcq');
         }
 
         function closeQuestionBankModal() {
@@ -693,15 +687,8 @@
             currentQbTab = tab;
             ['mcq', 'passage', 'image'].forEach(t => {
                 let btn = document.getElementById(`qbTab${t === 'mcq' ? '1' : t === 'passage' ? '2' : '3'}Btn`);
-                if(btn) {
-                    if (t === tab) {
-                        btn.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-indigo-600 text-white cursor-pointer";
-                    } else {
-                        btn.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200 cursor-pointer";
-                    }
-                }
+                btn.className = (t === tab) ? "px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-indigo-600 text-white" : "px-4 py-2 font-bold text-xs sm:text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-200";
             });
-
             renderQbQuestions();
         }
 
@@ -711,77 +698,63 @@
             let list = (questionBank && questionBank[currentQbTab]) ? questionBank[currentQbTab] : [];
 
             if (list.length === 0) {
-                container.innerHTML = `<div class="text-center text-slate-400 py-8 font-bold">આ વિભાગમાં કોઈ પ્રશ્નો જમા થયેલ નથી.</div>`;
+                container.innerHTML = `<div class="text-center text-slate-400 py-8">આ વિભાગમાં કોઈ પ્રશ્નો જમા થયેલ નથી.</div>`;
                 return;
             }
 
             list.forEach((item, index) => {
                 let card = document.createElement('div');
                 card.className = "p-3 bg-slate-50 border rounded-xl flex items-center justify-between gap-3 hover:bg-slate-100 transition";
-
                 let mainContent = "";
+
                 if (currentQbTab === 'mcq') {
                     mainContent = `
                         <div class="flex items-start gap-3">
                             <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
                             <div class="text-sm">
-                                <span class="font-bold text-indigo-700">${index + 1}. ${item.question || item.q}</span>
-                                <div class="text-xs text-slate-500 mt-1">(A) ${item.options ? item.options[0] : item.o[0]} (B) ${item.options ? item.options[1] : item.o[1]} (C) ${item.options ? item.options[2] : item.o[2]} (D) ${item.options ? item.options[3] : item.o[3]}</div>
+                                <span class="font-bold text-indigo-700">${index + 1}. ${formatFractions(item.question)}</span>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 } else if (currentQbTab === 'passage') {
                     mainContent = `
                         <div class="flex items-start gap-3">
                             <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
                             <div class="text-sm">
-                                <span class="font-bold text-indigo-700">[ફકરો] ${(item.passage || item.p || '').substring(0, 80)}...</span>
-                                <div class="text-xs text-slate-500 mt-1 font-semibold">કુલ પ્રશ્નો: ${(item.questions || item.q || []).length}</div>
+                                <span class="font-bold text-indigo-700">[ફકરો] ${(item.passage || '').substring(0, 70)}...</span>
+                                <div class="text-xs text-emerald-600 font-bold mt-1">કુલ પ્રશ્નો: ${(item.questions || []).length} (૧-ક્લિકમાં સાથે ઉમેરાશે)</div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 } else if (currentQbTab === 'image') {
                     mainContent = `
                         <div class="flex items-center gap-3">
                             <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
-                            <img src="${item.imageUrl || item.u}" class="w-12 h-12 object-cover rounded border">
-                            <div class="text-sm">
-                                <span class="font-bold text-indigo-700">${index + 1}. ${item.question || item.q}</span>
-                            </div>
-                        </div>
-                    `;
+                            <img src="${item.imageUrl}" class="w-12 h-12 object-cover rounded border">
+                            <div class="text-sm"><span class="font-bold text-indigo-700">${index + 1}. ${formatFractions(item.question)}</span></div>
+                        </div>`;
                 }
 
                 card.innerHTML = `
                     ${mainContent}
-                    <button onclick="deleteQbQuestion('${item.id}')" class="text-rose-600 hover:text-rose-800 p-2 rounded-lg hover:bg-rose-50 transition cursor-pointer" title="પ્રશ્ન બેંકમાંથી કાયમી ડિલીટ કરો">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
+                    <button onclick="deleteQbQuestion('${item.id}')" class="text-rose-600 p-2 hover:bg-rose-50 rounded" title="કાયમી ડિલીટ કરો"><i class="fa-solid fa-trash-can"></i></button>
                 `;
                 container.appendChild(card);
             });
         }
 
         function deleteQbQuestion(id) {
-            if (confirm("શું તમે ખરેખર આ પ્રશ્નને પ્રશ્ન બેંકમાંથી કાયમી ડિલીટ કરવા માંગો છો?")) {
+            if (confirm("શું તમે આ ફકરા/પ્રશ્નને પ્રશ્ન બેંકમાંથી કાયમી ડિલીટ કરવા માંગો છો?")) {
                 questionBank[currentQbTab] = questionBank[currentQbTab].filter(item => item.id !== id);
-                localStorage.setItem('jnv_question_bank', JSON.stringify(questionBank));
-                
-                document.getElementById('qbMcqCount').innerText = (questionBank.mcq || []).length;
-                document.getElementById('qbPassageCount').innerText = (questionBank.passage || []).length;
-                document.getElementById('qbImageCount').innerText = (questionBank.image || []).length;
-
-                renderQbQuestions();
+                localStorage.setItem('jnv_question_bank_v6', JSON.stringify(questionBank));
+                openQuestionBankModal();
             }
         }
 
         function importSelectedToCurrentTest() {
             let checkboxes = document.querySelectorAll('.qb-checkbox:checked');
-            if (checkboxes.length === 0) return alert("કૃપા કરીને ઇમ્પોર્ટ કરવા માટે પ્રશ્નો પસંદ કરો!");
+            if (checkboxes.length === 0) return alert("ઇમ્પોર્ટ કરવા પ્રશ્ન/ફકરો પસંદ કરો!");
 
             let selectedIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-qb-id'));
             let testKey = document.getElementById('adminTestSelect').value;
-
             initTestStructure(testKey);
 
             let importedCount = 0;
@@ -790,8 +763,10 @@
             list.forEach(item => {
                 if (selectedIds.includes(item.id)) {
                     let cloned = JSON.parse(JSON.stringify(item));
-                    cloned.id = generateUniqueId(); // ટેસ્ટ માટે નવી Unique ID આપવી
-                    
+                    cloned.id = generateUniqueId();
+                    if (cloned.questions) {
+                        cloned.questions.forEach(q => q.id = generateUniqueId());
+                    }
                     allTestData[testKey].items.push(cloned);
                     importedCount++;
                 }
@@ -800,28 +775,13 @@
             saveTestData();
             loadAdminTestData();
             closeQuestionBankModal();
-
-            alert(`સફળતાપૂર્વક ${importedCount} પ્રશ્નો "${testKey}" માં ઉમેરાઈ ગયા છે! તે પ્રશ્ન બેંકમાં પણ સુરક્ષિત જ રહેશે.`);
+            alert(`સફળતાપૂર્વક ઇમ્પોર્ટ થઈ ગયું!`);
         }
 
         function promptTeacherLogin() {
-            document.getElementById('adminPasswordInput').value = "";
-            document.getElementById('adminLoginError').classList.add('hidden');
-            document.getElementById('adminLoginModal').classList.remove('hidden');
-        }
-
-        function closeAdminLoginModal() {
-            document.getElementById('adminLoginModal').classList.add('hidden');
-        }
-
-        function verifyAdminPassword() {
-            let pwd = document.getElementById('adminPasswordInput').value;
-            if (pwd === "10101991") {
-                closeAdminLoginModal();
-                switchView('admin');
-            } else {
-                document.getElementById('adminLoginError').classList.remove('hidden');
-            }
+            let pwd = prompt("Admin પાસવર્ડ દાખલ કરો:");
+            if (pwd === "10101991") switchView('admin');
+            else if (pwd !== null) alert("ખોટો પાસવર્ડ!");
         }
 
         function switchView(view) {
@@ -858,24 +818,18 @@
                     return {
                         id: item.id || generateUniqueId(),
                         t: 'p',
-                        p: item.passage || item.p,
-                        q: (item.questions || item.q || []).map(q => ({ id: q.id || generateUniqueId(), q: q.question || q.q, o: q.options || q.o, c: q.correct || q.c }))
+                        p: item.passage,
+                        q: (item.questions || []).map(q => ({ id: q.id || generateUniqueId(), q: q.question, o: q.options, c: q.correct }))
                     };
                 } else if(item.type === 'image_mcq' || item.t === 'i') {
-                    return { id: item.id || generateUniqueId(), t: 'i', u: item.imageUrl || item.u, q: item.question || item.q, o: item.options || item.o, c: item.correct || item.c };
+                    return { id: item.id || generateUniqueId(), t: 'i', u: item.imageUrl, q: item.question, o: item.options, c: item.correct };
                 } else {
-                    return { id: item.id || generateUniqueId(), t: 'm', q: item.question || item.q, o: item.options || item.o, c: item.correct || item.c };
+                    return { id: item.id || generateUniqueId(), t: 'm', q: item.question, o: item.options, c: item.correct };
                 }
             });
 
-            let fullDataObj = {
-                title: testKey,
-                meta: data.meta || {},
-                items: minifiedItems
-            };
-
-            let compressedStr = compressData(fullDataObj);
-            return `${baseUrl}?data=${compressedStr}`;
+            let fullDataObj = { title: testKey, meta: data.meta || {}, items: minifiedItems };
+            return `${baseUrl}?data=${compressData(fullDataObj)}`;
         }
 
         function loadAdminTestData() {
@@ -886,7 +840,6 @@
             document.getElementById('adminSubject').value = data.meta?.subject || '';
             document.getElementById('adminTotalMarks').value = data.meta?.totalMarks || '';
             document.getElementById('adminTimeLimit').value = data.meta?.timeLimit || '';
-
             document.getElementById('shareLinkInput').value = getFullLongUrl();
 
             renderAdminQuestionsList();
@@ -899,42 +852,26 @@
             inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
 
             try {
-                let apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
+                let apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
                 let response = await fetch(apiUrl);
+                let resData = await response.json();
                 
-                if (response.ok) {
-                    let shortUrl = await response.text();
-                    inputField.value = shortUrl.trim();
-                    alert("લિંક સફળતાપૂર્વક ટૂંકી થઈ ગઈ છે!");
-                    return shortUrl.trim();
+                if (resData.shorturl) {
+                    inputField.value = resData.shorturl;
+                    return resData.shorturl;
                 } else {
-                    throw new Error("TinyURL Error");
+                    throw new Error("Shortening failed");
                 }
             } catch (error) {
-                try {
-                    let backupUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`;
-                    let res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(backupUrl)}`);
-                    let data = await res.json();
-                    let jsonData = JSON.parse(data.contents);
-                    if (jsonData.shorturl) {
-                        inputField.value = jsonData.shorturl;
-                        alert("લિંક સફળતાપૂર્વક ટૂંકી થઈ ગઈ છે!");
-                        return jsonData.shorturl;
-                    }
-                } catch (e) {}
-                
                 inputField.value = longUrl;
-                alert("લિંક શોર્ટ કરવાની પ્રક્રિયામાં ક્ષતિ આવી, મૂળ લિંક રાખવામાં આવી છે.");
                 return longUrl;
             }
         }
 
         function deleteEntireTest() {
             const testKey = document.getElementById('adminTestSelect').value;
-            if (confirm(`શું તમે ખરેખર "${testKey}" ને ડિલીટ કરવા માંગો છો?`)) {
+            if (confirm(`શું તમે "${testKey}" ને ડિલીટ કરવા માંગો છો?`)) {
                 delete allTestData[testKey];
-                allSubmissions = allSubmissions.filter(s => s.testName !== testKey);
-                localStorage.setItem('jnv_test_submissions', JSON.stringify(allSubmissions));
                 saveTestData();
                 refreshSelectDropdown();
                 loadAdminTestData();
@@ -952,7 +889,7 @@
             let inputField = document.getElementById("shareLinkInput");
             let link = inputField.value;
 
-            if (link.includes("?data=") && link.length > 100) {
+            if (link.includes("?data=")) {
                 link = await generateShortUrlLink();
             }
 
@@ -960,17 +897,8 @@
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        function openNewTestModal() {
-            document.getElementById('newTestNameInput').value = "";
-            document.getElementById('newTestModal').classList.remove('hidden');
-        }
-
-        function closeNewTestModal() {
-            document.getElementById('newTestModal').classList.add('hidden');
-        }
-
-        function createNewTestConfirm() {
-            let testName = document.getElementById('newTestNameInput').value.trim();
+        function createNewTest() {
+            let testName = prompt("નવી ટેસ્ટનું નામ:");
             if (testName) {
                 if (!allTestData[testName]) {
                     allTestData[testName] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
@@ -978,12 +906,7 @@
                     saveTestData();
                     refreshSelectDropdown();
                     loadAdminTestData();
-                    closeNewTestModal();
-                } else {
-                    alert("આ નામની ટેસ્ટ પહેલેથી છે!");
-                }
-            } else {
-                alert("કૃપા કરીને ટેસ્ટનું નામ લખો.");
+                } else alert("આ નામની ટેસ્ટ છે!");
             }
         }
 
@@ -1004,18 +927,18 @@
         function setBuilderMode(mode) {
             [1, 2, 3].forEach(m => {
                 document.getElementById(`builderMode${m}`).classList.add('hidden');
-                document.getElementById(`mode${m}Btn`).className = "px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap cursor-pointer";
+                document.getElementById(`mode${m}Btn`).className = "px-4 py-2 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap";
             });
             document.getElementById(`builderMode${mode}`).classList.remove('hidden');
-            document.getElementById(`mode${mode}Btn`).className = "px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap cursor-pointer";
+            document.getElementById(`mode${mode}Btn`).className = "px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap";
         }
 
         function parseMcqText(text) {
             let lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
             let question = lines[0] || '';
             let options = ['', '', '', ''];
-
             let fullText = text;
+
             let aPos = fullText.search(/\(?A\)?[\.\:\s\-]/i);
             let bPos = fullText.search(/\(?B\)?[\.\:\s\-]/i);
             let cPos = fullText.search(/\(?C\)?[\.\:\s\-]/i);
@@ -1030,8 +953,6 @@
             } else if (lines.length >= 5) {
                 question = lines[0];
                 options = [lines[1], lines[2], lines[3], lines[4]];
-            } else {
-                question = fullText;
             }
             return { question, options };
         }
@@ -1045,11 +966,10 @@
             saveTestData();
             activeTestData = allTestData[testKey];
             loadAdminTestData();
-            alert("પ્રશ્ન ઉમેરાયો!");
         }
 
         function saveTestData() {
-            localStorage.setItem('jnv_test_data_v5', JSON.stringify(allTestData));
+            localStorage.setItem('jnv_test_data_v6', JSON.stringify(allTestData));
         }
 
         function renderAdminQuestionsList() {
@@ -1057,7 +977,13 @@
             const container = document.getElementById('adminQuestionsList');
             const items = allTestData[testKey]?.items || [];
 
-            document.getElementById('qCountDisplay').innerText = items.length;
+            let totalCount = 0;
+            items.forEach(i => {
+                if (i.type === 'passage_group' || i.t === 'p') {
+                    totalCount += (i.questions ? i.questions.length : (i.q ? i.q.length : 0));
+                } else totalCount += 1;
+            });
+            document.getElementById('qCountDisplay').innerText = totalCount;
             container.innerHTML = "";
 
             items.forEach((item, idx) => {
@@ -1067,17 +993,17 @@
                 if (item.type === 'passage_group' || item.t === 'p') {
                     let passageText = item.passage || item.p || '';
                     let qCount = item.questions ? item.questions.length : (item.q ? item.q.length : 0);
-                    div.innerHTML = `<div><b class="text-indigo-600">[ફકરો]</b> ${passageText.substring(0, 50)}... (${qCount} પ્રશ્નો)</div>
-                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600 cursor-pointer"><i class="fa-solid fa-trash"></i></button>`;
+                    div.innerHTML = `<div><b class="text-indigo-600">[ફકરો જૂથ]</b> ${formatFractions(passageText.substring(0, 40))}... (<b class="text-emerald-700">${qCount} પ્રશ્નો સાથે</b>)</div>
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
                 } else if(item.type === 'image_mcq' || item.t === 'i') {
                     let img = item.imageUrl || item.u;
                     let qText = item.question || item.q;
-                    div.innerHTML = `<div class="flex items-center gap-2"><img src="${img}" class="w-10 h-10 object-cover rounded"> <b>${idx+1}. ${qText}</b></div>
-                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600 cursor-pointer"><i class="fa-solid fa-trash"></i></button>`;
+                    div.innerHTML = `<div class="flex items-center gap-2"><img src="${img}" class="w-10 h-10 object-cover rounded"> <b>${idx+1}. ${formatFractions(qText)}</b></div>
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
                 } else {
                     let qText = item.question || item.q;
-                    div.innerHTML = `<div><b>${idx+1}. ${qText}</b></div>
-                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600 cursor-pointer"><i class="fa-solid fa-trash"></i></button>`;
+                    div.innerHTML = `<div><b>${idx+1}. ${formatFractions(qText)}</b></div>
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
                 }
                 container.appendChild(div);
             });
@@ -1088,19 +1014,14 @@
             const currentTestSubmissions = allSubmissions.filter(s => s.testName === currentActiveTest);
 
             if (currentTestSubmissions.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400">હજી સુધી આ ટેસ્ટ કોઈ વિદ્યાર્થીએ આપી નથી.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-400">હજી સુધી કોઈ વિદ્યાર્થીનું પરિણામ નથી.</p>`;
                 return;
             }
 
             container.innerHTML = currentTestSubmissions.map(s => `
                 <div class="p-2 border rounded bg-slate-50 text-xs flex justify-between items-center">
-                    <div>
-                        <span class="font-bold text-slate-800">${s.studentName}</span> 
-                        <span class="text-slate-500">(${s.std} - રોલ: ${s.roll})</span>
-                    </div>
-                    <div class="font-bold text-indigo-700">
-                        ગુણ: ${s.score}
-                    </div>
+                    <div><b>${s.studentName}</b> <span class="text-slate-500">(${s.std})</span></div>
+                    <div class="font-bold text-indigo-700">ગુણ: ${s.score}</div>
                 </div>
             `).join('');
         }
@@ -1112,7 +1033,7 @@
 
         function clearCurrentTest() {
             const testKey = document.getElementById('adminTestSelect').value;
-            if(confirm("આ ટેસ્ટના બધા પ્રશ્નો ભૂસી નાખવા છે?")) {
+            if(confirm("બધા પ્રશ્નો ભૂસી નાખવા છે?")) {
                 allTestData[testKey].items = [];
                 saveAndRefresh(testKey);
             }
@@ -1124,7 +1045,7 @@
             userAnswers = {};
             flatQuestionsList = [];
 
-            if (!testData.items || testData.items.length === 0) return alert("આ ટેસ્ટમાં કોઈ પ્રશ્નો નથી!");
+            if (!testData.items || testData.items.length === 0) return alert("ટેસ્ટમાં પ્રશ્નો નથી!");
 
             document.getElementById('quizTitleDisplay').innerText = currentActiveTest;
             document.getElementById('quizSubDisplay').innerText = "વિષય: " + (testData.meta?.subject || 'સામાન્ય');
@@ -1143,7 +1064,6 @@
             timerInterval = setInterval(function () {
                 minutes = parseInt(timer / 60, 10);
                 seconds = parseInt(timer % 60, 10);
-
                 minutes = minutes < 10 ? "0" + minutes : minutes;
                 seconds = seconds < 10 ? "0" + seconds : seconds;
 
@@ -1151,12 +1071,12 @@
 
                 if (--timer < 0) {
                     clearInterval(timerInterval);
-                    alert("સમય પૂરો થઈ ગયો છે!");
                     confirmSubmitQuiz();
                 }
             }, 1000);
         }
 
+        /* --- DISPLAY PASSAGES AND THEIR 5 QUESTIONS INDIVIDUALLY --- */
         function renderStudentQuestions(items) {
             const container = document.getElementById('quizQuestionsContainer');
             container.innerHTML = "";
@@ -1166,10 +1086,10 @@
                 let type = item.type || item.t;
                 if (type === 'passage_group' || type === 'p') {
                     let passage = item.passage || item.p;
-                    let questions = item.questions || item.q;
+                    let questions = item.questions || item.q || [];
                     
                     const pBox = document.createElement('div');
-                    pBox.className = "grid grid-cols-1 md:grid-cols-12 gap-6 bg-white p-6 rounded-2xl shadow border my-6";
+                    pBox.className = "grid grid-cols-1 md:grid-cols-12 gap-6 bg-white p-6 rounded-2xl shadow-md border border-slate-200 my-6";
                     
                     let questionsHtml = questions.map((q) => {
                         let qObj = { ...q, labelText: `પ્રશ્ન ${globalQuestionIndex}`, type: 'mcq' };
@@ -1181,8 +1101,8 @@
 
                     pBox.innerHTML = `
                         <div class="md:col-span-5 bg-amber-50 p-4 rounded-xl border border-amber-200 sticky-passage">
-                            <h4 class="font-bold text-amber-900 border-b pb-2 mb-2"><i class="fa-solid fa-book-open"></i> ફકરો વાંચી પ્રશ્નોના જવાબ આપો:</h4>
-                            <p class="text-sm leading-relaxed text-slate-800 whitespace-pre-line">${passage}</p>
+                            <h4 class="font-bold text-amber-900 border-b pb-2 mb-2"><i class="fa-solid fa-book-open"></i> નીચેનો ફકરો વાંચી આપેલા ૫ પ્રશ્નોના જવાબ આપો:</h4>
+                            <p class="text-sm leading-relaxed text-slate-800 whitespace-pre-line">${formatFractions(passage)}</p>
                         </div>
                         <div class="md:col-span-7 space-y-6">
                             ${questionsHtml}
@@ -1207,19 +1127,19 @@
         }
 
         function renderMcqCard(q, labelText) {
-            let qText = q.question || q.q;
+            let qText = formatFractions(q.question || q.q);
             let options = q.options || q.o;
             let correct = q.correct || q.c;
             let qId = q.id || generateUniqueId();
 
             return `
-                <div class="space-y-3">
-                    <h3 class="font-bold text-slate-800">${labelText}: ${qText}</h3>
+                <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <h3 class="font-bold text-slate-800 text-base">${labelText}: ${qText}</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="opts_${qId}">
                         ${['A', 'B', 'C', 'D'].map((key, i) => `
-                            <button onclick="selectAns('${qId}', '${key}', '${correct}')" id="btn_${qId}_${key}" class="p-3 border rounded-xl text-left font-medium hover:bg-indigo-50 flex items-center gap-2 transition-all cursor-pointer">
+                            <button onclick="selectAns('${qId}', '${key}', '${correct}')" id="btn_${qId}_${key}" class="p-3 border rounded-xl text-left font-medium hover:bg-indigo-50 flex items-center gap-2 transition-all bg-white">
                                 <span class="font-bold text-slate-400">${key}.</span>
-                                <span>${options[i] || ''}</span>
+                                <span>${formatFractions(options[i] || '')}</span>
                             </button>
                         `).join('')}
                     </div>
@@ -1229,21 +1149,16 @@
 
         function selectAns(qId, selectedOpt, correctOpt) {
             userAnswers[qId] = { selected: selectedOpt, correct: correctOpt };
-
             ['A', 'B', 'C', 'D'].forEach(k => {
                 const b = document.getElementById(`btn_${qId}_${k}`);
                 if (b) b.classList.remove('selected-ans');
             });
-
             const selBtn = document.getElementById(`btn_${qId}_${selectedOpt}`);
-            if (selBtn) {
-                selBtn.classList.add('selected-ans');
-            }
+            if (selBtn) selBtn.classList.add('selected-ans');
         }
 
         function confirmSubmitQuiz() {
             clearInterval(timerInterval);
-
             let totalQuestions = flatQuestionsList.length;
             let correctCount = 0;
 
@@ -1251,20 +1166,16 @@
                 let qId = q.id;
                 let userAns = userAnswers[qId]?.selected;
                 let correctAns = q.correct || q.c;
-                if (userAns === correctAns) {
-                    correctCount++;
-                }
+                if (userAns === correctAns) correctCount++;
             });
 
             const name = document.getElementById('studentName').value;
             const std = document.getElementById('studentStd').value;
-            const roll = document.getElementById('studentRoll').value;
 
             allSubmissions.push({
                 testName: currentActiveTest,
                 studentName: name,
                 std: std,
-                roll: roll,
                 score: `${correctCount} / ${totalQuestions}`,
                 date: new Date().toLocaleDateString('gu-IN')
             });
@@ -1275,7 +1186,6 @@
             document.getElementById('resPercentage').innerText = percentage + "%";
 
             renderTestReview();
-
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('resultScreen').classList.remove('hidden');
         }
@@ -1286,7 +1196,7 @@
 
             flatQuestionsList.forEach(q => {
                 let qId = q.id;
-                let qText = q.question || q.q;
+                let qText = formatFractions(q.question || q.q);
                 let options = q.options || q.o;
                 let correct = q.correct || q.c;
                 let userAns = userAnswers[qId]?.selected;
@@ -1306,13 +1216,13 @@
                     }
                     if (key === userAns && !isCorrect) {
                         optStyle = "bg-rose-100 border-rose-500 font-bold text-rose-800";
-                        icon = `<i class="fa-solid fa-circle-xmark text-rose-600 ml-auto"></i> (તમારો ખોટો જવાબ)`;
+                        icon = `<i class="fa-solid fa-circle-xmark text-rose-600 ml-auto"></i> (ખોટો જવાબ)`;
                     }
 
                     return `
                         <div class="p-3 border rounded-xl flex items-center gap-2 ${optStyle}">
                             <span class="font-bold">${key}.</span>
-                            <span>${options[i] || ''}</span>
+                            <span>${formatFractions(options[i] || '')}</span>
                             ${icon}
                         </div>
                     `;
@@ -1325,17 +1235,85 @@
                             ${isCorrect ? '✓ સાચો' : '✕ ખોટો'}
                         </span>
                     </div>
-
                     ${img ? `<img src="${img}" class="max-h-56 mx-auto mb-4 rounded-lg border shadow">` : ''}
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 my-2">
-                        ${optionsHtml}
-                    </div>
-
-                    ${!userAns ? `<p class="text-xs font-bold text-amber-600 mt-2"><i class="fa-solid fa-circle-exclamation"></i> તમે આ પ્રશ્નનો જવાબ આપ્યો નથી.</p>` : ''}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 my-2">${optionsHtml}</div>
                 `;
-
                 reviewContainer.appendChild(card);
+            });
+        }
+
+        function refreshSelectDropdown() {
+            let select = document.getElementById('adminTestSelect');
+            select.innerHTML = "";
+            let keys = Object.keys(allTestData);
+            if(keys.length === 0) {
+                allTestData["Test 1"] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
+                keys = ["Test 1"];
+            }
+            keys.forEach(k => {
+                let opt = document.createElement('option');
+                opt.value = k;
+                opt.innerText = k;
+                select.appendChild(opt);
+            });
+            select.value = keys.includes(currentActiveTest) ? currentActiveTest : keys[0];
+        }
+
+        function exportTestToPDF() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            const test = allTestData[testKey];
+            if (!test || !test.items || test.items.length === 0) return alert("ટેસ્ટમાં પ્રશ્નો નથી!");
+
+            const pdfContainer = document.getElementById('pdfExportContainer');
+            let qHtml = "";
+            let count = 1;
+
+            test.items.forEach(item => {
+                let type = item.type || item.t;
+                if (type === 'passage_group' || type === 'p') {
+                    let passage = item.passage || item.p;
+                    let questions = item.questions || item.q;
+                    qHtml += `<div style="margin-bottom: 15px; background: #f8fafc; padding: 10px; border-radius: 8px;">
+                        <p style="font-weight: bold; margin-bottom: 5px;">ફકરો:</p>
+                        <p style="white-space: pre-line; margin-bottom: 10px;">${formatFractions(passage)}</p>`;
+                    questions.forEach(q => {
+                        qHtml += `<div style="margin-bottom: 8px; font-weight: bold;">${count}. ${formatFractions(q.question || q.q)}</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px;">
+                            <div>(A) ${formatFractions((q.options||q.o)[0])}</div><div>(B) ${formatFractions((q.options||q.o)[1])}</div>
+                            <div>(C) ${formatFractions((q.options||q.o)[2])}</div><div>(D) ${formatFractions((q.options||q.o)[3])}</div>
+                        </div>`;
+                        count++;
+                    });
+                    qHtml += `</div>`;
+                } else {
+                    let qText = item.question || item.q;
+                    let opts = item.options || item.o;
+                    let img = item.imageUrl || item.u;
+
+                    qHtml += `<div style="margin-bottom: 15px; page-break-inside: avoid;">
+                        <div style="font-weight: bold; margin-bottom: 5px;">${count}. ${formatFractions(qText)}</div>
+                        ${img ? `<img src="${img}" style="max-height: 120px; display: block; margin-bottom: 5px;">` : ''}
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px;">
+                            <div>(A) ${formatFractions(opts[0])}</div><div>(B) ${formatFractions(opts[1])}</div>
+                            <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
+                        </div>
+                    </div>`;
+                    count++;
+                }
+            });
+
+            pdfContainer.innerHTML = `
+                <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
+                    ${customLogoBase64 ? `<img src="${customLogoBase64}" style="height: 50px; margin: 0 auto 5px auto;">` : ''}
+                    <h1 style="font-size: 22px; font-weight: bold;">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
+                    <h2 style="font-size: 16px;">${testKey} - (વિષય: ${test.meta?.subject || 'સામાન્ય'})</h2>
+                </div>
+                ${qHtml}
+            `;
+
+            pdfContainer.classList.remove('hidden');
+            html2pdf().set({ margin: 0.5, filename: `${testKey}_પ્રશ્નપત્ર.pdf` }).from(pdfContainer).save().then(() => {
+                pdfContainer.classList.add('hidden');
             });
         }
     </script>

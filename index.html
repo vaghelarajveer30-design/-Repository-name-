@@ -909,12 +909,12 @@
         }
 
         async function generateShortUrlLink() {
-            let longUrl = getFullLongUrl();
-            let inputField = document.getElementById('shareLinkInput');
-            inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
+    let longUrl = getFullLongUrl();
+    let inputField = document.getElementById('shareLinkInput');
+    inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
 
-            try {
-                let apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
+    try {
+        let apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
         let response = await fetch(apiUrl);
         
         if (response.ok) {
@@ -924,11 +924,11 @@
         } else {
             throw new Error("Shortening failed");
         }
-            } catch (error) {
-                inputField.value = longUrl;
-                return longUrl;
-            }
-        }
+    } catch (error) {
+        inputField.value = longUrl;
+        return longUrl;
+    }
+}
 
         function deleteEntireTest() {
             const testKey = document.getElementById('adminTestSelect').value;

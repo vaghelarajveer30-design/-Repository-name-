@@ -87,7 +87,7 @@
                 <h1 class="text-xl font-bold tracking-wide" id="mainHeaderTitle">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
             </div>
             <div>
-                <!-- Admin Photo Icon: ફોટા પર ક્લિક કરવાથી પાસવર્ડ પૂછશે -->
+                <!-- Admin Photo Icon -->
                 <button onclick="promptTeacherLogin()" title="Admin Login" class="focus:outline-none">
                     <img src="https://i.ibb.co/L5Q852p/profile.jpg" alt="Admin Icon" class="w-9 h-9 rounded-full object-cover border-2 border-amber-300 shadow hover:opacity-80 transition">
                 </button>
@@ -187,7 +187,6 @@
                 <p class="text-sm font-semibold text-slate-600">તમે આપેલી ટેસ્ટનું સોલ્યુશન નીચે મુજબ છે:</p>
             </div>
 
-            <!-- Review Container -->
             <div id="reviewContainer" class="space-y-4"></div>
         </section>
 
@@ -208,7 +207,7 @@
                 </div>
             </div>
 
-            <!-- CUSTOM LOGO UPLOAD SECTION -->
+            <!-- LOGO UPLOAD SECTION -->
             <div class="bg-white p-6 rounded-xl shadow border space-y-4">
                 <h3 class="font-bold text-indigo-700 border-b pb-2"><i class="fa-solid fa-image text-indigo-600"></i> શાળા / ક્લાસનો લોગો અપલોડ કરો</h3>
                 <div class="flex flex-col sm:flex-row items-center gap-6">
@@ -233,6 +232,11 @@
                                 <option value="Test 1">ટેસ્ટ ૧ (Test 1)</option>
                             </select>
                             
+                            <!-- Status Badge -->
+                            <span id="testStatusBadge" class="px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
+                                📝 ડ્રાફ્ટ (Draft)
+                            </span>
+
                             <button onclick="deleteEntireTest()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1 shadow">
                                 <i class="fa-solid fa-trash-can"></i> આ ટેસ્ટ ડિલીટ કરો
                             </button>
@@ -359,7 +363,7 @@
                     <div id="adminQuestionsList" class="space-y-3"></div>
                 </div>
 
-                <!-- 10+ TESTS SINGLE STUDENT RESULT DISPLAY MODULE -->
+                <!-- STUDENT MULTI TEST REPORT -->
                 <div class="mt-8 border-t pt-6 bg-slate-100 p-5 rounded-xl space-y-4">
                     <h4 class="font-bold text-slate-800 text-lg flex items-center gap-2">
                         <i class="fa-solid fa-id-card text-indigo-600"></i> વિદ્યાર્થીવાર ઓલ ટેસ્ટ માર્ક્સ (રિપોર્ટ કાર્ડ)
@@ -464,7 +468,7 @@
         let questionBank = JSON.parse(localStorage.getItem('jnv_question_bank_v6') || '{"mcq":[], "passage":[], "image":[]}');
 
         let currentActiveTest = "Test 1";
-        let activeTestData = { meta: {}, items: [] };
+        let activeTestData = { meta: {}, items: [], status: 'draft' };
         let timerInterval = null;
         let userAnswers = {};
         let flatQuestionsList = [];
@@ -569,7 +573,6 @@
             listenToFirebaseRealtime();
         };
 
-        // Firebase માંથી તમારા મોબાઈલમાં રિયલ-ટાઇમ નોટિફિકેશન મેળવવા માટે
         function listenToFirebaseRealtime() {
             if (typeof database !== 'undefined') {
                 database.ref('jnv_test_submissions').on('child_added', (snapshot) => {
@@ -903,7 +906,7 @@
         }
 
         function setupStudentView() {
-            const data = activeTestData || { meta: {}, items: [] };
+            const data = activeTestData || { meta: {}, items: [], status: 'draft' };
             document.getElementById('studentTestTitle').innerText = currentActiveTest + " - ઓનલાઇન કસોટી";
             document.getElementById('dispSubject').innerText = data.meta?.subject || 'નિર્ધારિત નથી';
             document.getElementById('dispTotalMarks').innerText = data.meta?.totalMarks || '100';
@@ -912,7 +915,7 @@
 
         function getFullLongUrl() {
             const testKey = document.getElementById('adminTestSelect').value;
-            const data = allTestData[testKey] || { meta: {}, items: [] };
+            const data = allTestData[testKey] || { meta: {}, items: [], status: 'draft' };
             let baseUrl = window.location.origin + window.location.pathname;
 
             let minifiedItems = (data.items || []).map(item => {
@@ -934,15 +937,36 @@
             return `${baseUrl}?data=${compressData(fullDataObj)}`;
         }
 
+        function setTestStatusToActive(testKey) {
+            if (allTestData[testKey]) {
+                allTestData[testKey].status = 'active';
+                saveTestData();
+                updateStatusBadge('active');
+            }
+        }
+
+        function updateStatusBadge(status) {
+            const badge = document.getElementById('testStatusBadge');
+            if (status === 'active') {
+                badge.className = "px-3 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+                badge.innerHTML = "🚀 એક્ટિવ (Active)";
+            } else {
+                badge.className = "px-3 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-300";
+                badge.innerHTML = "📝 ડ્રાફ્ટ (Draft)";
+            }
+        }
+
         function loadAdminTestData() {
             const testKey = document.getElementById('adminTestSelect').value;
             currentActiveTest = testKey;
-            const data = allTestData[testKey] || { meta: {}, items: [] };
+            const data = allTestData[testKey] || { meta: {}, items: [], status: 'draft' };
 
             document.getElementById('adminSubject').value = data.meta?.subject || '';
             document.getElementById('adminTotalMarks').value = data.meta?.totalMarks || '';
             document.getElementById('adminTimeLimit').value = data.meta?.timeLimit || '';
             document.getElementById('shareLinkInput').value = getFullLongUrl();
+
+            updateStatusBadge(data.status || 'draft');
 
             renderAdminQuestionsList();
             renderTeacherSubmissions();
@@ -950,6 +974,9 @@
         }
 
         async function generateShortUrlLink() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            setTestStatusToActive(testKey);
+
             let longUrl = getFullLongUrl();
             let inputField = document.getElementById('shareLinkInput');
             inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
@@ -982,13 +1009,19 @@
         }
 
         function copyShareLink() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            setTestStatusToActive(testKey);
+
             const copyText = document.getElementById("shareLinkInput");
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
-            alert("લિંક કોપી થઈ ગઈ છે!");
+            alert("લિંક કોપી થઈ ગઈ છે અને ટેસ્ટ active માં સેવ થઈ ગઈ છે!");
         }
 
         async function shareWhatsApp() {
+            const testKey = document.getElementById('adminTestSelect').value;
+            setTestStatusToActive(testKey);
+
             let inputField = document.getElementById("shareLinkInput");
             let link = inputField.value;
 
@@ -1004,7 +1037,7 @@
             let testName = prompt("નવી ટેસ્ટનું નામ:");
             if (testName) {
                 if (!allTestData[testName]) {
-                    allTestData[testName] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
+                    allTestData[testName] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [], status: 'draft' };
                     currentActiveTest = testName;
                     saveTestData();
                     refreshSelectDropdown();
@@ -1015,7 +1048,7 @@
 
         function saveTestMetaSettings() {
             const testKey = document.getElementById('adminTestSelect').value;
-            if (!allTestData[testKey]) allTestData[testKey] = { meta: {}, items: [] };
+            initTestStructure(testKey);
 
             allTestData[testKey].meta = {
                 subject: document.getElementById('adminSubject').value || 'સામાન્ય કસોટી',
@@ -1061,8 +1094,9 @@
         }
 
         function initTestStructure(key) {
-            if (!allTestData[key]) allTestData[key] = { meta: {}, items: [] };
+            if (!allTestData[key]) allTestData[key] = { meta: {}, items: [], status: 'draft' };
             if (!allTestData[key].items) allTestData[key].items = [];
+            if (!allTestData[key].status) allTestData[key].status = 'draft';
         }
 
         function saveAndRefresh(testKey) {
@@ -1364,7 +1398,6 @@
             if (selBtn) selBtn.classList.add('selected-ans');
         }
 
-        /* --- SUBMIT QUIZ & NOTIFY ADMIN --- */
         function confirmSubmitQuiz() {
             clearInterval(timerInterval);
             let totalQuestions = flatQuestionsList.length;
@@ -1408,16 +1441,13 @@
                 details: studentDetails
             };
 
-            // ૧. Local Storage Persistence
             allSubmissions.push(submissionObj);
             localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
 
-            // ૨. Firebase માં પરિણામ સેવ કરો (જેથી તમારા મોબાઇલમાં રિયલ-ટાઇમ દેખાય)
             if (typeof database !== 'undefined') {
                 database.ref('jnv_test_submissions').push(submissionObj);
             }          
 
-            // ૩. Admin Notification
             triggerAdminNotification(`${name} (${std}) - સાચા: ${correctCount}, ખોટા: ${wrongCount} (${percentage}%)`);
 
             document.getElementById('resTotalScore').innerText = `${correctCount} / ${totalQuestions}`;
@@ -1494,13 +1524,14 @@
             select.innerHTML = "";
             let keys = Object.keys(allTestData);
             if(keys.length === 0) {
-                allTestData["Test 1"] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [] };
+                allTestData["Test 1"] = { meta: { subject: '', totalMarks: '100', timeLimit: '60' }, items: [], status: 'draft' };
                 keys = ["Test 1"];
             }
             keys.forEach(k => {
                 let opt = document.createElement('option');
+                let st = allTestData[k].status === 'active' ? ' (એક્ટિવ)' : ' (ડ્રાફ્ટ)';
                 opt.value = k;
-                opt.innerText = k;
+                opt.innerText = k + st;
                 select.appendChild(opt);
             });
             select.value = keys.includes(currentActiveTest) ? currentActiveTest : keys[0];

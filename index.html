@@ -846,27 +846,41 @@
             renderTeacherSubmissions();
         }
 
-        /* --- UPDATED LINK SHORTENER (TINYURL API) --- */
+        /* --- ADVANCED RELIABLE SHORTENER (MULTI-API FALLBACK) --- */
         async function generateShortUrlLink() {
             let longUrl = getFullLongUrl();
             let inputField = document.getElementById('shareLinkInput');
             inputField.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
 
+            // API 1: TinyURL API Try
             try {
                 let apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
                 let response = await fetch(apiUrl);
-                let shortUrl = await response.text();
-                
-                if (shortUrl && shortUrl.startsWith("http")) {
-                    inputField.value = shortUrl;
-                    return shortUrl;
-                } else {
-                    throw new Error("Shortening failed");
+                if (response.ok) {
+                    let shortUrl = await response.text();
+                    if (shortUrl && shortUrl.startsWith("http")) {
+                        inputField.value = shortUrl;
+                        return shortUrl;
+                    }
                 }
-            } catch (error) {
-                inputField.value = longUrl;
-                return longUrl;
-            }
+            } catch (e) {}
+
+            // API 2: clck.ru API Try (Fallback for very long URL support)
+            try {
+                let apiUrl = `https://clck.ru/--?url=${encodeURIComponent(longUrl)}`;
+                let response = await fetch(apiUrl);
+                if (response.ok) {
+                    let shortUrl = await response.text();
+                    if (shortUrl && shortUrl.startsWith("http")) {
+                        inputField.value = shortUrl;
+                        return shortUrl;
+                    }
+                }
+            } catch (e) {}
+
+            // જો બંને API નિષ્ફળ જાય, તો પણ ટેસ્ટ બગડશે નહીં - કમ્પ્રેસ થયેલી મૂળ મોટી લિંક જશે
+            inputField.value = longUrl;
+            return longUrl;
         }
 
         function deleteEntireTest() {
@@ -883,15 +897,14 @@
             const copyText = document.getElementById("shareLinkInput");
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
-            alert("લિંક કોપી થઈ ગઈ છે!");
+            alert("લિંક સફળતાપૂર્વક કોપી થઈ ગઈ છે!");
         }
 
-        /* --- UPDATED WHATSAPP SHARE --- */
+        /* --- UPDATED SAFE WHATSAPP SHARE --- */
         async function shareWhatsApp() {
             let inputField = document.getElementById("shareLinkInput");
             let link = inputField.value;
 
-            // જો લિંક હજુ શોર્ટ ન થઈ હોય તો ટૂંકી કરો
             if (link.includes("?data=") || link === "લિંક જનરેટ થઈ રહી છે...") {
                 link = await generateShortUrlLink();
             }

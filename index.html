@@ -203,10 +203,25 @@
                 </div>
             </div>
 
-            <!-- ક્લાઉડ સેવ કરેલ ટેસ્ટ બોક્ષ વિભાગ -->
+            <!-- કસ્ટમ લોગો ઓપ્શન વિભાગ -->
+            <div class="bg-white p-4 rounded-xl shadow border flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-image text-2xl text-indigo-600"></i>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">કસ્ટમ લોગો અપલોડ કરો</h4>
+                        <p class="text-xs text-slate-500">તમારો પોતાનો લોગો અથવા ઈમેજ સેટ કરો (ક્લાઉડમાં સેવ થશે)</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="file" id="customLogoFileInput" accept="image/*" onchange="uploadCustomLogo(event)" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                    <button onclick="removeCustomLogo()" class="text-xs text-rose-600 font-bold border border-rose-200 bg-rose-50 px-2 py-1 rounded">લોગો દૂર કરો</button>
+                </div>
+            </div>
+
+            <!-- ૧. સેવ કરેલ ગૂગલ ક્લાઉડ નું એક બટન વિભાગ -->
             <div class="bg-white p-6 rounded-xl shadow border space-y-4">
                 <h3 class="font-bold text-indigo-700 border-b pb-2 flex items-center justify-between">
-                    <span><i class="fa-solid fa-cloud text-indigo-600"></i> સેવ કરેલ ટેસ્ટ બોક્ષ (Google Cloud Sync)</span>
+                    <span><i class="fa-solid fa-cloud text-indigo-600"></i> સેવ કરેલ ટેસ્ટ બોક્ષ (Google Cloud Sync Button)</span>
                     <span class="text-xs font-normal text-slate-500">મોબાઇલ અને કોમ્પ્યુટર બંનેમાં ઓટો-સિંક થશે</span>
                 </h3>
                 <div id="testBoxesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -338,10 +353,14 @@
                     </div>
                 </div>
 
+                <!-- ૨. હાલની ટેસ્ટ માં ઉમેરેલ પ્રશ્ન નું એક બટન વિભાગ -->
                 <div class="mt-6 border-t pt-4">
-                    <h4 class="font-bold text-slate-800 mb-3 flex justify-between">
-                        <span>હાલના ટેસ્ટમાં ઉમેરેલા પ્રશ્નો (<span id="qCountDisplay">0</span>)</span>
-                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold">બધા પ્રશ્નો ભૂસી નાખો</button>
+                    <h4 class="font-bold text-slate-800 mb-3 flex justify-between items-center">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-indigo-600"></i> હાલની ટેસ્ટમાં ઉમેરેલા પ્રશ્નો (બટન):
+                            <span id="qCountDisplay" class="bg-indigo-600 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">0</span>
+                        </span>
+                        <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold bg-rose-50 border border-rose-200 px-3 py-1 rounded">બધા પ્રશ્નો ભૂસી નાખો</button>
                     </h4>
                     <div id="adminQuestionsList" class="space-y-3"></div>
                 </div>
@@ -381,12 +400,13 @@
                     </div>
                 </div>
 
+                <!-- ૩. તાજેતરના પરિણામો નું એક બટન વિભાગ -->
                 <div class="mt-8 border-t pt-4">
                     <div class="flex justify-between items-center mb-3">
                         <h4 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-users text-indigo-600"></i> તાજેતરના વિદ્યાર્થીઓના પરિણામો (Cloud Sync)
+                            <i class="fa-solid fa-users text-indigo-600"></i> તાજેતરના વિદ્યાર્થીઓના પરિણામો (Button / Realtime Sync)
                         </h4>
-                        <button onclick="clearAllSubmissionsHistory()" class="text-xs text-rose-600 font-bold">બધા પરિણામો ડિલીટ કરો</button>
+                        <button onclick="clearAllSubmissionsHistory()" class="text-xs text-rose-600 font-bold bg-rose-50 border border-rose-200 px-3 py-1 rounded">બધા પરિણામો ડિલીટ કરો</button>
                     </div>
                     <div id="submissionsList" class="space-y-2 max-h-60 overflow-y-auto"></div>
                 </div>
@@ -533,7 +553,17 @@
 
             // Firebase Cloud Data Sync (Mobile + Computer Realtime Sync)
             if (typeof database !== 'undefined') {
-                // 1. Synchronize Tests Data
+                // 1. Synchronize Custom Logo
+                database.ref('jnv_custom_logo').on('value', (snapshot) => {
+                    const logoData = snapshot.val();
+                    if (logoData) {
+                        customLogoBase64 = logoData;
+                        localStorage.setItem('jnv_custom_logo', customLogoBase64);
+                        renderCustomLogoUI();
+                    }
+                });
+
+                // 2. Synchronize Tests Data
                 database.ref('jnv_tests').on('value', (snapshot) => {
                     const cloudData = snapshot.val();
                     if (cloudData) {
@@ -544,7 +574,7 @@
                     }
                 });
 
-                // 2. Synchronize Question Bank Data
+                // 3. Synchronize Question Bank Data
                 database.ref('jnv_question_bank').on('value', (snapshot) => {
                     const qbData = snapshot.val();
                     if (qbData) {
@@ -563,7 +593,7 @@
                     }
                 });
 
-                // 3. Synchronize All Student Submissions/Results across devices
+                // 4. Synchronize All Student Submissions/Results across devices
                 database.ref('jnv_test_submissions').on('value', (snapshot) => {
                     const subData = snapshot.val();
                     allSubmissions = [];
@@ -613,6 +643,57 @@
             renderTestBoxes();
         };
 
+        // Custom Logo Handler
+        function uploadCustomLogo(e) {
+            let file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    customLogoBase64 = evt.target.result;
+                    localStorage.setItem('jnv_custom_logo', customLogoBase64);
+                    if (typeof database !== 'undefined') {
+                        database.ref('jnv_custom_logo').set(customLogoBase64);
+                    }
+                    renderCustomLogoUI();
+                    alert("લોગો સફળતાપૂર્વક અપડેટ થઈ ગયો!");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeCustomLogo() {
+            if (confirm("શું તમે કસ્ટમ લોગો દૂર કરવા માંગો છો?")) {
+                customLogoBase64 = "";
+                localStorage.removeItem('jnv_custom_logo');
+                if (typeof database !== 'undefined') {
+                    database.ref('jnv_custom_logo').remove();
+                }
+                location.reload();
+            }
+        }
+
+        function renderCustomLogoUI() {
+            const hDef = document.getElementById('headerDefaultLogo');
+            const hCust = document.getElementById('headerCustomLogo');
+            const sDef = document.getElementById('studentDefaultLogo');
+            const sCust = document.getElementById('studentCustomLogo');
+            const qCust = document.getElementById('quizHeaderCustomLogo');
+
+            if (customLogoBase64) {
+                if(hDef) hDef.classList.add('hidden'); 
+                if(hCust) { hCust.src = customLogoBase64; hCust.classList.remove('hidden'); }
+                if(sDef) sDef.classList.add('hidden'); 
+                if(sCust) { sCust.src = customLogoBase64; sCust.classList.remove('hidden'); }
+                if(qCust) { qCust.src = customLogoBase64; qCust.classList.remove('hidden'); }
+            } else {
+                if(hDef) hDef.classList.remove('hidden'); 
+                if(hCust) hCust.classList.add('hidden');
+                if(sDef) sDef.classList.remove('hidden'); 
+                if(sCust) sCust.classList.add('hidden');
+                if(qCust) qCust.classList.add('hidden');
+            }
+        }
+
         // Render Dynamic Test Boxes
         function renderTestBoxes() {
             const container = document.getElementById('testBoxesContainer');
@@ -634,8 +715,8 @@
                     <div>
                         <div class="flex justify-between items-start mb-2">
                             <h4 class="font-bold text-indigo-900 text-base">${key}</h4>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${test.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                                ${test.status === 'active' ? 'એક્ટિવ' : 'ડ્રાફ્ટ'}
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${test.status === 'active' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}">
+                                ${test.status === 'active' ? '🚀 એક્ટિવ' : '📝 ડ્રાફ્ટ'}
                             </span>
                         </div>
                         <p class="text-xs text-slate-600">વિષય: <b>${test.meta?.subject || 'સામાન્ય'}</b></p>
@@ -874,20 +955,6 @@
             }
         }
 
-        function renderCustomLogoUI() {
-            const hDef = document.getElementById('headerDefaultLogo');
-            const hCust = document.getElementById('headerCustomLogo');
-            const sDef = document.getElementById('studentDefaultLogo');
-            const sCust = document.getElementById('studentCustomLogo');
-            const qCust = document.getElementById('quizHeaderCustomLogo');
-
-            if (customLogoBase64) {
-                hDef.classList.add('hidden'); hCust.src = customLogoBase64; hCust.classList.remove('hidden');
-                sDef.classList.add('hidden'); sCust.src = customLogoBase64; sCust.classList.remove('hidden');
-                qCust.src = customLogoBase64; qCust.classList.remove('hidden');
-            }
-        }
-
         function promptTeacherLogin() {
             let pwd = prompt("Admin પાસવર્ડ દાખલ કરો:");
             if (pwd === "10101991") switchView('admin');
@@ -974,6 +1041,7 @@
                 allTestData[testKey].status = 'active';
                 saveTestData();
                 updateStatusBadge('active');
+                refreshSelectDropdown();
             }
         }
 

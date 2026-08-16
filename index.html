@@ -408,7 +408,7 @@
                                         <th class="p-2 border">સાચા / કુલ માર્ક્સ</th>
                                         <th class="p-2 border">ખોટા જવાબો</th>
                                         <th class="p-2 border">ટકાવારી</th>
-                                        <th class="p-2 border text-center">સોલ્યુશન</th>
+                                        <th class="p-2 border text-center">કારવાઈ</th>
                                     </tr>
                                 </thead>
                                 <tbody id="studentMultiReportTableBody"></tbody>
@@ -472,6 +472,35 @@
                     <button onclick="importSelectedToCurrentTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-sm shadow">
                         ઇમ્પોર્ટ કરો
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- EDIT QUESTION MODAL (લિંક મોકલ્યા પછી પણ સુધારો કરવા માટે) -->
+        <div id="editQuestionModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-4">
+                <h3 class="text-lg font-bold text-indigo-700 border-b pb-2">પ્રશ્ન અને વિકલ્પો સુધારો</h3>
+                <input type="hidden" id="editItemKey">
+                <input type="hidden" id="editItemId">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">પ્રશ્ન:</label>
+                    <textarea id="editQuestionInput" rows="3" class="w-full p-2 border rounded text-sm"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="block text-xs font-bold text-slate-700">વિકલ્પ A:</label><input type="text" id="editOptA" class="w-full p-2 border rounded text-sm"></div>
+                    <div><label class="block text-xs font-bold text-slate-700">વિકલ્પ B:</label><input type="text" id="editOptB" class="w-full p-2 border rounded text-sm"></div>
+                    <div><label class="block text-xs font-bold text-slate-700">વિકલ્પ C:</label><input type="text" id="editOptC" class="w-full p-2 border rounded text-sm"></div>
+                    <div><label class="block text-xs font-bold text-slate-700">વિકલ્પ D:</label><input type="text" id="editOptD" class="w-full p-2 border rounded text-sm"></div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <label class="text-xs font-bold text-slate-700">સાચો જવાબ:</label>
+                    <select id="editCorrectInput" class="p-2 border rounded font-bold text-emerald-600">
+                        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button onclick="closeEditModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg text-xs">કેન્સલ</button>
+                    <button onclick="saveEditedQuestion()" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg text-xs">અપડેટ કરો</button>
                 </div>
             </div>
         </div>
@@ -585,9 +614,8 @@
             renderCustomLogoUI();
             buildMode2Inputs();
 
-            // Firebase Cloud Data Sync (Mobile + Computer Realtime Sync)
+            // Firebase Cloud Data Sync
             if (typeof database !== 'undefined') {
-                // 1. Synchronize Custom Logo
                 database.ref('jnv_custom_logo').on('value', (snapshot) => {
                     const logoData = snapshot.val();
                     if (logoData) {
@@ -597,7 +625,6 @@
                     }
                 });
 
-                // 2. Synchronize Tests Data (Drafts + Active Sync across PC & Mobile)
                 database.ref('jnv_tests').on('value', (snapshot) => {
                     const cloudData = snapshot.val();
                     if (cloudData) {
@@ -613,7 +640,6 @@
                     }
                 });
 
-                // 3. Synchronize Question Bank Data
                 database.ref('jnv_question_bank').on('value', (snapshot) => {
                     const qbData = snapshot.val();
                     if (qbData) {
@@ -632,7 +658,6 @@
                     }
                 });
 
-                // 4. Synchronize All Student Submissions/Results
                 database.ref('jnv_test_submissions').on('value', (snapshot) => {
                     const subData = snapshot.val();
                     allSubmissions = [];
@@ -680,7 +705,6 @@
             renderTestBoxes();
         };
 
-        // Custom Logo Handler
         function uploadCustomLogo(e) {
             let file = e.target.files[0];
             if (file) {
@@ -731,7 +755,6 @@
             }
         }
 
-        // Filter Test Boxes (Draft vs Active)
         function filterTestBoxes(filterType) {
             activeBoxFilter = filterType;
             document.getElementById('btnFilterAll').className = filterType === 'all' ? "px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white" : "px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-700";
@@ -740,7 +763,6 @@
             renderTestBoxes();
         }
 
-        // Render Dynamic Test Boxes (Google Cloud Sync)
         function renderTestBoxes() {
             const container = document.getElementById('testBoxesContainer');
             if (!container) return;
@@ -780,7 +802,6 @@
             });
         }
 
-        // Open Google Cloud Test Modal
         function openCloudTestModal() {
             const modalBoxes = document.getElementById('modalCloudTestBoxes');
             modalBoxes.innerHTML = "";
@@ -858,7 +879,6 @@
             }
         }
 
-        // Explicit Draft / Active Switcher
         function setTestStatusExplicit(status) {
             const testKey = document.getElementById('adminTestSelect').value;
             if (allTestData[testKey]) {
@@ -870,7 +890,6 @@
             }
         }
 
-        // --- SUBMIT QUIZ WITH DETAILED OPTIONS & ANSWERS ---
         function confirmSubmitQuiz() {
             clearInterval(timerInterval);
             let totalQuestions = flatQuestionsList.length;
@@ -924,7 +943,6 @@
                 details: studentDetails
             };
 
-            // Firebase Cloud Push for Realtime Sync
             if (typeof database !== 'undefined') {
                 database.ref('jnv_test_submissions').push(submissionObj);
             } else {
@@ -941,7 +959,6 @@
             document.getElementById('resultScreen').classList.remove('hidden');
         }
 
-        // --- RENDER DETAILED REVIEW FOR STUDENT ---
         function renderTestReview() {
             const reviewContainer = document.getElementById('reviewContainer');
             reviewContainer.innerHTML = "";
@@ -994,7 +1011,6 @@
             });
         }
 
-        // --- ADMIN VIEW STUDENT DETAILED RESULT ---
         function viewStudentDetailedResult(subId) {
             let sub = allSubmissions.find(s => s.id === subId || s.firebaseKey === subId) || allSubmissions[subId];
             if(!sub) return alert("પરિણામ મળી શક્યું નથી.");
@@ -1035,7 +1051,6 @@
             document.getElementById('adminViewResultModal').classList.remove('hidden');
         }
 
-        // --- HELPER FUNCTIONS ---
         function buildMode2Inputs() {
             const container = document.getElementById('m2QuestionsInputContainer');
             container.innerHTML = "";
@@ -1385,6 +1400,7 @@
             renderQbQuestions();
         }
 
+        // પ્રશ્ન સાથે તેના વિકલ્પો પણ જોવા મળે તેવો સુધારો
         function renderQbQuestions() {
             const container = document.getElementById('qbQuestionsContainer');
             container.innerHTML = "";
@@ -1400,25 +1416,39 @@
                 card.className = "p-3 bg-slate-50 border rounded-xl flex items-center justify-between gap-3 hover:bg-slate-100 transition";
                 let mainContent = "";
 
+                let opts = item.options || item.o || [];
+                let optsHtml = opts.length === 4 ? `<div class="text-xs text-slate-500 mt-1 grid grid-cols-2 gap-1">
+                    <span>(A) ${formatFractions(opts[0])}</span>
+                    <span>(B) ${formatFractions(opts[1])}</span>
+                    <span>(C) ${formatFractions(opts[2])}</span>
+                    <span>(D) ${formatFractions(opts[3])}</span>
+                </div>` : '';
+
                 if (currentQbTab === 'mcq') {
                     mainContent = `<div class="flex items-start gap-3">
                         <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
-                        <div class="text-sm"><span class="font-bold text-indigo-700">${index + 1}. ${formatFractions(item.question)}</span></div>
+                        <div class="text-sm">
+                            <span class="font-bold text-indigo-700">${index + 1}. ${formatFractions(item.question || item.q)}</span>
+                            ${optsHtml}
+                        </div>
                     </div>`;
                 } else if (currentQbTab === 'passage') {
                     mainContent = `<div class="flex items-start gap-3">
                         <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
-                        <div class="text-sm"><span class="font-bold text-indigo-700">[ફકરો] ${(item.passage || '').substring(0, 70)}...</span></div>
+                        <div class="text-sm"><span class="font-bold text-indigo-700">[ફકરો] ${(item.passage || item.p || '').substring(0, 70)}...</span></div>
                     </div>`;
                 } else if (currentQbTab === 'image') {
                     mainContent = `<div class="flex items-center gap-3">
                         <input type="checkbox" data-qb-id="${item.id}" class="qb-checkbox mt-1 w-5 h-5 text-indigo-600 rounded cursor-pointer">
-                        <img src="${item.imageUrl}" class="w-12 h-12 object-cover rounded border" alt="Question Image">
-                        <div class="text-sm"><span class="font-bold text-indigo-700">${index + 1}. ${formatFractions(item.question)}</span></div>
+                        <img src="${item.imageUrl || item.u}" class="w-12 h-12 object-cover rounded border" alt="Question Image">
+                        <div class="text-sm">
+                            <span class="font-bold text-indigo-700">${index + 1}. ${formatFractions(item.question || item.q)}</span>
+                            ${optsHtml}
+                        </div>
                     </div>`;
                 }
 
-                card.innerHTML = `${mainContent}<button onclick="deleteQbQuestion('${item.id}')" class="text-rose-600 p-2 hover:bg-rose-50 rounded"><i class="fa-solid fa-trash-can"></i></button>`;
+                card.innerHTML = `${mainContent}<button onclick="deleteQbQuestion('${item.id}')" class="text-rose-600 p-2 hover:bg-rose-50 rounded" title="ડિલીટ"><i class="fa-solid fa-trash-can"></i></button>`;
                 container.appendChild(card);
             });
         }
@@ -1456,6 +1486,50 @@
             alert("ઇમ્પોર્ટ થઈ ગયું!");
         }
 
+        // લિંક મોકલ્યા પછી પણ ઓટો અપડેટ કરવા માટે એડિટ કરવા માટેનો સુધારો
+        function openEditQuestionModal(testKey, id) {
+            let item = allTestData[testKey].items.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('editItemKey').value = testKey;
+            document.getElementById('editItemId').value = id;
+            document.getElementById('editQuestionInput').value = item.question || item.q || '';
+            let opts = item.options || item.o || ['', '', '', ''];
+            document.getElementById('editOptA').value = opts[0] || '';
+            document.getElementById('editOptB').value = opts[1] || '';
+            document.getElementById('editOptC').value = opts[2] || '';
+            document.getElementById('editOptD').value = opts[3] || '';
+            document.getElementById('editCorrectInput').value = item.correct || item.c || 'A';
+
+            document.getElementById('editQuestionModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editQuestionModal').classList.add('hidden');
+        }
+
+        function saveEditedQuestion() {
+            let testKey = document.getElementById('editItemKey').value;
+            let id = document.getElementById('editItemId').value;
+
+            let item = allTestData[testKey].items.find(i => i.id === id);
+            if (item) {
+                item.question = document.getElementById('editQuestionInput').value;
+                item.options = [
+                    document.getElementById('editOptA').value,
+                    document.getElementById('editOptB').value,
+                    document.getElementById('editOptC').value,
+                    document.getElementById('editOptD').value
+                ];
+                item.correct = document.getElementById('editCorrectInput').value;
+
+                saveTestData();
+                loadAdminTestData();
+                closeEditModal();
+                alert("પ્રશ્ન અને તેના વિકલ્પો સફળતાપૂર્વક અપડેટ થઈ ગયા!");
+            }
+        }
+
         function renderAdminQuestionsList() {
             const testKey = document.getElementById('adminTestSelect').value;
             const container = document.getElementById('adminQuestionsList');
@@ -1476,16 +1550,20 @@
                 if (item.type === 'passage_group' || item.t === 'p') {
                     let passageText = item.passage || item.p || '';
                     div.innerHTML = `<div><b class="text-indigo-600">[ફકરો]</b> ${formatFractions(passageText.substring(0, 40))}...</div>
-                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600" title="ડિલીટ"><i class="fa-solid fa-trash"></i></button>`;
                 } else {
                     let qText = item.question || item.q;
                     div.innerHTML = `<div><b>${idx+1}. ${formatFractions(qText)}</b></div>
-                    <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600"><i class="fa-solid fa-trash"></i></button>`;
+                    <div class="flex items-center gap-2">
+                        <button onclick="openEditQuestionModal('${testKey}', '${item.id}')" class="text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded" title="એડિટ"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteItem('${testKey}', '${item.id}')" class="text-rose-600 hover:bg-rose-50 px-2 py-1 rounded" title="ડિલીટ"><i class="fa-solid fa-trash"></i></button>
+                    </div>`;
                 }
                 container.appendChild(div);
             });
         }
 
+        // તાજેતરના પરિણામો માંથી ડિલીટ કરવા માટેનું બટન ઉમેરવાનો સુધારો
         function renderTeacherSubmissions() {
             const container = document.getElementById('submissionsList');
             const currentTestSubmissions = allSubmissions.filter(s => s.testName === currentActiveTest);
@@ -1498,12 +1576,28 @@
             container.innerHTML = currentTestSubmissions.map((s, idx) => `
                 <div class="p-2 border rounded bg-slate-50 text-xs flex justify-between items-center">
                     <div><b>${s.studentName}</b> <span class="text-slate-500">(${s.std})</span> <span class="text-[10px] text-slate-400 ml-2">${s.date}</span></div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
                         <span class="font-bold text-indigo-700">સાચા: ${s.correctCount}/${s.totalQuestions} (${s.percentage}%)</span>
                         <button onclick="viewStudentDetailedResult('${s.firebaseKey || s.id || idx}')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-bold hover:bg-indigo-200">ઉત્તરવહી જુઓ</button>
+                        <button onclick="deleteSingleSubmission('${s.firebaseKey || s.id}')" class="text-rose-600 hover:bg-rose-100 p-1 rounded font-bold" title="વિદ્યાર્થી ડિલીટ કરો"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 </div>
             `).join('');
+        }
+
+        // એક બાળકનું પરિણામ ડિલીટ કરવાનું ફંક્શન
+        function deleteSingleSubmission(keyOrId) {
+            if (confirm("શું તમે આ વિદ્યાર્થીનું પરિણામ ડિલીટ કરવા માંગો છો?")) {
+                if (typeof database !== 'undefined') {
+                    database.ref('jnv_test_submissions/' + keyOrId).remove();
+                }
+                allSubmissions = allSubmissions.filter(s => s.firebaseKey !== keyOrId && s.id !== keyOrId);
+                localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
+                renderTeacherSubmissions();
+                populateStudentFilterDropdown();
+                renderStudentMultiTestReport();
+                renderTestBoxes();
+            }
         }
 
         function populateStudentFilterDropdown() {
@@ -1519,6 +1613,7 @@
             });
         }
 
+        // રિપોર્ટ ટેબલમાંથી પણ વિદ્યાર્થીનું પરિણામ ડિલીટ બટન સુધારો
         function renderStudentMultiTestReport() {
             const studentName = document.getElementById('studentFilterSelect').value;
             const container = document.getElementById('studentMultiReportContainer');
@@ -1544,8 +1639,9 @@
                     <td class="p-2 border font-bold text-emerald-600">${st.correctCount} / ${st.totalQuestions}</td>
                     <td class="p-2 border font-bold text-rose-600">${st.wrongCount || (st.totalQuestions - st.correctCount)}</td>
                     <td class="p-2 border font-bold text-amber-600">${st.percentage}%</td>
-                    <td class="p-2 border text-center">
+                    <td class="p-2 border text-center flex justify-center gap-1">
                         <button onclick="viewStudentDetailedResult('${st.firebaseKey || st.id || idx}')" class="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded font-bold hover:bg-indigo-700">જુઓ</button>
+                        <button onclick="deleteSingleSubmission('${st.firebaseKey || st.id}')" class="bg-rose-600 text-white text-[10px] px-2 py-1 rounded font-bold hover:bg-rose-700"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);

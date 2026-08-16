@@ -188,9 +188,12 @@
 
         <!-- 4. ADMIN PANEL -->
         <section id="adminScreen" class="hidden space-y-6">
-            <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow border">
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow border flex-wrap gap-2">
                 <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-sliders text-indigo-600"></i> શિક્ષક એડમિન પેનલ</h2>
                 <div class="flex gap-2 flex-wrap">
+                    <button onclick="openCloudTestModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded border text-sm font-bold shadow flex items-center gap-1">
+                        <i class="fa-solid fa-cloud text-amber-300"></i> ગૂગલ ક્લાઉડ ટેસ્ટ
+                    </button>
                     <button onclick="exportTestToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded border text-sm font-bold shadow flex items-center gap-1">
                         <i class="fa-solid fa-file-pdf"></i> PDF ડાઉનલોડ
                     </button>
@@ -218,19 +221,25 @@
                 </div>
             </div>
 
-            <!-- ૧. સેવ કરેલ ગૂગલ ક્લાઉડ નું એક બટન વિભાગ -->
+            <!-- ૧. ગૂગલ ક્લાઉડ ઓટો-સિંક ટેસ્ટ વિભાજન (Drafts vs Active) -->
             <div class="bg-white p-6 rounded-xl shadow border space-y-4">
-                <h3 class="font-bold text-indigo-700 border-b pb-2 flex items-center justify-between">
-                    <span><i class="fa-solid fa-cloud text-indigo-600"></i> સેવ કરેલ ટેસ્ટ બોક્ષ (Google Cloud Sync Button)</span>
-                    <span class="text-xs font-normal text-slate-500">મોબાઇલ અને કોમ્પ્યુટર બંનેમાં ઓટો-સિંક થશે</span>
-                </h3>
+                <div class="flex flex-wrap justify-between items-center border-b pb-2 gap-2">
+                    <h3 class="font-bold text-indigo-700 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud text-indigo-600"></i> ગૂગલ ક્લાઉડ સિંક બોક્ષ (Google Cloud Sync)
+                    </h3>
+                    <div class="flex gap-2">
+                        <button onclick="filterTestBoxes('all')" id="btnFilterAll" class="px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white">બધી ટેસ્ટ</button>
+                        <button onclick="filterTestBoxes('draft')" id="btnFilterDraft" class="px-3 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300">📝 ડ્રાફ્ટ (બાકી)</button>
+                        <button onclick="filterTestBoxes('active')" id="btnFilterActive" class="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300">🚀 એક્ટિવ (મોકલેલ)</button>
+                    </div>
+                </div>
                 <div id="testBoxesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow border space-y-6">
                 <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 space-y-4">
                     <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 flex-wrap">
                             <label class="font-bold text-slate-700">ટેસ્ટ પસંદ કરો:</label>
                             <select id="adminTestSelect" onchange="loadAdminTestData()" class="p-2 border rounded-lg font-bold text-indigo-600 bg-white">
                                 <option value="Test 1">ટેસ્ટ ૧ (Test 1)</option>
@@ -240,11 +249,19 @@
                                 📝 ડ્રાફ્ટ (Draft)
                             </span>
 
-                            <button onclick="deleteEntireTest()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1 shadow">
-                                <i class="fa-solid fa-trash-can"></i> આ ટેસ્ટ ડિલીટ કરો
+                            <!-- ડ્રાફ્ટ/એક્ટિવ કરવાના બે બટન -->
+                            <button onclick="setTestStatusExplicit('draft')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow flex items-center gap-1">
+                                📝 ડ્રાફ્ટમાં રાખો
+                            </button>
+                            <button onclick="setTestStatusExplicit('active')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow flex items-center gap-1">
+                                🚀 એક્ટિવ કરો
+                            </button>
+
+                            <button onclick="deleteEntireTest()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 shadow">
+                                <i class="fa-solid fa-trash-can"></i> ડિલીટ
                             </button>
                         </div>
-                        <button onclick="createNewTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm">
+                        <button onclick="createNewTest()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg text-sm shadow">
                             <i class="fa-solid fa-plus"></i> નવી ટેસ્ટ બનાવો
                         </button>
                     </div>
@@ -353,11 +370,11 @@
                     </div>
                 </div>
 
-                <!-- ૨. હાલની ટેસ્ટ માં ઉમેરેલ પ્રશ્ન નું એક બટન વિભાગ -->
+                <!-- ૨. હાલની ટેસ્ટ માં ઉમેરેલ પ્રશ્ન નું બટન વિભાગ -->
                 <div class="mt-6 border-t pt-4">
                     <h4 class="font-bold text-slate-800 mb-3 flex justify-between items-center">
                         <span class="flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-indigo-600"></i> હાલની ટેસ્ટમાં ઉમેરેલા પ્રશ્નો (બટન):
+                            <i class="fa-solid fa-list-check text-indigo-600"></i> હાલની ટેસ્ટમાં ઉમેરેલા પ્રશ્નો:
                             <span id="qCountDisplay" class="bg-indigo-600 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">0</span>
                         </span>
                         <button onclick="clearCurrentTest()" class="text-xs text-rose-600 font-bold bg-rose-50 border border-rose-200 px-3 py-1 rounded">બધા પ્રશ્નો ભૂસી નાખો</button>
@@ -400,11 +417,11 @@
                     </div>
                 </div>
 
-                <!-- ૩. તાજેતરના પરિણામો નું એક બટન વિભાગ -->
+                <!-- ૩. તાજેતરના પરિણામો નું વિભાગ -->
                 <div class="mt-8 border-t pt-4">
                     <div class="flex justify-between items-center mb-3">
                         <h4 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-users text-indigo-600"></i> તાજેતરના વિદ્યાર્થીઓના પરિણામો (Button / Realtime Sync)
+                            <i class="fa-solid fa-users text-indigo-600"></i> તાજેતરના વિદ્યાર્થીઓના પરિણામો (Realtime Sync)
                         </h4>
                         <button onclick="clearAllSubmissionsHistory()" class="text-xs text-rose-600 font-bold bg-rose-50 border border-rose-200 px-3 py-1 rounded">બધા પરિણામો ડિલીટ કરો</button>
                     </div>
@@ -412,6 +429,22 @@
                 </div>
             </div>
         </section>
+
+        <!-- GOOGLE CLOUD TESTS MODAL -->
+        <div id="cloudTestModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+                <div class="bg-indigo-700 text-white p-4 flex justify-between items-center">
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-cloud text-amber-300"></i> સેવ કરેલ ગૂગલ ક્લાઉડ ટેસ્ટ (Google Cloud Tests)
+                    </h3>
+                    <button onclick="closeCloudTestModal()" class="text-white hover:text-slate-200 text-2xl font-bold">&times;</button>
+                </div>
+                <div class="p-4 overflow-y-auto flex-1">
+                    <p class="text-xs text-slate-500 mb-4">આ ટેસ્ટ મોબાઈલ અને કમ્પ્યુટર બંનેમાં ઓટો-સિંક થયેલ છે. તમે જે તે ટેસ્ટ પર ક્લિક કરીને તેના પ્રશ્નો અને વિગતો ચકાસી કે બદલી શકો છો.</p>
+                    <div id="modalCloudTestBoxes" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+        </div>
 
         <!-- QUESTION BANK MODAL -->
         <div id="qBankModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
@@ -472,6 +505,7 @@
         let flatQuestionsList = [];
         let currentQbTab = 'mcq';
         let isInitialLoad = true;
+        let activeBoxFilter = 'all';
 
         function generateUniqueId() {
             return 'q_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
@@ -563,7 +597,7 @@
                     }
                 });
 
-                // 2. Synchronize Tests Data
+                // 2. Synchronize Tests Data (Drafts + Active Sync across PC & Mobile)
                 database.ref('jnv_tests').on('value', (snapshot) => {
                     const cloudData = snapshot.val();
                     if (cloudData) {
@@ -571,6 +605,11 @@
                         localStorage.setItem('jnv_test_data_v6', JSON.stringify(allTestData));
                         refreshSelectDropdown();
                         renderTestBoxes();
+                        if (allTestData[currentActiveTest]) {
+                            activeTestData = allTestData[currentActiveTest];
+                            renderAdminQuestionsList();
+                            updateStatusBadge(activeTestData.status || 'draft');
+                        }
                     }
                 });
 
@@ -593,7 +632,7 @@
                     }
                 });
 
-                // 4. Synchronize All Student Submissions/Results across devices
+                // 4. Synchronize All Student Submissions/Results
                 database.ref('jnv_test_submissions').on('value', (snapshot) => {
                     const subData = snapshot.val();
                     allSubmissions = [];
@@ -603,7 +642,6 @@
                             item.firebaseKey = key;
                             allSubmissions.push(item);
                         });
-                        // Reverse so latest appears first
                         allSubmissions.reverse();
                     }
                     localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
@@ -611,7 +649,6 @@
                     populateStudentFilterDropdown();
                     renderTestBoxes();
 
-                    // Trigger notification only for new additions after initial page load
                     if (!isInitialLoad && allSubmissions.length > 0) {
                         let latest = allSubmissions[0];
                         triggerAdminNotification(`${latest.studentName} (${latest.std}) - સાચા: ${latest.correctCount}/${latest.totalQuestions}`);
@@ -694,15 +731,27 @@
             }
         }
 
-        // Render Dynamic Test Boxes
+        // Filter Test Boxes (Draft vs Active)
+        function filterTestBoxes(filterType) {
+            activeBoxFilter = filterType;
+            document.getElementById('btnFilterAll').className = filterType === 'all' ? "px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white" : "px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-700";
+            document.getElementById('btnFilterDraft').className = filterType === 'draft' ? "px-3 py-1 text-xs font-bold rounded-lg bg-amber-500 text-white border border-amber-600" : "px-3 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300";
+            document.getElementById('btnFilterActive').className = filterType === 'active' ? "px-3 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white border border-emerald-700" : "px-3 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300";
+            renderTestBoxes();
+        }
+
+        // Render Dynamic Test Boxes (Google Cloud Sync)
         function renderTestBoxes() {
             const container = document.getElementById('testBoxesContainer');
             if (!container) return;
             container.innerHTML = "";
 
             let keys = Object.keys(allTestData);
+            if (activeBoxFilter === 'draft') keys = keys.filter(k => (allTestData[k].status || 'draft') === 'draft');
+            else if (activeBoxFilter === 'active') keys = keys.filter(k => allTestData[k].status === 'active');
+
             if (keys.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 col-span-full">કોઈ ટેસ્ટ સેવ થયેલ નથી.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-400 col-span-full py-4 text-center">કોઈ ટેસ્ટ મળી નથી.</p>`;
                 return;
             }
 
@@ -720,7 +769,7 @@
                             </span>
                         </div>
                         <p class="text-xs text-slate-600">વિષય: <b>${test.meta?.subject || 'સામાન્ય'}</b></p>
-                        <p class="text-xs text-slate-600">કુલ ગુણ: ${test.meta?.totalMarks || 100} | સમય: ${test.meta?.timeLimit || 60} મિનિટ</p>
+                        <p class="text-xs text-slate-600">પ્રશ્નો: <b>${test.items ? test.items.length : 0}</b> | ગુણ: ${test.meta?.totalMarks || 100} | સમય: ${test.meta?.timeLimit || 60} મિનિટ</p>
                     </div>
                     <div class="mt-4 pt-2 border-t border-indigo-200 flex justify-between items-center text-xs">
                         <span class="font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full"><i class="fa-solid fa-users"></i> ${countStudents} બાળકોએ આપી</span>
@@ -731,10 +780,49 @@
             });
         }
 
+        // Open Google Cloud Test Modal
+        function openCloudTestModal() {
+            const modalBoxes = document.getElementById('modalCloudTestBoxes');
+            modalBoxes.innerHTML = "";
+            let keys = Object.keys(allTestData);
+
+            if (keys.length === 0) {
+                modalBoxes.innerHTML = `<p class="text-xs text-slate-400 col-span-full">કોઈ ટેસ્ટ સેવ થયેલ નથી.</p>`;
+            } else {
+                keys.forEach(key => {
+                    let test = allTestData[key];
+                    let countStudents = allSubmissions.filter(s => s.testName === key).length;
+                    let card = document.createElement('div');
+                    card.className = "p-4 bg-slate-50 border rounded-xl flex flex-col justify-between shadow-sm";
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-bold text-indigo-900 text-base">${key}</h4>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded ${test.status === 'active' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}">
+                                    ${test.status === 'active' ? '🚀 એક્ટિવ' : '📝 ડ્રાફ્ટ'}
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-600">વિષય: <b>${test.meta?.subject || 'સામાન્ય'}</b></p>
+                            <p class="text-xs text-slate-600">કુલ ગુણ: ${test.meta?.totalMarks || 100} | સમય: ${test.meta?.timeLimit || 60} મિનિટ</p>
+                        </div>
+                        <div class="mt-4 pt-2 border-t flex justify-between items-center text-xs">
+                            <span class="font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200"><i class="fa-solid fa-users"></i> ${countStudents} વિદ્યાર્થીઓ</span>
+                            <button onclick="selectTestFromBox('${key}'); closeCloudTestModal();" class="bg-indigo-600 text-white px-3 py-1 rounded font-bold hover:bg-indigo-700">ઓપન કરો</button>
+                        </div>
+                    `;
+                    modalBoxes.appendChild(card);
+                });
+            }
+            document.getElementById('cloudTestModal').classList.remove('hidden');
+        }
+
+        function closeCloudTestModal() {
+            document.getElementById('cloudTestModal').classList.add('hidden');
+        }
+
         function selectTestFromBox(key) {
             document.getElementById('adminTestSelect').value = key;
             loadAdminTestData();
-            alert(`"${key}" સિલેક્ટ થઈ ગઈ છે!`);
         }
 
         function saveTestData() {
@@ -767,6 +855,18 @@
             if (!exists) {
                 questionBank[targetKey].push(qbItem);
                 saveQuestionBankToCloud();
+            }
+        }
+
+        // Explicit Draft / Active Switcher
+        function setTestStatusExplicit(status) {
+            const testKey = document.getElementById('adminTestSelect').value;
+            if (allTestData[testKey]) {
+                allTestData[testKey].status = status;
+                saveTestData();
+                updateStatusBadge(status);
+                refreshSelectDropdown();
+                alert(`ટેસ્ટને સફળતાપૂર્વક "${status === 'active' ? '🚀 એક્ટિવ' : '📝 ડ્રાફ્ટ'}" કરવામાં આવી છે!`);
             }
         }
 
@@ -1083,7 +1183,7 @@
             const copyText = document.getElementById("shareLinkInput");
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
-            alert("લિંક કોપી થઈ ગઈ છે!");
+            alert("લિંક કોપી થઈ ગઈ છે અને ટેસ્ટ એક્ટિવ થઈ ગઈ છે!");
         }
 
         async function shareWhatsApp() {

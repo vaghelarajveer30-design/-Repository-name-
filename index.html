@@ -203,15 +203,13 @@
                 </div>
             </div>
 
-            <!-- ક્લાઉડ સેવ કરેલ ટેસ્ટ બોક્ષ વિભાગ (Dynamic Subjects) -->
+            <!-- ક્લાઉડ સેવ કરેલ ટેસ્ટ બોક્ષ વિભાગ -->
             <div class="bg-white p-6 rounded-xl shadow border space-y-4">
                 <h3 class="font-bold text-indigo-700 border-b pb-2 flex items-center justify-between">
                     <span><i class="fa-solid fa-cloud text-indigo-600"></i> સેવ કરેલ ટેસ્ટ બોક્ષ (Google Cloud Sync)</span>
                     <span class="text-xs font-normal text-slate-500">મોબાઇલ અને કોમ્પ્યુટર બંનેમાં ઓટો-સિંક થશે</span>
                 </h3>
-                <div id="testBoxesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Dynamic Test Cards Will Appear Here -->
-                </div>
+                <div id="testBoxesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow border space-y-6">
@@ -518,11 +516,21 @@
             } catch (e) { return null; }
         }
 
+        function updateQbCountsUI() {
+            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
+            let mcqElem = document.getElementById('qbMcqCount');
+            let pasElem = document.getElementById('qbPassageCount');
+            let imgElem = document.getElementById('qbImageCount');
+            if (mcqElem) mcqElem.innerText = (questionBank.mcq || []).length;
+            if (pasElem) pasElem.innerText = (questionBank.passage || []).length;
+            if (imgElem) imgElem.innerText = (questionBank.image || []).length;
+        }
+
         window.onload = function() {
             renderCustomLogoUI();
             buildMode2Inputs();
 
-            // Firebase Cloud Data Sync (Mobile + Computer Sync)
+            // Firebase Cloud Data Sync (Mobile + Computer Realtime Sync)
             if (typeof database !== 'undefined') {
                 database.ref('jnv_tests').on('value', (snapshot) => {
                     const cloudData = snapshot.val();
@@ -534,11 +542,22 @@
                     }
                 });
 
+                // Question Bank Realtime Synchronization
                 database.ref('jnv_question_bank').on('value', (snapshot) => {
                     const qbData = snapshot.val();
                     if (qbData) {
-                        questionBank = qbData;
-                        localStorage.setItem('jnv_question_bank_v6', JSON.stringify(questionBank));
+                        questionBank = {
+                            mcq: Array.isArray(qbData.mcq) ? qbData.mcq : (qbData.mcq ? Object.values(qbData.mcq) : []),
+                            passage: Array.isArray(qbData.passage) ? qbData.passage : (qbData.passage ? Object.values(qbData.passage) : []),
+                            image: Array.isArray(qbData.image) ? qbData.image : (qbData.image ? Object.values(qbData.image) : [])
+                        };
+                    } else {
+                        questionBank = { mcq: [], passage: [], image: [] };
+                    }
+                    localStorage.setItem('jnv_question_bank_v6', JSON.stringify(questionBank));
+                    updateQbCountsUI();
+                    if (!document.getElementById('qBankModal').classList.contains('hidden')) {
+                        renderQbQuestions();
                     }
                 });
             }
@@ -567,7 +586,7 @@
             renderTestBoxes();
         };
 
-        // Render Dynamic Test Boxes (ક્લાઉડ સેવ કરેલ બોક્ષો)
+        // Render Dynamic Test Boxes
         function renderTestBoxes() {
             const container = document.getElementById('testBoxesContainer');
             if (!container) return;
@@ -642,6 +661,24 @@
             if (typeof database !== 'undefined') {
                 database.ref('jnv_question_bank').set(questionBank);
             }
+            updateQbCountsUI();
+        }
+
+        function saveToQuestionBank(item) {
+            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
+            let qbItem = JSON.parse(JSON.stringify(item));
+            
+            let targetKey = 'mcq';
+            if (qbItem.type === 'passage_group') targetKey = 'passage';
+            else if (qbItem.type === 'image_mcq') targetKey = 'image';
+
+            if (!questionBank[targetKey]) questionBank[targetKey] = [];
+
+            let exists = questionBank[targetKey].some(q => q.id === qbItem.id);
+            if (!exists) {
+                questionBank[targetKey].push(qbItem);
+                saveQuestionBankToCloud();
+            }
         }
 
         // --- SUBMIT QUIZ WITH DETAILED OPTIONS & ANSWERS ---
@@ -660,7 +697,6 @@
                 let opts = q.options || q.o || [];
                 let optIndexMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
 
-                // Get Option Text for exact review
                 let userAnsText = userAnsKey ? `${userAnsKey}. ${opts[optIndexMap[userAnsKey]] || ''}` : 'આપેલ નથી';
                 let correctAnsText = `${correctAnsKey}. ${opts[optIndexMap[correctAnsKey]] || ''}`;
 
@@ -769,7 +805,7 @@
             });
         }
 
-        // --- ADMIN VIEW STUDENT DETAILED RESULT (નામ પર ક્લિક કરતા) ---
+        // --- ADMIN VIEW STUDENT DETAILED RESULT ---
         function viewStudentDetailedResult(subId) {
             let sub = allSubmissions.find(s => s.id === subId) || allSubmissions[subId];
             if(!sub) return alert("પરિણામ મળી શક્યું નથી.");
@@ -810,16 +846,7 @@
             document.getElementById('adminViewResultModal').classList.remove('hidden');
         }
 
-        function saveToQuestionBank(item) {
-            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
-            let qbItem = JSON.parse(JSON.stringify(item));
-            if (qbItem.type === 'mcq') questionBank.mcq.push(qbItem);
-            else if (qbItem.type === 'passage_group') questionBank.passage.push(qbItem);
-            else if (qbItem.type === 'image_mcq') questionBank.image.push(qbItem);
-            saveQuestionBankToCloud();
-        }
-
-        // --- REST OF HELPER FUNCTIONS ---
+        // --- HELPER FUNCTIONS ---
         function buildMode2Inputs() {
             const container = document.getElementById('m2QuestionsInputContainer');
             container.innerHTML = "";
@@ -1164,10 +1191,7 @@
         }
 
         function openQuestionBankModal() {
-            if (!questionBank) questionBank = { mcq: [], passage: [], image: [] };
-            document.getElementById('qbMcqCount').innerText = (questionBank.mcq || []).length;
-            document.getElementById('qbPassageCount').innerText = (questionBank.passage || []).length;
-            document.getElementById('qbImageCount').innerText = (questionBank.image || []).length;
+            updateQbCountsUI();
             document.getElementById('qBankModal').classList.remove('hidden');
             switchQbTab('mcq');
         }
@@ -1227,7 +1251,7 @@
             if (confirm("પ્રશ્ન બેંકમાંથી ડિલીટ કરવું છે?")) {
                 questionBank[currentQbTab] = questionBank[currentQbTab].filter(item => item.id !== id);
                 saveQuestionBankToCloud();
-                openQuestionBankModal();
+                renderQbQuestions();
             }
         }
 

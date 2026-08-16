@@ -384,7 +384,7 @@
                 <div class="mt-8 border-t pt-4">
                     <div class="flex justify-between items-center mb-3">
                         <h4 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-users text-indigo-600"></i> તાજેતરના વિદ્યાર્થીઓના પરિણામો
+                            <i class="fa-solid fa-users text-indigo-600"></i> તાજેતરના વિદ્યાર્થીઓના પરિણામો (Cloud Sync)
                         </h4>
                         <button onclick="clearAllSubmissionsHistory()" class="text-xs text-rose-600 font-bold">બધા પરિણામો ડિલીટ કરો</button>
                     </div>
@@ -451,6 +451,7 @@
         let userAnswers = {};
         let flatQuestionsList = [];
         let currentQbTab = 'mcq';
+        let isInitialLoad = true;
 
         function generateUniqueId() {
             return 'q_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
@@ -532,6 +533,7 @@
 
             // Firebase Cloud Data Sync (Mobile + Computer Realtime Sync)
             if (typeof database !== 'undefined') {
+                // 1. Synchronize Tests Data
                 database.ref('jnv_tests').on('value', (snapshot) => {
                     const cloudData = snapshot.val();
                     if (cloudData) {
@@ -542,7 +544,7 @@
                     }
                 });
 
-                // Question Bank Realtime Synchronization
+                // 2. Synchronize Question Bank Data
                 database.ref('jnv_question_bank').on('value', (snapshot) => {
                     const qbData = snapshot.val();
                     if (qbData) {
@@ -559,6 +561,32 @@
                     if (!document.getElementById('qBankModal').classList.contains('hidden')) {
                         renderQbQuestions();
                     }
+                });
+
+                // 3. Synchronize All Student Submissions/Results across devices
+                database.ref('jnv_test_submissions').on('value', (snapshot) => {
+                    const subData = snapshot.val();
+                    allSubmissions = [];
+                    if (subData) {
+                        Object.keys(subData).forEach(key => {
+                            let item = subData[key];
+                            item.firebaseKey = key;
+                            allSubmissions.push(item);
+                        });
+                        // Reverse so latest appears first
+                        allSubmissions.reverse();
+                    }
+                    localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
+                    renderTeacherSubmissions();
+                    populateStudentFilterDropdown();
+                    renderTestBoxes();
+
+                    // Trigger notification only for new additions after initial page load
+                    if (!isInitialLoad && allSubmissions.length > 0) {
+                        let latest = allSubmissions[0];
+                        triggerAdminNotification(`${latest.studentName} (${latest.std}) - સાચા: ${latest.correctCount}/${latest.totalQuestions}`);
+                    }
+                    isInitialLoad = false;
                 });
             }
 
@@ -582,7 +610,6 @@
             refreshSelectDropdown();
             setupStudentView();
             setupPasteListener();
-            listenToFirebaseRealtime();
             renderTestBoxes();
         };
 
@@ -627,25 +654,6 @@
             document.getElementById('adminTestSelect').value = key;
             loadAdminTestData();
             alert(`"${key}" સિલેક્ટ થઈ ગઈ છે!`);
-        }
-
-        function listenToFirebaseRealtime() {
-            if (typeof database !== 'undefined') {
-                database.ref('jnv_test_submissions').on('child_added', (snapshot) => {
-                    const submission = snapshot.val();
-                    if (submission) {
-                        let exists = allSubmissions.some(s => s.id === submission.id);
-                        if (!exists) {
-                            allSubmissions.push(submission);
-                            localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
-                            renderTeacherSubmissions();
-                            populateStudentFilterDropdown();
-                            renderTestBoxes();
-                            triggerAdminNotification(`${submission.studentName} (${submission.std}) - સાચા: ${submission.correctCount}/${submission.totalQuestions}`);
-                        }
-                    }
-                });
-            }
         }
 
         function saveTestData() {
@@ -735,14 +743,14 @@
                 details: studentDetails
             };
 
-            allSubmissions.push(submissionObj);
-            localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
-
+            // Firebase Cloud Push for Realtime Sync
             if (typeof database !== 'undefined') {
                 database.ref('jnv_test_submissions').push(submissionObj);
-            }          
-
-            triggerAdminNotification(`${name} (${std}) - સાચા: ${correctCount}, ખોટા: ${wrongCount} (${percentage}%)`);
+            } else {
+                allSubmissions.unshift(submissionObj);
+                localStorage.setItem('jnv_test_submissions_v2', JSON.stringify(allSubmissions));
+                renderTeacherSubmissions();
+            }
 
             document.getElementById('resTotalScore').innerText = `${correctCount} / ${totalQuestions}`;
             document.getElementById('resPercentage').innerText = percentage + "%";
@@ -807,7 +815,7 @@
 
         // --- ADMIN VIEW STUDENT DETAILED RESULT ---
         function viewStudentDetailedResult(subId) {
-            let sub = allSubmissions.find(s => s.id === subId) || allSubmissions[subId];
+            let sub = allSubmissions.find(s => s.id === subId || s.firebaseKey === subId) || allSubmissions[subId];
             if(!sub) return alert("પરિણામ મળી શક્યું નથી.");
 
             document.getElementById('adminModalStudentTitle').innerText = `${sub.studentName} (${sub.std}) - ${sub.testName}`;
@@ -1324,7 +1332,7 @@
                     <div><b>${s.studentName}</b> <span class="text-slate-500">(${s.std})</span> <span class="text-[10px] text-slate-400 ml-2">${s.date}</span></div>
                     <div class="flex items-center gap-3">
                         <span class="font-bold text-indigo-700">સાચા: ${s.correctCount}/${s.totalQuestions} (${s.percentage}%)</span>
-                        <button onclick="viewStudentDetailedResult('${s.id || idx}')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-bold hover:bg-indigo-200">ઉત્તરવહી જુઓ</button>
+                        <button onclick="viewStudentDetailedResult('${s.firebaseKey || s.id || idx}')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-bold hover:bg-indigo-200">ઉત્તરવહી જુઓ</button>
                     </div>
                 </div>
             `).join('');
@@ -1369,7 +1377,7 @@
                     <td class="p-2 border font-bold text-rose-600">${st.wrongCount || (st.totalQuestions - st.correctCount)}</td>
                     <td class="p-2 border font-bold text-amber-600">${st.percentage}%</td>
                     <td class="p-2 border text-center">
-                        <button onclick="viewStudentDetailedResult('${st.id || idx}')" class="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded font-bold hover:bg-indigo-700">જુઓ</button>
+                        <button onclick="viewStudentDetailedResult('${st.firebaseKey || st.id || idx}')" class="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded font-bold hover:bg-indigo-700">જુઓ</button>
                     </td>
                 `;
                 tbody.appendChild(tr);

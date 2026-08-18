@@ -590,6 +590,7 @@
                     createDefaultTestStructure();
                 }
                 updateAdminUI();
+                updateStudentRegistrationCard();
             });
 
             database.ref('customLogo').on('value', (snapshot) => {
@@ -680,9 +681,10 @@
             database.ref('customLogo').remove();
         }
 
+        // Updated Teacher Login - Password: 10101991
         function promptTeacherLogin() {
             const pass = prompt("શિક્ષક એડમિન પેનલમાં પ્રવેશવા પાસવર્ડ દાખલ કરો:");
-            if (pass === "1234") {
+            if (pass === "10101991") {
                 switchView('admin');
             } else if (pass !== null) {
                 alert("ખોટો પાસવર્ડ! કૃપા કરીને ફરી પ્રયાસ કરો.");
@@ -886,7 +888,6 @@
         function openCloudTestModal() { document.getElementById('cloudTestModal').classList.remove('hidden'); }
         function closeCloudTestModal() { document.getElementById('cloudTestModal').classList.add('hidden'); }
 
-        // Question Bank Modal & Subject Filter Handling
         function openQuestionBankModal() {
             document.getElementById('qBankModal').classList.remove('hidden');
             onQbCourseFilterChange();
@@ -945,7 +946,6 @@
                 });
             });
 
-            // Count Types
             let countAll = allQuestions.length;
             let countMcq = allQuestions.filter(q => q.type === 'mcq').length;
             let countPassage = allQuestions.filter(q => q.type === 'passage').length;
@@ -956,7 +956,6 @@
             document.getElementById('qbPassageCount').textContent = countPassage;
             document.getElementById('qbImageCount').textContent = countImage;
 
-            // Filtering
             let filtered = allQuestions;
             if (selectedCourse !== 'all') {
                 filtered = filtered.filter(q => q.course === selectedCourse);
@@ -1033,7 +1032,6 @@
                 });
         }
 
-        // Builder Modes
         function setBuilderMode(mode) {
             document.getElementById('builderMode1').classList.add('hidden');
             document.getElementById('builderMode2').classList.add('hidden');
@@ -1293,7 +1291,6 @@
             }
         }
 
-        // Student Quiz Execution & Submissions
         function startStudentQuiz(e) {
             e.preventDefault();
             const name = document.getElementById('studentName').value.trim();
@@ -1595,11 +1592,30 @@
             alert("લિંક સફળતાપૂર્વક કોપી થઈ ગઈ!");
         }
 
-        function generateShortUrlLink() {
-            const longUrl = document.getElementById('shareLinkInput').value;
-            alert("લિંક ટૂંકી કરવા માટે TinyURL નો ઉપયોગ કરી શકાય છે. વર્તમાન કોપી લિંક મોકલી શકાય છે.");
+        // Real Short URL Link Generator using TinyURL API
+        async function generateShortUrlLink() {
+            const input = document.getElementById('shareLinkInput');
+            const longUrl = input.value;
+            if (!longUrl || longUrl.includes("tinyurl.com")) return;
+
+            try {
+                input.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
+                const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
+                if (res.ok) {
+                    const shortUrl = await res.text();
+                    input.value = shortUrl;
+                    alert("લિંક સફળતાપૂર્વક ટૂંકી (Short Link) થઈ ગઈ છે!");
+                } else {
+                    input.value = longUrl;
+                    alert("ટૂંકી લિંક જનરેટ કરવામાં સમસ્યા આવી.");
+                }
+            } catch (e) {
+                input.value = longUrl;
+                alert("નેટવર્ક ભૂલ: લિંક ટૂંકી થઈ શકી નથી.");
+            }
         }
 
+        // WhatsApp Direct Share
         function shareWhatsApp() {
             const url = document.getElementById('shareLinkInput').value;
             const text = encodeURIComponent(`*નિર્મળા નવોદય સ્ટડી ઝોન*\nઓનલાઇન ટેસ્ટ આપવા માટે નીચેની લિંક પર ક્લિક કરો:\n${url}`);

@@ -33,7 +33,15 @@
     <style>
         body { font-family: 'Hind Vadodara', sans-serif; background-color: #f1f5f9; }
         .selected-ans { background-color: #e0e7ff !important; border-color: #6366f1 !important; font-weight: bold; color: #4338ca !important; }
-        .sticky-passage { position: sticky; top: 85px; max-height: calc(100vh - 120px); overflow-y: auto; }
+        
+        /* ફકરા માટે સ્ટીકી ક્લાસ - ૫ પ્રશ્નો પૂરા ના થાય ત્યાં સુધી ફકરો સ્ક્રીન પર ફિક્સ રહેશે */
+        .sticky-passage-box { 
+            position: sticky; 
+            top: 85px; 
+            max-height: calc(100vh - 110px); 
+            overflow-y: auto; 
+        }
+
         .correct-card { border-left: 6px solid #10b981 !important; background-color: #f0fdf4 !important; }
         .wrong-card { border-left: 6px solid #ef4444 !important; background-color: #fef2f2 !important; }
 
@@ -777,7 +785,6 @@
                 badge.className = "px-3 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
                 badge.innerHTML = "🚀 એક્ટિવ (Active)";
                 
-                // Disable controls when test is ACTIVE
                 document.getElementById('btnSetDraft').disabled = true;
                 document.getElementById('btnSetDraft').classList.add('opacity-50', 'cursor-not-allowed');
                 document.getElementById('activeLockWarning').classList.remove('hidden');
@@ -787,7 +794,6 @@
                 badge.className = "px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300";
                 badge.innerHTML = "📝 ડ્રાફ્ટ (Draft)";
                 
-                // Enable controls when test is DRAFT
                 document.getElementById('btnSetDraft').disabled = false;
                 document.getElementById('btnSetDraft').classList.remove('opacity-50', 'cursor-not-allowed');
                 document.getElementById('activeLockWarning').classList.add('hidden');
@@ -824,7 +830,6 @@
         function setTestStatusExplicit(status) {
             if (!currentTests[activeTestKey]) return;
             
-            // Rule: Actived test cannot be set back to draft directly
             if (currentTests[activeTestKey].meta?.status === 'active' && status === 'draft') {
                 alert("એક્ટિવ થયેલી ટેસ્ટ ફરી ડ્રાફ્ટમાં મૂકી શકાશે નહીં. જો સુધારો કરવો હોય તો ડુપ્લિકેટ કોપી બનાવો.");
                 return;
@@ -1459,46 +1464,88 @@
             startQuizTimer(currentStudentQuizData.timeLimit * 60);
         }
 
+        /* સુધારેલું Quiz Display વિજેટ - જ્યાં સુધી ૫ પ્રશ્નો પૂરા ના થાય ત્યાં સુધી ફકરો સ્ક્રીન પર fixed રહે છે */
         function renderQuizQuestions() {
             const container = document.getElementById('quizQuestionsContainer');
             let html = '';
 
-            currentStudentQuizData.questions.forEach((q, idx) => {
-                html += `
-                    <div class="bg-white p-6 rounded-2xl shadow border border-slate-200 space-y-4">
-                        <div class="flex justify-between items-start gap-3">
-                            <span class="font-bold text-indigo-700 text-base">પ્રશ્ન ${idx + 1}.</span>
-                            <span class="text-xs font-bold text-slate-400">૧ ગુણ</span>
-                        </div>
-                        
-                        ${q.passage ? `<div class="sticky-passage bg-amber-50/60 p-4 rounded-xl border border-amber-200 text-sm font-semibold text-slate-700 leading-relaxed">${q.passage}</div>` : ''}
-                        ${q.image ? `<img src="${q.image}" class="max-h-56 mx-auto rounded-xl border shadow-sm">` : ''}
-                        
-                        <div class="text-slate-800 font-bold text-base leading-relaxed">${formatFractions(q.question)}</div>
+            let i = 0;
+            while (i < currentStudentQuizData.questions.length) {
+                const q = currentStudentQuizData.questions[i];
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                            ${['A', 'B', 'C', 'D'].map((optKey, i) => `
-                                <button type="button" onclick="selectQuizAnswer(${idx}, '${optKey}')" id="optBtn_${idx}_${optKey}" class="p-3 rounded-xl border-2 text-left font-semibold text-sm flex items-center gap-3 transition border-slate-200 hover:border-indigo-300">
-                                    <span class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600">${optKey}</span>
-                                    <span>${formatFractions(q.options[i])}</span>
-                                </button>
-                            `).join('')}
+                if (q.passage) {
+                    // જો પ્રશ્ન ફકરા વાળો હોય તો તે ફકરો અને તેની સાથેના પ્રશ્નો એક જ Container માં Group થશે
+                    const currentPassage = q.passage;
+                    let passageQuestions = [];
+
+                    while (i < currentStudentQuizData.questions.length && currentStudentQuizData.questions[i].passage === currentPassage) {
+                        passageQuestions.push({ q: currentStudentQuizData.questions[i], originalIdx: i });
+                        i++;
+                    }
+
+                    html += `
+                        <div class="bg-white p-4 sm:p-6 rounded-2xl shadow border border-slate-200 mb-8 flex flex-col md:flex-row gap-6 items-start relative">
+                            <!-- sticky-passage-box વડે ફકરો પોતે જ સ્થિર રહેશે અને ફક્ત પ્રશ્નો જ સ્ક્રોલ થશે -->
+                            <div class="w-full md:w-1/2 sticky-passage-box bg-amber-50/90 p-5 rounded-xl border-2 border-amber-200 shadow-sm">
+                                <span class="bg-amber-200 text-amber-900 font-bold px-3 py-1 rounded-full text-xs mb-3 inline-block">
+                                    <i class="fa-solid fa-paragraph"></i> ફકરો વાંચી નીચેના પ્રશ્નોના જવાબ આપો
+                                </span>
+                                <div class="text-sm font-semibold text-slate-800 leading-relaxed whitespace-pre-line">
+                                    ${currentPassage}
+                                </div>
+                            </div>
+                            
+                            <!-- પ્રશ્નો જે આ ફકરા હેઠળ સ્ક્રોલ થશે -->
+                            <div class="w-full md:w-1/2 space-y-6">
+                                ${passageQuestions.map(item => renderSingleQuestionCard(item.q, item.originalIdx)).join('')}
+                            </div>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                } else {
+                    // સામાન્ય કે આકૃતિ વાળો MCQ પ્રશ્ન
+                    html += `<div class="bg-white p-6 rounded-2xl shadow border border-slate-200 mb-6">
+                        ${renderSingleQuestionCard(q, i)}
+                    </div>`;
+                    i++;
+                }
+            }
 
             container.innerHTML = html;
+        }
+
+        /* સિંગલ કસોટી કાર્ડ રેન્ડર કરવા માટેનું ફંક્શન */
+        function renderSingleQuestionCard(q, idx) {
+            return `
+                <div class="space-y-4 ${q.passage ? 'bg-slate-50 p-4 rounded-xl border border-slate-200' : ''}">
+                    <div class="flex justify-between items-start gap-3">
+                        <span class="font-bold text-indigo-700 text-base">પ્રશ્ન ${idx + 1}.</span>
+                        <span class="text-xs font-bold text-slate-400">૧ ગુણ</span>
+                    </div>
+                    
+                    ${q.image ? `<img src="${q.image}" class="max-h-56 mx-auto rounded-xl border shadow-sm mb-2">` : ''}
+                    
+                    <div class="text-slate-800 font-bold text-base leading-relaxed">${formatFractions(q.question)}</div>
+
+                    <div class="grid grid-cols-1 gap-2.5 pt-2">
+                        ${['A', 'B', 'C', 'D'].map((optKey, i) => `
+                            <button type="button" onclick="selectQuizAnswer(${idx}, '${optKey}')" id="optBtn_${idx}_${optKey}" class="p-3 rounded-xl border-2 text-left font-semibold text-sm flex items-center gap-3 transition border-slate-200 bg-white hover:border-indigo-300 shadow-sm">
+                                <span class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600 shrink-0">${optKey}</span>
+                                <span class="break-words">${formatFractions(q.options[i])}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
         }
 
         function selectQuizAnswer(qIdx, optKey) {
             currentStudentQuizData.userAnswers[qIdx] = optKey;
             ['A', 'B', 'C', 'D'].forEach(k => {
                 const btn = document.getElementById(`optBtn_${qIdx}_${k}`);
-                if (btn) btn.className = "p-3 rounded-xl border-2 text-left font-semibold text-sm flex items-center gap-3 transition border-slate-200 hover:border-indigo-300";
+                if (btn) btn.className = "p-3 rounded-xl border-2 text-left font-semibold text-sm flex items-center gap-3 transition border-slate-200 bg-white hover:border-indigo-300 shadow-sm";
             });
             const selBtn = document.getElementById(`optBtn_${qIdx}_${optKey}`);
-            if (selBtn) selBtn.className = "p-3 rounded-xl border-2 text-left font-semibold text-sm flex items-center gap-3 transition selected-ans";
+            if (selBtn) selBtn.className = "p-3 rounded-xl border-2 text-left font-semibold text-sm flex items-center gap-3 transition selected-ans shadow-sm";
         }
 
         function startQuizTimer(seconds) {

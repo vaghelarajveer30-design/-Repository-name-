@@ -67,7 +67,7 @@
         </div>
     </div>
 
-    <!-- ઓછો હેડર - સમય અને લોગો એક જગ્યાએ ગોઠવેલ -->
+    <!-- હેડર -->
     <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -78,7 +78,6 @@
                 <h1 class="text-lg font-bold tracking-wide" id="mainHeaderTitle">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
             </div>
 
-            <!-- Quiz Timer Header Bar -->
             <div id="quizHeaderTimerBox" class="hidden flex items-center gap-3 bg-indigo-800 px-3 py-1 rounded-lg border border-indigo-500">
                 <div class="text-xs text-right">
                     <span id="quizTitleDisplay" class="font-bold block text-yellow-300 leading-tight">ટેસ્ટ</span>
@@ -110,7 +109,7 @@
                 <p id="studentTestTitle" class="text-indigo-600 font-bold text-base mt-0.5">ઓનલાઇન કસોટી</p>
             </div>
 
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs space-y-1.5">
+            <div id="studentTestDetailsBox" class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs space-y-1.5">
                 <div class="flex justify-between items-center">
                     <span class="text-slate-600 font-semibold"><i class="fa-solid fa-bookmark text-indigo-600"></i> કોર્ષ:</span>
                     <span id="dispCourse" class="font-bold text-indigo-900">-</span>
@@ -129,11 +128,21 @@
                 </div>
             </div>
 
-            <div class="mb-4 bg-indigo-50 border border-indigo-200 rounded-lg p-2 text-xs text-indigo-800 text-center font-bold">
+            <div id="studentAttemptNotice" class="mb-4 bg-indigo-50 border border-indigo-200 rounded-lg p-2 text-xs text-indigo-800 text-center font-bold">
                 <i class="fa-solid fa-mobile-screen-button"></i> નોંધ: આ લિંક પરથી મહત્તમ ૨ વખત ટેસ્ટ આપી શકાશે. (આપેલ ટેસ્ટ: <span id="dispDeviceAttempts" class="text-rose-600">0</span>/2)
             </div>
 
-            <form onsubmit="startStudentQuiz(event)" class="space-y-3">
+            <!-- લિમિટ પૂરી થાય ત્યારે જ માર્ક્સ બતાવતું બોક્સ -->
+            <div id="maxAttemptsReachedBox" class="hidden bg-rose-50 border border-rose-300 p-4 rounded-xl text-center space-y-2 mb-4">
+                <i class="fa-solid fa-circle-exclamation text-rose-600 text-3xl"></i>
+                <h3 class="font-bold text-rose-800 text-sm">તમે આ લિંક પરથી ૨ વખત ટેસ્ટ આપી દીધી છે!</h3>
+                <p class="text-xs text-slate-600">તમારા છેલ્લા પ્રયાસનું પરિણામ:</p>
+                <div class="bg-white p-2.5 rounded-lg border text-indigo-900 font-bold text-sm" id="lastAttemptScoreText">
+                    -
+                </div>
+            </div>
+
+            <form id="studentRegForm" onsubmit="startStudentQuiz(event)" class="space-y-3">
                 <div>
                     <label class="block text-slate-700 text-xs font-semibold mb-1">વિદ્યાર્થીનું પૂરું નામ *</label>
                     <input type="text" id="studentName" required placeholder="દા.ત. રમેશભાઈ પટેલ" class="w-full px-3 py-2 text-sm rounded-lg border focus:ring-2 focus:ring-indigo-500">
@@ -152,7 +161,7 @@
                     </select>
                 </div>
                 
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow text-sm mt-2">
+                <button type="submit" id="startQuizBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow text-sm mt-2">
                     ટેસ્ટ શરૂ કરો
                 </button>
             </form>
@@ -256,7 +265,6 @@
                         <div class="flex items-center gap-2 flex-wrap">
                             <label class="font-bold text-xs text-slate-700">ટેસ્ટ પસંદ કરો:</label>
                             <select id="adminTestSelect" onchange="loadAdminTestData()" class="p-1.5 border rounded-lg font-bold text-xs text-indigo-600 bg-white">
-                                <option value="Test 1">ટેસ્ટ ૧ (Test 1)</option>
                             </select>
                             
                             <span id="testStatusBadge" class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
@@ -289,7 +297,7 @@
 
                     <div class="bg-white p-2.5 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-2">
                         <div class="w-full">
-                            <span class="text-[11px] font-bold text-indigo-700 block mb-0.5"><i class="fa-solid fa-link"></i> શેર કરવા માટેની લિંક (આ લિંક પરથી ગમે ત્યારે ટેસ્ટ આપી શકાશે):</span>
+                            <span class="text-[11px] font-bold text-indigo-700 block mb-0.5"><i class="fa-solid fa-link"></i> સેપ્રેટ ટેસ્ટ લિંક (આ દરેક ટેસ્ટ માટે અલગ લિંક બનશે):</span>
                             <input type="text" id="shareLinkInput" readonly value="લિંક જનરેટ થઈ રહી છે..." class="w-full bg-slate-100 p-1.5 text-xs rounded border text-slate-700 font-bold">
                         </div>
                         <div class="flex gap-2 w-full sm:w-auto justify-end">
@@ -584,7 +592,7 @@
 
         let currentTests = {};
         let questionBankData = {};
-        let activeTestKey = 'Test 1';
+        let activeTestKey = '';
         let activeBoxFilter = 'all';
         let currentQbTab = 'all';
         let studentTimerInterval = null;
@@ -609,11 +617,21 @@
                     currentTests = {};
                     createDefaultTestStructure();
                 }
+                
+                // URL માંથી ટેસ્ટ આઈડી મેળવવું
+                const urlParams = new URLSearchParams(window.location.search);
+                const requestedTest = urlParams.get('test');
+                
+                if (requestedTest && currentTests[requestedTest]) {
+                    activeTestKey = requestedTest;
+                } else if (!activeTestKey || !currentTests[activeTestKey]) {
+                    activeTestKey = Object.keys(currentTests)[0] || 'test_1';
+                }
+
                 updateAdminUI();
                 updateStudentRegistrationCard();
             });
 
-            // કાયમી પ્રશ્ન બેંક માટેનો Firebase Listener
             database.ref('question_bank').on('value', (snapshot) => {
                 questionBankData = snapshot.val() || {};
                 renderQbQuestionsList();
@@ -638,18 +656,21 @@
         }
 
         function createDefaultTestStructure() {
-            currentTests['Test 1'] = {
+            const defaultId = 'test_' + Date.now();
+            currentTests[defaultId] = {
                 meta: {
-                    title: 'ટેસ્ટ ૧ (Test 1)',
+                    id: defaultId,
+                    title: 'ટેસ્ટ ૧',
                     course: 'સામાન્ય',
                     subject: 'સામાન્ય',
                     totalMarks: 100,
                     timeLimit: 60,
-                    status: 'draft'
+                    status: 'active'
                 },
                 questions: []
             };
-            database.ref('tests/Test 1').set(currentTests['Test 1']);
+            database.ref(`tests/${defaultId}`).set(currentTests[defaultId]);
+            activeTestKey = defaultId;
         }
 
         function onAdminCourseChange() {
@@ -726,27 +747,53 @@
             }
         }
 
+        // સુધારેલ વિદ્યાર્થી રજિસ્ટ્રેશન સ્ક્રિન
         function updateStudentRegistrationCard() {
             const urlParams = new URLSearchParams(window.location.search);
             let testKeyToLoad = urlParams.get('test') || activeTestKey;
 
-            if (!currentTests[testKeyToLoad]) {
-                const activeKeys = Object.keys(currentTests).filter(k => currentTests[k].meta?.status === 'active');
-                if (activeKeys.length > 0) testKeyToLoad = activeKeys[0];
-                else testKeyToLoad = Object.keys(currentTests)[0] || 'Test 1';
+            const test = currentTests[testKeyToLoad];
+
+            // જો ટેસ્ટ ન મળે અથવા ટેસ્ટ ડ્રાફ્ટમાં હોય તો વિદ્યાર્થીને બતાવવી નહીં
+            if (!test || test.meta?.status === 'draft') {
+                document.getElementById('studentTestTitle').textContent = "ટેસ્ટ ઉપલબ્ધ નથી";
+                document.getElementById('studentTestDetailsBox').classList.add('hidden');
+                document.getElementById('studentAttemptNotice').classList.add('hidden');
+                document.getElementById('studentRegForm').classList.add('hidden');
+                document.getElementById('maxAttemptsReachedBox').classList.remove('hidden');
+                document.getElementById('maxAttemptsReachedBox').innerHTML = `
+                    <i class="fa-solid fa-lock text-amber-500 text-3xl"></i>
+                    <h3 class="font-bold text-slate-800 text-sm">આ ટેસ્ટ હજુ ઉપલબ્ધ નથી અથવા ડ્રાફ્ટમાં છે.</h3>
+                    <p class="text-xs text-slate-500">મહેરબાની કરીને શિક્ષક દ્વારા ટેસ્ટ એક્ટિવ કરવાની રાહ જુઓ.</p>
+                `;
+                return;
             }
 
-            const test = currentTests[testKeyToLoad] || { meta: {} };
             activeTestKey = testKeyToLoad;
 
-            document.getElementById('studentTestTitle').textContent = test.meta?.title || testKeyToLoad;
+            document.getElementById('studentTestDetailsBox').classList.remove('hidden');
+            document.getElementById('studentAttemptNotice').classList.remove('hidden');
+
+            document.getElementById('studentTestTitle').textContent = test.meta?.title || "ઓનલાઇન કસોટી";
             document.getElementById('dispCourse').textContent = test.meta?.course || 'સામાન્ય';
             document.getElementById('dispSubject').textContent = test.meta?.subject || 'સામાન્ય';
             document.getElementById('dispTotalMarks').textContent = test.meta?.totalMarks || 100;
             document.getElementById('dispTimeLimit').textContent = (test.meta?.timeLimit || 60) + " મિનિટ";
 
-            const attempts = localStorage.getItem(`attempts_${testKeyToLoad}`) || 0;
+            const attempts = parseInt(localStorage.getItem(`attempts_${testKeyToLoad}`) || 0);
             document.getElementById('dispDeviceAttempts').textContent = attempts;
+
+            // જો મોબાઇલ/ઉપકરણ પરથી ૨ વાર ટેસ્ટ અપાઈ ગઈ હોય તો ૩જી વાર આપવા જાય ત્યારે પરિણામ/માર્ક્સ જ બતાવવા
+            if (attempts >= 2) {
+                document.getElementById('studentRegForm').classList.add('hidden');
+                document.getElementById('maxAttemptsReachedBox').classList.remove('hidden');
+
+                const lastScore = localStorage.getItem(`lastScore_${testKeyToLoad}`) || "માર્ક્સ ઉપલબ્ધ નથી";
+                document.getElementById('lastAttemptScoreText').textContent = lastScore;
+            } else {
+                document.getElementById('studentRegForm').classList.remove('hidden');
+                document.getElementById('maxAttemptsReachedBox').classList.add('hidden');
+            }
         }
 
         function updateAdminUI() {
@@ -786,8 +833,8 @@
                 badge.className = "px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
                 badge.innerHTML = "🚀 એક્ટિવ (Active)";
                 
-                document.getElementById('btnSetDraft').disabled = true;
-                document.getElementById('btnSetDraft').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('btnSetDraft').disabled = false;
+                document.getElementById('btnSetDraft').classList.remove('opacity-50', 'cursor-not-allowed');
                 document.getElementById('activeLockWarning').classList.remove('hidden');
                 document.getElementById('questionBuilderArea').classList.add('opacity-50', 'pointer-events-none');
                 document.getElementById('btnClearCurrentTest').classList.add('hidden');
@@ -802,7 +849,9 @@
                 document.getElementById('btnClearCurrentTest').classList.remove('hidden');
             }
 
-            const shareUrl = `${window.location.origin}${window.location.pathname}?test=${encodeURIComponent(activeTestKey)}`;
+            // દરેક ટેસ્ટ માટે સેપ્રેટ યુનિક લિંક
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareUrl = `${baseUrl}?test=${encodeURIComponent(activeTestKey)}`;
             document.getElementById('shareLinkInput').value = shareUrl;
 
             renderAdminQuestionsList();
@@ -830,12 +879,6 @@
 
         function setTestStatusExplicit(status) {
             if (!currentTests[activeTestKey]) return;
-            
-            if (currentTests[activeTestKey].meta?.status === 'active' && status === 'draft') {
-                alert("એક્ટિવ થયેલી ટેસ્ટ ફરી ડ્રાફ્ટમાં મૂકી શકાશે નહીં. જો સુધારો કરવો હોય તો ડુપ્લિકેટ કોપી બનાવો.");
-                return;
-            }
-
             database.ref(`tests/${activeTestKey}/meta/status`).set(status);
         }
 
@@ -843,13 +886,13 @@
             const currentTest = currentTests[activeTestKey];
             if (!currentTest) return;
 
-            const count = Object.keys(currentTests).length + 1;
-            const newKey = `Test ${count}`;
+            const newKey = 'test_' + Date.now();
             const newTitle = (currentTest.meta?.title || activeTestKey) + " (Copy)";
 
             const duplicateTestData = {
                 meta: {
                     ...currentTest.meta,
+                    id: newKey,
                     title: newTitle,
                     status: 'draft'
                 },
@@ -862,26 +905,29 @@
             });
         }
 
+        // નવી ટેસ્ટ બનાવતાની સાથે જ ઓટોમેટિક એક્ટિવ થશે
         function createNewTest() {
             const count = Object.keys(currentTests).length + 1;
-            const newKey = `Test ${count}`;
+            const newKey = 'test_' + Date.now();
             const newTitle = prompt("નવી ટેસ્ટનું નામ લખો:", `ટેસ્ટ ${count}`);
             if (!newTitle) return;
 
             const newTest = {
                 meta: {
+                    id: newKey,
                     title: newTitle,
                     course: 'સામાન્ય',
                     subject: 'સામાન્ય',
                     totalMarks: 100,
                     timeLimit: 60,
-                    status: 'draft'
+                    status: 'active' // ઓટોમેટિક એક્ટિવ
                 },
                 questions: []
             };
 
             database.ref(`tests/${newKey}`).set(newTest).then(() => {
                 activeTestKey = newKey;
+                alert(`નવી ટેસ્ટ "${newTitle}" ઓટોમેટિક એક્ટિવ થઈ ગઈ છે અને લિંક તૈયાર છે!`);
             });
         }
 
@@ -890,7 +936,7 @@
                 alert("ઓછામાં ઓછી એક ટેસ્ટ હોવી જરૂરી છે!");
                 return;
             }
-            if (confirm(`શું તમે ખરેખર "${activeTestKey}" ટેસ્ટ ડિલીટ કરવા માગો છો? (નોંધ: આનાથી પ્રશ્ન બેંકના પ્રશ્નો ડિલીટ થશે નહીં)`)) {
+            if (confirm(`શું તમે ખરેખર આ ટેસ્ટ ડિલીટ કરવા માગો છો?`)) {
                 database.ref(`tests/${activeTestKey}`).remove().then(() => {
                     activeTestKey = Object.keys(currentTests)[0];
                 });
@@ -989,7 +1035,6 @@
             renderQbQuestionsList();
         }
 
-        /* સુધારેલ ક્લાઉડ પ્રશ્ન બેંક રેન્ડરિંગ - જે સ્વતંત્ર ડેટાબેઝમાંથી પ્રશ્નો લોડ કરે છે */
         function renderQbQuestionsList() {
             const container = document.getElementById('qbQuestionsContainer');
             const selectedCourse = document.getElementById('qbCourseFilter').value;
@@ -1054,7 +1099,6 @@
             container.innerHTML = html;
         }
 
-        /* પ્રશ્ન બેંકમાંથી યુઝર પોતે ઈચ્છે ત્યારે જ પ્રશ્ન ડિલીટ કરવા માટેનું ફંક્શન */
         function deleteQbQuestionOnly(qbKey) {
             if (confirm("શું તમે આ પ્રશ્નને પ્રશ્ન બેંકમાંથી કાયમી ડિલીટ કરવા માગો છો?")) {
                 database.ref(`question_bank/${qbKey}`).remove();
@@ -1063,7 +1107,7 @@
 
         function importSelectedToCurrentTest() {
             if (currentTests[activeTestKey]?.meta?.status === 'active') {
-                alert("હાલની પસંદ કરેલ ટેસ્ટ એક્ટિવ છે! તેમાં નવા પ્રશ્નો ઇમ્પોર્ટ કરી શકાશે નહીં.");
+                alert("હાલની પસંદ કરેલ ટેસ્ટ એક્ટિવ છે! નવા પ્રશ્નો ઉમેરવા ટેસ્ટ ડ્રાફ્ટમાં હોવી જોઈશે.");
                 return;
             }
 
@@ -1257,14 +1301,12 @@
             uploadedImageBase64 = '';
         }
 
-        // ટેસ્ટ અને પ્રશ્ન બેંક બંનેમાં ઓટો-સેવ કરવાનું સુધારેલું ફંક્શન
         function saveQuestionToCurrentTest(qObj) {
             if (!currentTests[activeTestKey]) return;
             let questions = currentTests[activeTestKey].questions ? (Array.isArray(currentTests[activeTestKey].questions) ? [...currentTests[activeTestKey].questions] : Object.values(currentTests[activeTestKey].questions)) : [];
             questions.push(qObj);
 
             database.ref(`tests/${activeTestKey}/questions`).set(questions);
-            // કાયમી પ્રશ્ન બેંકમાં ઓટો-સેવ
             database.ref('question_bank').push(qObj);
         }
 
@@ -1274,7 +1316,6 @@
             questions = questions.concat(qArray);
 
             database.ref(`tests/${activeTestKey}/questions`).set(questions);
-            // કાયમી પ્રશ્ન બેંકમાં ઓટો-સેવ
             qArray.forEach(q => database.ref('question_bank').push(q));
         }
 
@@ -1339,7 +1380,7 @@
                 return;
             }
 
-            if (confirm("શું તમે આ ટેસ્ટના બધા પ્રશ્નો ભૂસી નાખવા માગો છો? (નોંધ: પ્રશ્ન બેંકના પ્રશ્નો સુરક્ષિત રહેશે)")) {
+            if (confirm("શું તમે આ ટેસ્ટના બધા પ્રશ્નો ભૂસી નાખવા માગો છો?")) {
                 database.ref(`tests/${activeTestKey}/questions`).set([]);
             }
         }
@@ -1405,6 +1446,11 @@
             }
 
             const test = currentTests[activeTestKey];
+            if (!test || test.meta?.status === 'draft') {
+                alert("આ ટેસ્ટ ઉપલબ્ધ નથી અથવા ડ્રાફ્ટમાં છે!");
+                return;
+            }
+
             const questions = test?.questions ? (Array.isArray(test.questions) ? test.questions : Object.values(test.questions)) : [];
 
             if (questions.length === 0) {
@@ -1574,8 +1620,10 @@
 
             database.ref('submissions').push(submission);
 
+            // લોકલ સ્ટોરેજમાં આપેલ પ્રયાસો અને છેલ્લા માર્ક્સ સેવ કરવા
             const attempts = parseInt(localStorage.getItem(`attempts_${currentStudentQuizData.testKey}`) || 0);
             localStorage.setItem(`attempts_${currentStudentQuizData.testKey}`, attempts + 1);
+            localStorage.setItem(`lastScore_${currentStudentQuizData.testKey}`, `${correctCount} / ${totalQuestions} (${percentage}%) - ${new Date().toLocaleDateString('gu-IN')}`);
 
             showQuizResultScreen(submission);
         }

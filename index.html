@@ -27,7 +27,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
@@ -132,7 +131,6 @@
                 <i class="fa-solid fa-mobile-screen-button"></i> નોંધ: આ લિંક પરથી મહત્તમ ૨ વખત ટેસ્ટ આપી શકાશે. (આપેલ ટેસ્ટ: <span id="dispDeviceAttempts" class="text-rose-600">0</span>/2)
             </div>
 
-            <!-- લિમિટ પૂરી થાય ત્યારે જ માર્ક્સ બતાવતું બોક્સ -->
             <div id="maxAttemptsReachedBox" class="hidden bg-rose-50 border border-rose-300 p-4 rounded-xl text-center space-y-2 mb-4">
                 <i class="fa-solid fa-circle-exclamation text-rose-600 text-3xl"></i>
                 <h3 class="font-bold text-rose-800 text-sm">તમે આ લિંક પરથી ૨ વખત ટેસ્ટ આપી દીધી છે!</h3>
@@ -267,8 +265,8 @@
                             <select id="adminTestSelect" onchange="loadAdminTestData()" class="p-1.5 border rounded-lg font-bold text-xs text-indigo-600 bg-white">
                             </select>
                             
-                            <span id="testStatusBadge" class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
-                                📝 ડ્રાફ્ટ (Draft)
+                            <span id="testStatusBadge" class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                🚀 એક્ટિવ (Active)
                             </span>
 
                             <button id="btnSetDraft" onclick="setTestStatusExplicit('draft')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-2.5 py-1 rounded-lg text-xs shadow">
@@ -618,7 +616,6 @@
                     createDefaultTestStructure();
                 }
                 
-                // URL માંથી ટેસ્ટ આઈડી મેળવવું
                 const urlParams = new URLSearchParams(window.location.search);
                 const requestedTest = urlParams.get('test');
                 
@@ -747,14 +744,12 @@
             }
         }
 
-        // સુધારેલ વિદ્યાર્થી રજિસ્ટ્રેશન સ્ક્રિન
         function updateStudentRegistrationCard() {
             const urlParams = new URLSearchParams(window.location.search);
             let testKeyToLoad = urlParams.get('test') || activeTestKey;
 
             const test = currentTests[testKeyToLoad];
 
-            // જો ટેસ્ટ ન મળે અથવા ટેસ્ટ ડ્રાફ્ટમાં હોય તો વિદ્યાર્થીને બતાવવી નહીં
             if (!test || test.meta?.status === 'draft') {
                 document.getElementById('studentTestTitle').textContent = "ટેસ્ટ ઉપલબ્ધ નથી";
                 document.getElementById('studentTestDetailsBox').classList.add('hidden');
@@ -783,7 +778,6 @@
             const attempts = parseInt(localStorage.getItem(`attempts_${testKeyToLoad}`) || 0);
             document.getElementById('dispDeviceAttempts').textContent = attempts;
 
-            // જો મોબાઇલ/ઉપકરણ પરથી ૨ વાર ટેસ્ટ અપાઈ ગઈ હોય તો ૩જી વાર આપવા જાય ત્યારે પરિણામ/માર્ક્સ જ બતાવવા
             if (attempts >= 2) {
                 document.getElementById('studentRegForm').classList.add('hidden');
                 document.getElementById('maxAttemptsReachedBox').classList.remove('hidden');
@@ -849,7 +843,6 @@
                 document.getElementById('btnClearCurrentTest').classList.remove('hidden');
             }
 
-            // દરેક ટેસ્ટ માટે સેપ્રેટ યુનિક લિંક
             const baseUrl = window.location.origin + window.location.pathname;
             const shareUrl = `${baseUrl}?test=${encodeURIComponent(activeTestKey)}`;
             document.getElementById('shareLinkInput').value = shareUrl;
@@ -905,7 +898,7 @@
             });
         }
 
-        // નવી ટેસ્ટ બનાવતાની સાથે જ ઓટોમેટિક એક્ટિવ થશે
+        // ૧. નવી ટેસ્ટ બનાવતાની સાથે જ કાયમી એક્ટિવ મોડમાં રહેશે
         function createNewTest() {
             const count = Object.keys(currentTests).length + 1;
             const newKey = 'test_' + Date.now();
@@ -920,14 +913,14 @@
                     subject: 'સામાન્ય',
                     totalMarks: 100,
                     timeLimit: 60,
-                    status: 'active' // ઓટોમેટિક એક્ટિવ
+                    status: 'active' // કાયમી એક્ટિવ રહેશે
                 },
                 questions: []
             };
 
             database.ref(`tests/${newKey}`).set(newTest).then(() => {
                 activeTestKey = newKey;
-                alert(`નવી ટેસ્ટ "${newTitle}" ઓટોમેટિક એક્ટિવ થઈ ગઈ છે અને લિંક તૈયાર છે!`);
+                alert(`નવી ટેસ્ટ "${newTitle}" ઓટોમેટિક એક્ટિવ થઈ ગઈ છે!`);
             });
         }
 
@@ -1075,7 +1068,7 @@
                                     <span class="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[9px]">વિષય: ${q.subject}</span>
                                     <span class="bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase">${q.type}</span>
                                 </div>
-                                <button onclick="deleteQbQuestionOnly('${q.qbKey}')" class="text-rose-600 hover:bg-rose-50 px-1.5 py-0.5 rounded text-[10px] font-bold border border-rose-200" title="તમે જાતે ડિલીટ કરો તો જ ડિલીટ થશે">
+                                <button onclick="deleteQbQuestionOnly('${q.qbKey}')" class="text-rose-600 hover:bg-rose-50 px-1.5 py-0.5 rounded text-[10px] font-bold border border-rose-200" title="ડિલીટ કરો">
                                     <i class="fa-solid fa-trash-can"></i> ડિલીટ
                                 </button>
                             </div>
@@ -1580,7 +1573,19 @@
             document.getElementById('timerDisplay').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
+        // ૨. જો સમય બાકી હોય અને ટેસ્ટ અધૂરી છોડી દીધી હોય તો સબમિટ અટકાવવું
         function confirmSubmitQuiz() {
+            const answeredCount = Object.keys(currentStudentQuizData.userAnswers).length;
+            const totalCount = currentStudentQuizData.questions.length;
+
+            if (answeredCount < totalCount) {
+                if (studentTimeLeft > 0) {
+                    const remainingMins = Math.ceil(studentTimeLeft / 60);
+                    alert(`તમારી ટેસ્ટમાં હજુ ${totalCount - answeredCount} પ્રશ્નોના જવાબ આપવાના બાકી છે અને ${remainingMins} મિનિટ સમય બાકી છે! સમય પૂર્ણ ના થાય ત્યાં સુધી ટેસ્ટ પૂર્ણ કરો.`);
+                    return; // અહીંથી સબમિટ અટકી જશે
+                }
+            }
+
             if (confirm("શું તમે ખરેખર ટેસ્ટ સબમિટ કરવા માગો છો?")) {
                 submitQuizFinal();
             }
@@ -1620,7 +1625,6 @@
 
             database.ref('submissions').push(submission);
 
-            // લોકલ સ્ટોરેજમાં આપેલ પ્રયાસો અને છેલ્લા માર્ક્સ સેવ કરવા
             const attempts = parseInt(localStorage.getItem(`attempts_${currentStudentQuizData.testKey}`) || 0);
             localStorage.setItem(`attempts_${currentStudentQuizData.testKey}`, attempts + 1);
             localStorage.setItem(`lastScore_${currentStudentQuizData.testKey}`, `${correctCount} / ${totalQuestions} (${percentage}%) - ${new Date().toLocaleDateString('gu-IN')}`);
@@ -1849,7 +1853,7 @@
                 filename: `${activeTestKey}_paper.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             }).from(pdfContainer).save().then(() => {
                 pdfContainer.classList.add('hidden');
             });

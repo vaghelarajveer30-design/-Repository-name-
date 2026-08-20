@@ -27,6 +27,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
@@ -265,8 +266,8 @@
                             <select id="adminTestSelect" onchange="loadAdminTestData()" class="p-1.5 border rounded-lg font-bold text-xs text-indigo-600 bg-white">
                             </select>
                             
-                            <span id="testStatusBadge" class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                🚀 એક્ટિવ (Active)
+                            <span id="testStatusBadge" class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
+                                📝 ડ્રાફ્ટ (Draft)
                             </span>
 
                             <button id="btnSetDraft" onclick="setTestStatusExplicit('draft')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-2.5 py-1 rounded-lg text-xs shadow">
@@ -295,17 +296,14 @@
 
                     <div class="bg-white p-2.5 rounded-lg border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-2">
                         <div class="w-full">
-                            <span class="text-[11px] font-bold text-indigo-700 block mb-0.5"><i class="fa-solid fa-link"></i> સેપ્રેટ ટેસ્ટ લિંક (આ દરેક ટેસ્ટ માટે અલગ લિંક બનશે):</span>
+                            <span class="text-[11px] font-bold text-indigo-700 block mb-0.5"><i class="fa-solid fa-link"></i> સેપ્રેટ શોર્ટ લિંક (આ દરેક ટેસ્ટ માટે પરમીનેન્ટ લિંક છે):</span>
                             <input type="text" id="shareLinkInput" readonly value="લિંક જનરેટ થઈ રહી છે..." class="w-full bg-slate-100 p-1.5 text-xs rounded border text-slate-700 font-bold">
                         </div>
                         <div class="flex gap-2 w-full sm:w-auto justify-end">
-                            <button onclick="generateShortUrlLink()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-2.5 py-1.5 rounded text-xs whitespace-nowrap shadow">
-                                ટૂંકી લિંક
-                            </button>
-                            <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2.5 py-1.5 rounded text-xs whitespace-nowrap shadow">
+                            <button onclick="copyShareLink()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded text-xs whitespace-nowrap shadow">
                                 કોપી કરો
                             </button>
-                            <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-2.5 py-1.5 rounded text-xs whitespace-nowrap shadow">
+                            <button onclick="shareWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded text-xs whitespace-nowrap shadow">
                                 <i class="fa-brands fa-whatsapp text-xs"></i> WhatsApp
                             </button>
                         </div>
@@ -616,13 +614,14 @@
                     createDefaultTestStructure();
                 }
                 
+                // URL માંથી ટૂંકી કી (t અથવા test) મેળવવી
                 const urlParams = new URLSearchParams(window.location.search);
-                const requestedTest = urlParams.get('test');
+                const requestedTest = urlParams.get('t') || urlParams.get('test');
                 
                 if (requestedTest && currentTests[requestedTest]) {
                     activeTestKey = requestedTest;
                 } else if (!activeTestKey || !currentTests[activeTestKey]) {
-                    activeTestKey = Object.keys(currentTests)[0] || 'test_1';
+                    activeTestKey = Object.keys(currentTests)[0] || 't1';
                 }
 
                 updateAdminUI();
@@ -652,8 +651,20 @@
             });
         }
 
+        // શોર્ટ યુનિક આઈડી જનરેટ કરવા માટેનું ફંક્શન (દા.ત. t1, t2...)
+        function generateShortTestId() {
+            const keys = Object.keys(currentTests);
+            let count = keys.length + 1;
+            let newId = 't' + count;
+            while (currentTests[newId]) {
+                count++;
+                newId = 't' + count;
+            }
+            return newId;
+        }
+
         function createDefaultTestStructure() {
-            const defaultId = 'test_' + Date.now();
+            const defaultId = 't1';
             currentTests[defaultId] = {
                 meta: {
                     id: defaultId,
@@ -746,7 +757,7 @@
 
         function updateStudentRegistrationCard() {
             const urlParams = new URLSearchParams(window.location.search);
-            let testKeyToLoad = urlParams.get('test') || activeTestKey;
+            let testKeyToLoad = urlParams.get('t') || urlParams.get('test') || activeTestKey;
 
             const test = currentTests[testKeyToLoad];
 
@@ -843,8 +854,9 @@
                 document.getElementById('btnClearCurrentTest').classList.remove('hidden');
             }
 
+            // થર્ડ પાર્ટી વગર શોર્ટ યુનિક પર્મેનેન્ટ લિંક
             const baseUrl = window.location.origin + window.location.pathname;
-            const shareUrl = `${baseUrl}?test=${encodeURIComponent(activeTestKey)}`;
+            const shareUrl = `${baseUrl}?t=${encodeURIComponent(activeTestKey)}`;
             document.getElementById('shareLinkInput').value = shareUrl;
 
             renderAdminQuestionsList();
@@ -879,7 +891,7 @@
             const currentTest = currentTests[activeTestKey];
             if (!currentTest) return;
 
-            const newKey = 'test_' + Date.now();
+            const newKey = generateShortTestId();
             const newTitle = (currentTest.meta?.title || activeTestKey) + " (Copy)";
 
             const duplicateTestData = {
@@ -898,10 +910,9 @@
             });
         }
 
-        // ૧. નવી ટેસ્ટ બનાવતાની સાથે જ કાયમી એક્ટિવ મોડમાં રહેશે
         function createNewTest() {
             const count = Object.keys(currentTests).length + 1;
-            const newKey = 'test_' + Date.now();
+            const newKey = generateShortTestId();
             const newTitle = prompt("નવી ટેસ્ટનું નામ લખો:", `ટેસ્ટ ${count}`);
             if (!newTitle) return;
 
@@ -913,14 +924,14 @@
                     subject: 'સામાન્ય',
                     totalMarks: 100,
                     timeLimit: 60,
-                    status: 'active' // કાયમી એક્ટિવ રહેશે
+                    status: 'active'
                 },
                 questions: []
             };
 
             database.ref(`tests/${newKey}`).set(newTest).then(() => {
                 activeTestKey = newKey;
-                alert(`નવી ટેસ્ટ "${newTitle}" ઓટોમેટિક એક્ટિવ થઈ ગઈ છે!`);
+                alert(`નવી ટેસ્ટ "${newTitle}" ઓટોમેટિક એક્ટિવ થઈ ગઈ છે અને પરમીનેન્ટ શોર્ટ લિંક તૈયાર છે!`);
             });
         }
 
@@ -1068,7 +1079,7 @@
                                     <span class="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[9px]">વિષય: ${q.subject}</span>
                                     <span class="bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase">${q.type}</span>
                                 </div>
-                                <button onclick="deleteQbQuestionOnly('${q.qbKey}')" class="text-rose-600 hover:bg-rose-50 px-1.5 py-0.5 rounded text-[10px] font-bold border border-rose-200" title="ડિલીટ કરો">
+                                <button onclick="deleteQbQuestionOnly('${q.qbKey}')" class="text-rose-600 hover:bg-rose-50 px-1.5 py-0.5 rounded text-[10px] font-bold border border-rose-200" title="તમે જાતે ડિલીટ કરો તો જ ડિલીટ થશે">
                                     <i class="fa-solid fa-trash-can"></i> ડિલીટ
                                 </button>
                             </div>
@@ -1573,19 +1584,7 @@
             document.getElementById('timerDisplay').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // ૨. જો સમય બાકી હોય અને ટેસ્ટ અધૂરી છોડી દીધી હોય તો સબમિટ અટકાવવું
         function confirmSubmitQuiz() {
-            const answeredCount = Object.keys(currentStudentQuizData.userAnswers).length;
-            const totalCount = currentStudentQuizData.questions.length;
-
-            if (answeredCount < totalCount) {
-                if (studentTimeLeft > 0) {
-                    const remainingMins = Math.ceil(studentTimeLeft / 60);
-                    alert(`તમારી ટેસ્ટમાં હજુ ${totalCount - answeredCount} પ્રશ્નોના જવાબ આપવાના બાકી છે અને ${remainingMins} મિનિટ સમય બાકી છે! સમય પૂર્ણ ના થાય ત્યાં સુધી ટેસ્ટ પૂર્ણ કરો.`);
-                    return; // અહીંથી સબમિટ અટકી જશે
-                }
-            }
-
             if (confirm("શું તમે ખરેખર ટેસ્ટ સબમિટ કરવા માગો છો?")) {
                 submitQuizFinal();
             }
@@ -1787,28 +1786,6 @@
             alert("લિંક સફળતાપૂર્વક કોપી થઈ ગઈ!");
         }
 
-        async function generateShortUrlLink() {
-            const input = document.getElementById('shareLinkInput');
-            const longUrl = input.value;
-            if (!longUrl || longUrl.includes("tinyurl.com")) return;
-
-            try {
-                input.value = "ટૂંકી લિંક જનરેટ થઈ રહી છે...";
-                const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
-                if (res.ok) {
-                    const shortUrl = await res.text();
-                    input.value = shortUrl;
-                    alert("લિંક સફળતાપૂર્વક ટૂંકી (Short Link) થઈ ગઈ છે!");
-                } else {
-                    input.value = longUrl;
-                    alert("ટૂંકી લિંક જનરેટ કરવામાં સમસ્યા આવી.");
-                }
-            } catch (e) {
-                input.value = longUrl;
-                alert("નેટવર્ક ભૂલ: લિંક ટૂંકી થઈ શકી નથી.");
-            }
-        }
-
         function shareWhatsApp() {
             const url = document.getElementById('shareLinkInput').value;
             const text = encodeURIComponent(`*નિર્મળા નવોદય સ્ટડી ઝોન*\nઓનલાઇન ટેસ્ટ આપવા માટે નીચેની લિંક પર ક્લિક કરો:\n${url}`);
@@ -1853,7 +1830,7 @@
                 filename: `${activeTestKey}_paper.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             }).from(pdfContainer).save().then(() => {
                 pdfContainer.classList.add('hidden');
             });

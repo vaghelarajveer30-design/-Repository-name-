@@ -443,16 +443,6 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="mt-6 border-t pt-3">
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-bold text-slate-800 text-xs flex items-center gap-2">
-                            <i class="fa-solid fa-users text-indigo-600"></i> તાજેતરના વિદ્યાર્થીઓના પરિણામો (Realtime Sync)
-                        </h4>
-                        <button onclick="clearAllSubmissionsHistory()" class="text-[11px] text-rose-600 font-bold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">બધા પરિણામો ડિલીટ કરો</button>
-                    </div>
-                    <div id="submissionsList" class="space-y-1.5 max-h-56 overflow-y-auto"></div>
-                </div>
             </div>
         </section>
 
@@ -500,7 +490,6 @@
                             </select>
                         </div>
                     </div>
-
                     <div class="flex gap-1">
                         <button id="qbTabAllBtn" onclick="switchQbTab('all')" class="px-2 py-0.5 font-bold text-[11px] rounded bg-indigo-600 text-white">
                             બધા (<span id="qbAllCount">0</span>)
@@ -519,56 +508,44 @@
 
                 <div class="p-3 overflow-y-auto flex-1 space-y-2" id="qbQuestionsListContainer"></div>
 
-                <div class="p-3 bg-slate-100 border-t flex justify-between items-center">
-                    <span class="text-xs font-bold text-indigo-900">પસંદ કરેલ પ્રશ્નો હાલની ટેસ્ટમાં ઉમેરો</span>
-                    <button onclick="addSelectedQbQuestionsToCurrentTest()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow">
-                        ટેસ્ટમાં પ્રશ્નો ઉમેરો
+                <div class="p-3 bg-slate-100 border-t flex justify-between items-center gap-2">
+                    <button onclick="deleteSelectedQbQuestions()" class="bg-rose-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow hover:bg-rose-700">
+                        પસંદ કરેલા પ્રશ્નો ડિલીટ કરો
+                    </button>
+                    <button onclick="addSelectedQbQuestionsToTest()" class="bg-indigo-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs shadow hover:bg-indigo-700">
+                        પસંદ કરેલા વર્તમાન ટેસ્ટમાં ઉમેરો
                     </button>
                 </div>
             </div>
         </div>
 
         <div id="editQuestionModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-5 space-y-3">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-4 space-y-3">
                 <div class="flex justify-between items-center border-b pb-2">
-                    <h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-pen-to-square text-indigo-600"></i> પ્રશ્નમાં સુધારો કરો</h3>
+                    <h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-pen-to-square text-indigo-600"></i> પ્રશ્ન સુધારો</h3>
                     <button onclick="closeEditQuestionModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
                 </div>
-                <input type="hidden" id="editItemType" value="test">
-                <input type="hidden" id="editItemId" value="">
+                <input type="hidden" id="editItemId">
+                <input type="hidden" id="editItemType">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">પ્રશ્ન:</label>
-                    <textarea id="editQuestionText" rows="3" class="w-full p-2 border rounded text-xs bg-slate-50 font-medium"></textarea>
+                    <label class="block font-bold text-xs text-slate-700 mb-1">પ્રશ્ન:</label>
+                    <textarea id="editQuestionText" rows="2" class="w-full p-2 border rounded-lg text-xs"></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                        <label class="font-bold text-slate-700 block mb-1">વિકલ્પ A:</label>
-                        <input type="text" id="editOptA" class="w-full p-1.5 border rounded">
-                    </div>
-                    <div>
-                        <label class="font-bold text-slate-700 block mb-1">વિકલ્પ B:</label>
-                        <input type="text" id="editOptB" class="w-full p-1.5 border rounded">
-                    </div>
-                    <div>
-                        <label class="font-bold text-slate-700 block mb-1">વિકલ્પ C:</label>
-                        <input type="text" id="editOptC" class="w-full p-1.5 border rounded">
-                    </div>
-                    <div>
-                        <label class="font-bold text-slate-700 block mb-1">વિકલ્પ D:</label>
-                        <input type="text" id="editOptD" class="w-full p-1.5 border rounded">
-                    </div>
+                    <div><label class="font-bold">(A)</label><input type="text" id="editOptA" class="w-full p-1 border rounded"></div>
+                    <div><label class="font-bold">(B)</label><input type="text" id="editOptB" class="w-full p-1 border rounded"></div>
+                    <div><label class="font-bold">(C)</label><input type="text" id="editOptC" class="w-full p-1 border rounded"></div>
+                    <div><label class="font-bold">(D)</label><input type="text" id="editOptD" class="w-full p-1 border rounded"></div>
                 </div>
-                <div class="flex items-center justify-between pt-1">
-                    <div class="flex items-center gap-2 text-xs">
-                        <label class="font-bold text-slate-700">સાચો જવાબ:</label>
-                        <select id="editCorrectAns" class="p-1 border rounded bg-white font-bold text-emerald-600">
-                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-                        </select>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="closeEditQuestionModal()" class="px-3 py-1.5 rounded text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">રદ કરો</button>
-                        <button onclick="saveQuestionEdit()" class="px-4 py-1.5 rounded text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow">સુધારો સેવ કરો</button>
-                    </div>
+                <div class="flex items-center gap-2 text-xs">
+                    <label class="font-bold text-slate-700">સાચો જવાબ:</label>
+                    <select id="editCorrectAns" class="p-1 border rounded font-bold text-emerald-600">
+                        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button onclick="closeEditQuestionModal()" class="px-3 py-1 text-xs border rounded font-bold">રદ કરો</button>
+                    <button onclick="saveEditedQuestion()" class="px-4 py-1 text-xs bg-indigo-600 text-white rounded font-bold shadow">સેવ કરો</button>
                 </div>
             </div>
         </div>
@@ -595,6 +572,7 @@
         </div>
 
         <div id="pdfExportContainer" class="hidden p-8 bg-white text-slate-900 max-w-3xl mx-auto"></div>
+
     </main>
 
     <script>
@@ -602,97 +580,71 @@
             'નવોદય': ['માનસિક યોગ્યતા કસોટી', 'ગણિત', 'ભાષા (ગુજરાતી)', 'સામાન્ય'],
             'Cet': ['ગણિત', 'વિજ્ઞાન', 'સામાજિક વિજ્ઞાન', 'અંગ્રેજી', 'ગુજરાતી', 'તાર્કિક ક્ષમતા'],
             'Gyan sadhana': ['ગણિત', 'વિજ્ઞાન', 'સામાજિક વિજ્ઞાન', 'અંગ્રેજી', 'ગુજરાતી', 'તાર્કિક ક્ષમતા'],
-            'English': ['Grammar', 'Vocabulary', 'Comprehension', 'General'],
-            'સામાન્ય': ['સામાન્ય', 'ગણિત', 'ગુજરાતી', 'અંગ્રેજી', 'વિજ્ઞાન', 'સામાજિક વિજ્ઞાન']
+            'English': ['Grammar', 'Vocabulary', 'Comprehension', 'સામાન્ય'],
+            'સામાન્ય': ['સામાન્ય']
         };
 
         let currentTests = {};
+        let activeTestKey = 'test_1';
+        let allSubmissionsGlobal = [];
         let questionBankData = {};
-        let activeTestKey = '';
         let activeBoxFilter = 'all';
         let currentQbTab = 'all';
-        let studentTimerInterval = null;
-        let studentTimeLeft = 0;
-        let currentStudentQuizData = null;
         let uploadedImageBase64 = '';
         let customLogoBase64 = '';
-        let allSubmissionsGlobal = [];
+        let currentStudentQuizData = null;
+        let studentTimerInterval = null;
+        let studentTimeLeft = 0;
 
-        window.onload = function() {
-            setupMode2Inputs();
-            onAdminCourseChange();
-            initRealtimeSync();
-        };
+        window.addEventListener('DOMContentLoaded', () => {
+            initMode2QuestionsInput();
+            setupFirebaseListeners();
+            checkUrlParameters();
+        });
 
-        function initRealtimeSync() {
-            database.ref('tests').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    currentTests = data;
-                } else {
-                    currentTests = {};
-                    createDefaultTestStructure();
-                }
-                const urlParams = new URLSearchParams(window.location.search);
-                const requestedTest = urlParams.get('t') || urlParams.get('test');
-                if (requestedTest && currentTests[requestedTest]) {
-                    activeTestKey = requestedTest;
-                } else if (!activeTestKey || !currentTests[activeTestKey]) {
-                    activeTestKey = Object.keys(currentTests)[0] || 't1';
-                }
-                updateAdminUI();
-                updateStudentRegistrationCard();
-            });
-
-            database.ref('question_bank').on('value', (snapshot) => {
-                questionBankData = snapshot.val() || {};
-                renderQbQuestionsList();
-            });
-
-            database.ref('customLogo').on('value', (snapshot) => {
+        function setupFirebaseListeners() {
+            database.ref('customLogo').on('value', snapshot => {
                 customLogoBase64 = snapshot.val() || '';
                 applyCustomLogo();
             });
 
-            database.ref('submissions').on('value', (snapshot) => {
-                const data = snapshot.val();
-                allSubmissionsGlobal = [];
-                if (data) {
-                    Object.keys(data).forEach(key => {
-                        allSubmissionsGlobal.push({ id: key, ...data[key] });
-                    });
+            database.ref('tests').on('value', snapshot => {
+                const val = snapshot.val();
+                if (val) {
+                    currentTests = val;
+                } else {
+                    currentTests = {};
                 }
-                renderSubmissionsList();
-                populateStudentFilterDropdown();
+                updateAdminTestDropdown();
+                renderTestBoxes();
+                updateStudentRegistrationCard();
+            });
+
+            database.ref('submissions').on('value', snapshot => {
+                const val = snapshot.val();
+                allSubmissionsGlobal = [];
+                if (val) {
+                    Object.keys(val).forEach(k => {
+                        allSubmissionsGlobal.push({ id: k, ...val[k] });
+                    });
+                    allSubmissionsGlobal.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                }
+                updateStudentFilterDropdown();
+                renderTestBoxes();
+            });
+
+            database.ref('question_bank').on('value', snapshot => {
+                questionBankData = snapshot.val() || {};
+                renderQbQuestionsList();
             });
         }
 
-        function generateShortTestId() {
-            const keys = Object.keys(currentTests);
-            let count = keys.length + 1;
-            let newId = 't' + count;
-            while (currentTests[newId]) {
-                count++;
-                newId = 't' + count;
+        function checkUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const testFromUrl = urlParams.get('t') || urlParams.get('test');
+            if (testFromUrl) {
+                activeTestKey = testFromUrl;
             }
-            return newId;
-        }
-
-        function createDefaultTestStructure() {
-            const defaultId = 't1';
-            currentTests[defaultId] = {
-                meta: {
-                    id: defaultId,
-                    title: 'ટેસ્ટ ૧',
-                    course: 'સામાન્ય',
-                    subject: 'સામાન્ય',
-                    totalMarks: 100,
-                    timeLimit: 60,
-                    status: 'draft'
-                },
-                questions: []
-            };
-            database.ref(`tests/${defaultId}`).set(currentTests[defaultId]);
         }
 
         function applyCustomLogo() {
@@ -705,7 +657,6 @@
                 headerDefault.classList.add('hidden');
                 headerCustom.src = customLogoBase64;
                 headerCustom.classList.remove('hidden');
-
                 if (studentDefault) {
                     studentDefault.classList.add('hidden');
                     studentCustom.src = customLogoBase64;
@@ -765,70 +716,49 @@
             let testKeyToLoad = urlParams.get('t') || urlParams.get('test') || activeTestKey;
             const test = currentTests[testKeyToLoad];
 
-            if (!test || test.meta?.status === 'draft') {
-                document.getElementById('studentTestTitle').textContent = "ટેસ્ટ ઉપલબ્ધ નથી";
-                document.getElementById('studentTestDetailsBox').classList.add('hidden');
-                document.getElementById('studentAttemptNotice').classList.add('hidden');
-                document.getElementById('studentRegForm').classList.add('hidden');
-                document.getElementById('maxAttemptsReachedBox').classList.remove('hidden');
-                document.getElementById('maxAttemptsReachedBox').innerHTML = `
-                    <i class="fa-solid fa-lock text-amber-500 text-3xl"></i>
-                    <h3 class="font-bold text-slate-800 text-sm">આ ટેસ્ટ હજુ ઉપલબ્ધ નથી અથવા ડ્રાફ્ટમાં છે.</h3>
-                    <p class="text-xs text-slate-500">મહેરબાની કરીને શિક્ષક દ્વારા ટેસ્ટ એક્ટિવ કરવાની રાહ જુઓ.</p>
-                `;
-                return;
-            }
+            if (test) {
+                const meta = test.meta || {};
+                document.getElementById('studentTestTitle').textContent = meta.title || testKeyToLoad;
+                document.getElementById('dispCourse').textContent = meta.course || 'સામાન્ય';
+                document.getElementById('dispSubject').textContent = meta.subject || 'સામાન્ય';
+                document.getElementById('dispTotalMarks').textContent = meta.totalMarks || 100;
+                document.getElementById('dispTimeLimit').textContent = `${meta.timeLimit || 60} મિનિટ`;
 
-            activeTestKey = testKeyToLoad;
-            document.getElementById('studentTestDetailsBox').classList.remove('hidden');
-            document.getElementById('studentAttemptNotice').classList.remove('hidden');
-            document.getElementById('studentRegForm').classList.remove('hidden');
-            document.getElementById('maxAttemptsReachedBox').classList.add('hidden');
+                const localAttempts = JSON.parse(localStorage.getItem(`attempts_${testKeyToLoad}`) || '[]');
+                document.getElementById('dispDeviceAttempts').textContent = localAttempts.length;
 
-            const meta = test.meta || {};
-            document.getElementById('studentTestTitle').textContent = meta.title || activeTestKey;
-            document.getElementById('dispCourse').textContent = meta.course || 'સામાન્ય';
-            document.getElementById('dispSubject').textContent = meta.subject || 'સામાન્ય';
-            document.getElementById('dispTotalMarks').textContent = (meta.totalMarks || 100) + ' ગુણ';
-            document.getElementById('dispTimeLimit').textContent = (meta.timeLimit || 60) + ' મિનિટ';
-
-            const attempts = parseInt(localStorage.getItem(`attempts_${activeTestKey}`) || 0);
-            document.getElementById('dispDeviceAttempts').textContent = attempts;
-
-            if (attempts >= 2) {
-                document.getElementById('studentRegForm').classList.add('hidden');
-                document.getElementById('maxAttemptsReachedBox').classList.remove('hidden');
-                const lastScore = localStorage.getItem(`lastScore_${activeTestKey}`) || 'તમે ટેસ્ટ પૂર્ણ કરી છે.';
-                document.getElementById('lastAttemptScoreText').textContent = lastScore;
+                if (localAttempts.length >= 2) {
+                    document.getElementById('studentRegForm').classList.add('hidden');
+                    document.getElementById('maxAttemptsReachedBox').classList.remove('hidden');
+                    const last = localAttempts[localAttempts.length - 1];
+                    document.getElementById('lastAttemptScoreText').textContent = `મેળવેલ માર્ક્સ: ${last.score} / ${last.total} (${last.percentage}%)`;
+                } else {
+                    document.getElementById('studentRegForm').classList.remove('hidden');
+                    document.getElementById('maxAttemptsReachedBox').classList.add('hidden');
+                }
             }
         }
 
-        function onAdminCourseChange() {
-            const course = document.getElementById('adminCourse').value;
-            const subSelect = document.getElementById('adminSubjectSelect');
-            subSelect.innerHTML = '';
-            const subjects = courseSubjectsMap[course] || ['સામાન્ય'];
-            subjects.forEach(s => {
-                subSelect.innerHTML += `<option value="${s}">${s}</option>`;
-            });
-        }
-
-        function updateAdminUI() {
+        function updateAdminTestDropdown() {
             const select = document.getElementById('adminTestSelect');
             select.innerHTML = '';
             const keys = Object.keys(currentTests);
-            
+            if (keys.length === 0) {
+                currentTests['test_1'] = { meta: { title: 'ટેસ્ટ ૧', course: 'સામાન્ય', subject: 'સામાન્ય', totalMarks: 100, timeLimit: 60, status: 'draft' }, questions: [] };
+                database.ref('tests/test_1').set(currentTests['test_1']);
+                return;
+            }
+
             keys.forEach(key => {
-                const meta = currentTests[key]?.meta || {};
+                const meta = currentTests[key].meta || {};
                 const title = meta.title || key;
-                const status = meta.status === 'active' ? '🚀 એક્ટિવ' : '📝 ડ્રાફ્ટ';
+                const status = meta.status === 'active' ? '🚀 Active' : '📝 Draft';
                 select.innerHTML += `<option value="${key}" ${key === activeTestKey ? 'selected' : ''}>${title} (${status})</option>`;
             });
 
             if (!keys.includes(activeTestKey) && keys.length > 0) {
                 activeTestKey = keys[0];
             }
-
             loadAdminTestData();
             renderTestBoxes();
         }
@@ -848,7 +778,7 @@
 
             const badge = document.getElementById('testStatusBadge');
             const isActive = meta.status === 'active';
-
+            
             if (isActive) {
                 badge.className = "px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
                 badge.innerHTML = "🚀 એક્ટિવ (Active)";
@@ -867,67 +797,33 @@
                 document.getElementById('btnClearCurrentTest').classList.remove('hidden');
             }
 
-            const baseUrl = window.location.origin + window.location.pathname;
-            const shareUrl = `${baseUrl}?t=${encodeURIComponent(activeTestKey)}`;
-            document.getElementById('shareLinkInput').value = shareUrl;
+            const currentUrl = window.location.origin + window.location.pathname + `?t=${activeTestKey}`;
+            document.getElementById('shareLinkInput').value = currentUrl;
 
             renderAdminQuestionsList();
         }
 
-        function saveTestMetaSettings() {
-            if (!currentTests[activeTestKey]) return;
+        function onAdminCourseChange() {
             const course = document.getElementById('adminCourse').value;
-            const subject = document.getElementById('adminSubjectSelect').value;
-            const totalMarks = document.getElementById('adminTotalMarks').value || 100;
-            const timeLimit = document.getElementById('adminTimeLimit').value || 60;
-
-            currentTests[activeTestKey].meta = {
-                ...currentTests[activeTestKey].meta,
-                course,
-                subject,
-                totalMarks,
-                timeLimit
-            };
-
-            database.ref(`tests/${activeTestKey}/meta`).set(currentTests[activeTestKey].meta)
-                .then(() => alert("ક્લાઉડમાં સેટિંગ્સ સફળતાપૂર્વક સેવ થયા!"))
-                .catch(err => alert("સેવ કરવામાં ભૂલ: " + err.message));
+            const subjSelect = document.getElementById('adminSubjectSelect');
+            const subjects = courseSubjectsMap[course] || ['સામાન્ય'];
+            subjSelect.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
         }
 
         function setTestStatusExplicit(status) {
             if (!currentTests[activeTestKey]) return;
-            database.ref(`tests/${activeTestKey}/meta/status`).set(status);
-        }
-
-        function duplicateActiveToDraft() {
-            const currentTest = currentTests[activeTestKey];
-            if (!currentTest) return;
-            const newKey = generateShortTestId();
-            const newTitle = (currentTest.meta?.title || activeTestKey) + " (Copy)";
-
-            const duplicateTestData = {
-                meta: {
-                    ...currentTest.meta,
-                    id: newKey,
-                    title: newTitle,
-                    status: 'draft'
-                },
-                questions: currentTest.questions ? (Array.isArray(currentTest.questions) ? [...currentTest.questions] : Object.values(currentTest.questions)) : []
-            };
-
-            database.ref(`tests/${newKey}`).set(duplicateTestData).then(() => {
-                activeTestKey = newKey;
-                alert("ટેસ્ટની ડુપ્લિકેટ કોપી તૈયાર થઈ ગઈ છે!");
+            database.ref(`tests/${activeTestKey}/meta/status`).set(status, () => {
+                loadAdminTestData();
             });
         }
 
         function createNewTest() {
-            const newKey = generateShortTestId();
-            const count = Object.keys(currentTests).length + 1;
-            const newTestObj = {
+            const title = prompt("નવી ટેસ્ટનું નામ લખો (દા.ત. નવોદય ગણિત કસોટી ૦૧):");
+            if (!title) return;
+            const newKey = `test_${Date.now()}`;
+            const newTestData = {
                 meta: {
-                    id: newKey,
-                    title: `ટેસ્ટ ${count}`,
+                    title: title,
                     course: 'સામાન્ય',
                     subject: 'સામાન્ય',
                     totalMarks: 100,
@@ -936,24 +832,67 @@
                 },
                 questions: []
             };
-
-            database.ref(`tests/${newKey}`).set(newTestObj).then(() => {
+            database.ref(`tests/${newKey}`).set(newTestData, () => {
                 activeTestKey = newKey;
-                alert("નવી ટેસ્ટ સફળતાપૂર્વક ઉમેરાઈ ગઈ!");
+                updateAdminTestDropdown();
+            });
+        }
+
+        function duplicateActiveToDraft() {
+            const current = currentTests[activeTestKey];
+            if (!current) return;
+            const newTitle = prompt("ડુપ્લિકેટ ડ્રાફ્ટ ટેસ્ટનું નામ:", `${current.meta?.title || 'ટેસ્ટ'} (ડ્રાફ્ટ)`);
+            if (!newTitle) return;
+
+            const newKey = `test_${Date.now()}`;
+            const dupData = {
+                meta: {
+                    ...(current.meta || {}),
+                    title: newTitle,
+                    status: 'draft'
+                },
+                questions: current.questions || []
+            };
+
+            database.ref(`tests/${newKey}`).set(dupData, () => {
+                activeTestKey = newKey;
+                updateAdminTestDropdown();
+                alert("ટેસ્ટ ડ્રાફ્ટ તરીકે ડુપ્લિકેટ થઈ ગઈ છે!");
             });
         }
 
         function deleteEntireTest() {
-            if (Object.keys(currentTests).length <= 1) {
-                alert("છેલ્લી ટેસ્ટ ડિલીટ કરી શકાશે નહીં!");
-                return;
-            }
-            if (confirm(`શું તમે ખરેખર ટેસ્ટ '${activeTestKey}' ડિલીટ કરવા માગો છો?`)) {
-                database.ref(`tests/${activeTestKey}`).remove().then(() => {
-                    activeTestKey = Object.keys(currentTests)[0];
-                    alert("ટેસ્ટ ડિલીટ કરી દેવાઈ છે.");
+            if (confirm("શું તમે ખરેખર આ આખી ટેસ્ટ ડિલીટ કરવા માગો છો?")) {
+                database.ref(`tests/${activeTestKey}`).remove(() => {
+                    const keys = Object.keys(currentTests).filter(k => k !== activeTestKey);
+                    activeTestKey = keys.length > 0 ? keys[0] : 'test_1';
+                    updateAdminTestDropdown();
                 });
             }
+        }
+
+        function saveTestMetaSettings() {
+            const course = document.getElementById('adminCourse').value;
+            const subject = document.getElementById('adminSubjectSelect').value;
+            const totalMarks = document.getElementById('adminTotalMarks').value;
+            const timeLimit = document.getElementById('adminTimeLimit').value;
+
+            database.ref(`tests/${activeTestKey}/meta`).update({
+                course: course,
+                subject: subject,
+                totalMarks: totalMarks,
+                timeLimit: timeLimit
+            }, () => {
+                alert("ટેસ્ટ સેટિંગ્સ ક્લાઉડમાં સેવ થઈ ગયા છે!");
+            });
+        }
+
+        function filterTestBoxes(filter) {
+            activeBoxFilter = filter;
+            document.getElementById('btnFilterAll').className = filter === 'all' ? 'px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white' : 'px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-700';
+            document.getElementById('btnFilterDraft').className = filter === 'draft' ? 'px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500 text-white shadow' : 'px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300';
+            document.getElementById('btnFilterActive').className = filter === 'active' ? 'px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow' : 'px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300';
+            renderTestBoxes();
         }
 
         function renderTestBoxes() {
@@ -972,6 +911,38 @@
                 if (selectedCourseFilter !== 'all' && meta.course !== selectedCourseFilter) return;
 
                 const isSelected = key === activeTestKey;
+                const testSubs = allSubmissionsGlobal.filter(s => s.testKey === key || s.testTitle === meta.title);
+
+                let studentsListHtml = '';
+                if (testSubs.length > 0) {
+                    studentsListHtml = `
+                        <div class="mt-2.5 pt-2 border-t border-slate-200 text-[11px] space-y-1">
+                            <div class="font-bold text-slate-700 mb-1 flex justify-between items-center">
+                                <span><i class="fa-solid fa-users text-indigo-600"></i> ટેસ્ટ આપનાર વિદ્યાર્થીઓ:</span>
+                                <span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-[10px]">${testSubs.length}</span>
+                            </div>
+                            <div class="space-y-1 max-h-36 overflow-y-auto pr-1">
+                                ${testSubs.map(sub => `
+                                    <div class="bg-white p-1.5 rounded border border-slate-200 flex justify-between items-center gap-2">
+                                        <div class="truncate">
+                                            <span class="font-bold text-slate-800 block truncate">${sub.studentName} <span class="text-[9px] text-slate-500">(${sub.std})</span></span>
+                                            <span class="text-[10px] text-emerald-600 font-bold">ગુણ: ${sub.correctCount}/${sub.totalQuestions} (${sub.percentage}%)</span>
+                                        </div>
+                                        <button onclick="event.stopPropagation(); viewStudentAnswerSheet('${sub.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold px-2 py-1 rounded shadow shrink-0">
+                                            <i class="fa-solid fa-eye"></i> ઉત્તરવહી
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    studentsListHtml = `
+                        <div class="mt-2.5 pt-2 border-t border-slate-200 text-[10px] text-slate-400 font-bold text-center">
+                            કોઈ વિદ્યાર્થીએ હજી આ ટેસ્ટ આપી નથી.
+                        </div>
+                    `;
+                }
 
                 html += `
                     <div onclick="selectTestBox('${key}')" class="p-3 rounded-xl border-2 cursor-pointer transition shadow-sm ${isSelected ? 'border-indigo-600 bg-indigo-50/50 shadow-md' : 'border-slate-200 bg-white hover:border-indigo-300'}">
@@ -982,51 +953,45 @@
                             </span>
                         </div>
                         <div class="text-[11px] text-slate-600 space-y-0.5 font-semibold">
-                            <div><i class="fa-solid fa-bookmark text-indigo-500"></i> કોર્ષ: <span class="text-indigo-900">${meta.course || 'સામાન્ય'}</span></div>
-                            <div><i class="fa-solid fa-book text-indigo-500"></i> વિષય: <span class="text-indigo-900">${meta.subject || 'સામાન્ય'}</span></div>
-                            <div><i class="fa-solid fa-file-lines text-amber-500"></i> પ્રશ્નો: ${qCount} | સમય: ${meta.timeLimit || 60} મિનિટ</div>
+                            <div><i class="fa-solid fa-bookmark text-indigo-500"></i> કોર્ષ: ${meta.course || 'સામાન્ય'} | ${meta.subject || 'સામાન્ય'}</div>
+                            <div><i class="fa-solid fa-circle-question text-indigo-500"></i> પ્રશ્નો: ${qCount} | સમય: ${meta.timeLimit || 60} મિનિટ</div>
                         </div>
+                        ${studentsListHtml}
                     </div>
                 `;
             });
 
-            container.innerHTML = html || '<p class="text-xs text-slate-500 col-span-full">કોઈ ટેસ્ટ મળી નથી.</p>';
-            if (modalContainer) modalContainer.innerHTML = html;
-        }
-
-        function filterTestBoxes(filter) {
-            activeBoxFilter = filter;
-            document.getElementById('btnFilterAll').className = filter === 'all' ? "px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white" : "px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-700";
-            document.getElementById('btnFilterDraft').className = filter === 'draft' ? "px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500 text-white" : "px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300";
-            document.getElementById('btnFilterActive').className = filter === 'active' ? "px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white" : "px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300";
-            renderTestBoxes();
+            if (container) container.innerHTML = html || `<div class="col-span-full text-center text-slate-400 py-6 text-xs font-bold">કોઈ ટેસ્ટ ઉપલબ્ધ નથી.</div>`;
+            if (modalContainer) modalContainer.innerHTML = html || `<div class="col-span-full text-center text-slate-400 py-6 text-xs font-bold">કોઈ ટેસ્ટ ઉપલબ્ધ નથી.</div>`;
         }
 
         function selectTestBox(key) {
             activeTestKey = key;
-            document.getElementById('adminTestSelect').value = key;
+            const select = document.getElementById('adminTestSelect');
+            if (select) select.value = key;
             loadAdminTestData();
+            renderTestBoxes();
             closeCloudTestModal();
         }
 
         function setBuilderMode(mode) {
             [1, 2, 3].forEach(m => {
                 document.getElementById(`builderMode${m}`).classList.add('hidden');
-                const btn = document.getElementById(`mode${m}Btn`);
-                btn.className = "px-3 py-1.5 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap";
+                document.getElementById(`mode${m}Btn`).className = 'px-3 py-1.5 font-bold text-slate-500 hover:text-indigo-600 whitespace-nowrap';
             });
             document.getElementById(`builderMode${mode}`).classList.remove('hidden');
-            document.getElementById(`mode${mode}Btn`).className = "px-3 py-1.5 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap";
+            document.getElementById(`mode${mode}Btn`).className = 'px-3 py-1.5 font-bold text-indigo-600 border-b-2 border-indigo-600 whitespace-nowrap';
         }
 
-        function setupMode2Inputs() {
+        function initMode2QuestionsInput() {
             const container = document.getElementById('m2QuestionsInputContainer');
+            if (!container) return;
             container.innerHTML = '';
             for (let i = 1; i <= 5; i++) {
                 container.innerHTML += `
-                    <div class="bg-slate-100 p-2.5 rounded-lg border space-y-1.5">
-                        <span class="font-bold text-[11px] text-indigo-700">પ્રશ્ન ${i}:</span>
-                        <textarea id="m2Q${i}Text" rows="2" placeholder="પ્રશ્ન ${i} અને વિકલ્પો..." class="w-full p-1.5 border rounded text-xs bg-white"></textarea>
+                    <div class="p-2 border rounded-lg bg-white space-y-1.5">
+                        <span class="font-bold text-indigo-600 text-[11px]">પ્રશ્ન ${i}:</span>
+                        <textarea id="m2Q${i}Text" rows="2" placeholder="પ્રશ્ન ${i} અને ૪ વિકલ્પો પેસ્ટ કરો...&#10;(A) વિકલ્પ ૧&#10;(B) વિકલ્પ ૨&#10;(C) વિકલ્પ ૩&#10;(D) વિકલ્પ ૪" class="w-full p-1.5 border rounded text-xs bg-white"></textarea>
                         <div class="flex items-center gap-2">
                             <label class="text-[11px] font-bold text-slate-700">સાચો જવાબ:</label>
                             <select id="m2Q${i}Correct" class="p-0.5 border rounded bg-white text-xs font-bold text-emerald-600">
@@ -1080,56 +1045,55 @@
                 alert("આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!");
                 return;
             }
-            const passageText = document.getElementById('m2PassageText').value.trim();
+            const passage = document.getElementById('m2PassageText').value.trim();
             const course = document.getElementById('adminCourse').value;
             const subject = document.getElementById('adminSubjectSelect').value;
 
-            if (!passageText) {
+            if (!passage) {
                 alert("કૃપા કરીને ફકરાનું લખાણ દાખલ કરો!");
                 return;
             }
 
-            let qArray = [];
+            let qList = [];
             for (let i = 1; i <= 5; i++) {
                 const raw = document.getElementById(`m2Q${i}Text`).value.trim();
                 const correct = document.getElementById(`m2Q${i}Correct`).value;
-                if (raw) {
-                    const lines = raw.split('\n').map(l => l.trim()).filter(l => l !== '');
-                    const qText = lines[0];
-                    const options = lines.slice(1).map(l => l.replace(/^\([A-D]\)\s*/i, '').replace(/^[A-D][\.\)]\s*/i, ''));
+                if (!raw) continue;
 
-                    qArray.push({
-                        type: 'passage',
-                        course,
-                        subject,
-                        passage: passageText,
-                        question: qText,
-                        options: options.length >= 4 ? options.slice(0, 4) : ['A', 'B', 'C', 'D'],
-                        answer: correct
-                    });
-                }
+                const lines = raw.split('\n').map(l => l.trim()).filter(l => l !== '');
+                const qText = lines[0];
+                const options = lines.slice(1).map(l => l.replace(/^\([A-D]\)\s*/i, '').replace(/^[A-D][\.\)]\s*/i, ''));
+
+                qList.push({
+                    type: 'passage',
+                    passage: passage,
+                    course,
+                    subject,
+                    question: qText,
+                    options: options.length >= 4 ? options.slice(0, 4) : ['A', 'B', 'C', 'D'],
+                    answer: correct
+                });
             }
 
-            if (qArray.length === 0) {
-                alert("ઓછામાં ઓછો ૧ પ્રશ્ન ઉમેરવો જરૂરી છે!");
+            if (qList.length === 0) {
+                alert("કૃપા કરીને ઓછામાં ઓછો એક પ્રશ્ન દાખલ કરો!");
                 return;
             }
 
-            saveMultipleQuestionsToCurrentTest(qArray);
+            saveMultipleQuestionsToCurrentTest(qList);
             document.getElementById('m2PassageText').value = '';
-            setupMode2Inputs();
+            initMode2QuestionsInput();
         }
 
         function handleImageUploadDirect(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 uploadedImageBase64 = e.target.result;
                 document.getElementById('m3ImgPreview').src = uploadedImageBase64;
                 document.getElementById('imgPreviewContainer').classList.remove('hidden');
-                document.getElementById('uploadStatus').textContent = "ઈમેજ સફળતાપૂર્વક અપલોડ થઈ!";
+                document.getElementById('uploadStatus').textContent = "આકૃતિ સફળતાપૂર્વક લોડ થઈ ગઈ!";
             };
             reader.readAsDataURL(file);
         }
@@ -1139,15 +1103,14 @@
                 alert("આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!");
                 return;
             }
+            if (!uploadedImageBase64) {
+                alert("કૃપા કરીને આકૃતિ ઈમેજ સિલેક્ટ કરો!");
+                return;
+            }
             const raw = document.getElementById('m3RawText').value.trim();
             const correct = document.getElementById('m3Correct').value;
             const course = document.getElementById('adminCourse').value;
             const subject = document.getElementById('adminSubjectSelect').value;
-
-            if (!uploadedImageBase64) {
-                alert("કૃપા કરીને પહેલા આકૃતિની ઈમેજ સિલેક્ટ કરો!");
-                return;
-            }
 
             const lines = raw ? raw.split('\n').map(l => l.trim()).filter(l => l !== '') : ['આકૃતિ જોઈ સાચો વિકલ્પ પસંદ કરો.'];
             const qText = lines[0];
@@ -1195,7 +1158,7 @@
             document.getElementById('qCountDisplay').textContent = questions.length;
 
             if (questions.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 italic">આ ટેસ્ટમાં હજુ કોઈ પ્રશ્નો ઉમેર્યા નથી.</p>';
+                container.innerHTML = `<div class="text-center py-4 text-slate-400 text-xs font-bold">હાલમાં કોઈ પ્રશ્નો ઉમેરેલા નથી.</div>`;
                 return;
             }
 
@@ -1203,48 +1166,44 @@
             questions.forEach((q, idx) => {
                 const opts = q.options || ['A', 'B', 'C', 'D'];
                 html += `
-                    <div class="bg-slate-50 p-2.5 rounded-lg border flex items-start justify-between gap-2 text-xs">
-                        <div class="flex-1 space-y-1">
-                            <div class="font-bold text-indigo-900">${idx + 1}. ${formatFractions(q.question)}</div>
-                            ${q.image ? `<img src="${q.image}" class="max-h-20 rounded border my-1">` : ''}
-                            ${q.passage ? `<div class="bg-amber-50 p-1.5 rounded border text-[10px] text-amber-900 italic font-semibold line-clamp-2">ફકરો: ${q.passage}</div>` : ''}
-                            <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
-                                <div>(A) ${formatFractions(opts[0])}</div><div>(B) ${formatFractions(opts[1])}</div>
-                                <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
+                    <div class="bg-white p-3 rounded-xl border flex flex-col gap-1 shadow-sm text-xs">
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="font-bold text-indigo-700">પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</span>
+                            <div class="flex gap-1 shrink-0">
+                                <button onclick="openEditQuestionModal(${idx})" class="text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-[10px] font-bold">સુધારો</button>
+                                <button onclick="deleteQuestionFromTest(${idx})" class="text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold">ડિલીટ</button>
                             </div>
-                            <span class="inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">સાચો જવાબ: ${q.answer}</span>
                         </div>
-                        <div class="flex flex-col gap-1">
-                            <button onclick="openEditQuestionModal(${idx})" class="text-indigo-600 hover:bg-indigo-100 p-1.5 rounded text-xs font-bold border border-indigo-200" title="પ્રશ્ન સુધારો">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button onclick="deleteQuestion(${idx})" class="text-rose-600 hover:bg-rose-100 p-1.5 rounded text-xs font-bold border border-rose-200" title="ડિલીટ કરો">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+                        ${q.image ? `<img src="${q.image}" class="max-h-24 my-1 rounded border">` : ''}
+                        <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
+                            <div>(A) ${formatFractions(opts[0])}</div><div>(B) ${formatFractions(opts[1])}</div>
+                            <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
                         </div>
+                        <div class="text-[10px] font-bold text-emerald-600">સાચો જવાબ: ${q.answer}</div>
                     </div>
                 `;
             });
             container.innerHTML = html;
         }
 
-        function deleteQuestion(idx) {
+        function deleteQuestionFromTest(idx) {
             if (currentTests[activeTestKey]?.meta?.status === 'active') {
-                alert("આ ટેસ્ટ એક્ટિવ હોવાથી પ્રશ્ન ડિલીટ કરી શકાશે નહીં!");
+                alert("આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં ફેરફાર કરી શકાશે નહીં!");
                 return;
             }
-            if (!currentTests[activeTestKey]) return;
-            let questions = Array.isArray(currentTests[activeTestKey].questions) ? [...currentTests[activeTestKey].questions] : Object.values(currentTests[activeTestKey].questions);
-            questions.splice(idx, 1);
-            database.ref(`tests/${activeTestKey}/questions`).set(questions);
+            if (confirm("શું તમે આ પ્રશ્ન ડિલીટ કરવા માગો છો?")) {
+                let questions = currentTests[activeTestKey].questions ? (Array.isArray(currentTests[activeTestKey].questions) ? [...currentTests[activeTestKey].questions] : Object.values(currentTests[activeTestKey].questions)) : [];
+                questions.splice(idx, 1);
+                database.ref(`tests/${activeTestKey}/questions`).set(questions);
+            }
         }
 
         function clearCurrentTest() {
             if (currentTests[activeTestKey]?.meta?.status === 'active') {
-                alert("આ ટેસ્ટ એક્ટિવ હોવાથી ખાલી કરી શકાશે નહીં!");
+                alert("આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં ફેરફાર કરી શકાશે નહીં!");
                 return;
             }
-            if (confirm("શું તમે આ ટેસ્ટના બધા પ્રશ્નો ભૂસી નાખવા માગો છો?")) {
+            if (confirm("શું તમે વર્તમાન ટેસ્ટના તમામ પ્રશ્નો ભૂસી નાખવા માગો છો?")) {
                 database.ref(`tests/${activeTestKey}/questions`).set([]);
             }
         }
@@ -1271,28 +1230,12 @@
             document.getElementById('editQuestionModal').classList.remove('hidden');
         }
 
-        function openEditQbQuestionModal(qbKey) {
-            const q = questionBankData[qbKey];
-            if (!q) return;
-
-            document.getElementById('editItemType').value = 'qb';
-            document.getElementById('editItemId').value = qbKey;
-            document.getElementById('editQuestionText').value = q.question || '';
-            document.getElementById('editOptA').value = q.options ? q.options[0] : '';
-            document.getElementById('editOptB').value = q.options ? q.options[1] : '';
-            document.getElementById('editOptC').value = q.options ? q.options[2] : '';
-            document.getElementById('editOptD').value = q.options ? q.options[3] : '';
-            document.getElementById('editCorrectAns').value = q.answer || 'A';
-
-            document.getElementById('editQuestionModal').classList.remove('hidden');
-        }
-
         function closeEditQuestionModal() {
             document.getElementById('editQuestionModal').classList.add('hidden');
         }
 
-        function saveQuestionEdit() {
-            const itemType = document.getElementById('editItemType').value;
+        function saveEditedQuestion() {
+            const type = document.getElementById('editItemType').value;
             const itemId = document.getElementById('editItemId').value;
 
             const updatedQ = {
@@ -1306,38 +1249,31 @@
                 answer: document.getElementById('editCorrectAns').value
             };
 
-            if (itemType === 'test') {
-                const idx = parseInt(itemId);
-                const test = currentTests[activeTestKey];
-                let questions = Array.isArray(test.questions) ? [...test.questions] : Object.values(test.questions);
-
-                if (questions[idx]) {
-                    questions[idx] = {
-                        ...questions[idx],
-                        ...updatedQ
-                    };
-                    database.ref(`tests/${activeTestKey}/questions`).set(questions).then(() => {
-                        closeEditQuestionModal();
-                    });
-                }
-            } else if (itemType === 'qb') {
-                const qbKey = itemId;
-                if (questionBankData[qbKey]) {
-                    const newObj = {
-                        ...questionBankData[qbKey],
-                        ...updatedQ
-                    };
-                    database.ref(`question_bank/${qbKey}`).set(newObj).then(() => {
-                        closeEditQuestionModal();
-                        alert("પ્રશ્ન બેંકમાં પ્રશ્ન સુધારી દેવાયો છે!");
-                    });
-                }
+            if (type === 'test') {
+                let questions = Array.isArray(currentTests[activeTestKey].questions) ? [...currentTests[activeTestKey].questions] : Object.values(currentTests[activeTestKey].questions);
+                questions[itemId] = { ...questions[itemId], ...updatedQ };
+                database.ref(`tests/${activeTestKey}/questions`).set(questions, () => {
+                    closeEditQuestionModal();
+                });
+            } else if (type === 'qb') {
+                database.ref(`question_bank/${itemId}`).update(updatedQ, () => {
+                    closeEditQuestionModal();
+                });
             }
+        }
+
+        function openCloudTestModal() {
+            document.getElementById('cloudTestModal').classList.remove('hidden');
+            renderTestBoxes();
+        }
+
+        function closeCloudTestModal() {
+            document.getElementById('cloudTestModal').classList.add('hidden');
         }
 
         function openQuestionBankModal() {
             document.getElementById('qBankModal').classList.remove('hidden');
-            onQbCourseFilterChange();
+            renderQbQuestionsList();
         }
 
         function closeQuestionBankModal() {
@@ -1346,15 +1282,9 @@
 
         function onQbCourseFilterChange() {
             const course = document.getElementById('qbCourseFilter').value;
-            const subSelect = document.getElementById('qbSubjectFilter');
-            subSelect.innerHTML = '<option value="all">બધા વિષય</option>';
-
-            if (course !== 'all') {
-                const subjects = courseSubjectsMap[course] || ['સામાન્ય'];
-                subjects.forEach(s => {
-                    subSelect.innerHTML += `<option value="${s}">${s}</option>`;
-                });
-            }
+            const subjSelect = document.getElementById('qbSubjectFilter');
+            const subjects = courseSubjectsMap[course] || ['સામાન્ય'];
+            subjSelect.innerHTML = `<option value="all">બધા વિષય</option>` + subjects.map(s => `<option value="${s}">${s}</option>`).join('');
             renderQbQuestionsList();
         }
 
@@ -1364,12 +1294,8 @@
                 const btn = document.getElementById(`qbTab${t === 'all' ? 'All' : t}Btn`);
                 if (btn) btn.className = "px-2 py-0.5 font-bold text-[11px] rounded bg-white text-slate-600 hover:bg-slate-200";
             });
-            let activeBtnId = 'qbTabAllBtn';
-            if (tab === 'mcq') activeBtnId = 'qbTab1Btn';
-            if (tab === 'passage') activeBtnId = 'qbTab2Btn';
-            if (tab === 'image') activeBtnId = 'qbTab3Btn';
-
-            document.getElementById(activeBtnId).className = "px-2 py-0.5 font-bold text-[11px] rounded bg-indigo-600 text-white";
+            const activeBtn = document.getElementById(`qbTab${tab === 'all' ? 'All' : (tab === 'mcq' ? '1' : (tab === 'passage' ? '2' : '3'))}Btn`);
+            if (activeBtn) activeBtn.className = "px-2 py-0.5 font-bold text-[11px] rounded bg-indigo-600 text-white";
             renderQbQuestionsList();
         }
 
@@ -1378,10 +1304,7 @@
             const selectedCourse = document.getElementById('qbCourseFilter').value;
             const selectedSubject = document.getElementById('qbSubjectFilter').value;
 
-            const allQuestions = Object.keys(questionBankData).map(key => ({
-                qbKey: key,
-                ...questionBankData[key]
-            }));
+            const allQuestions = Object.keys(questionBankData).map(key => ({ qbKey: key, ...questionBankData[key] }));
 
             document.getElementById('qbAllCount').textContent = allQuestions.length;
             document.getElementById('qbMcqCount').textContent = allQuestions.filter(q => q.type === 'mcq' || !q.type).length;
@@ -1402,51 +1325,41 @@
             filtered.forEach((q) => {
                 const opts = q.options || ['A', 'B', 'C', 'D'];
                 html += `
-                    <div class="bg-white p-2.5 rounded-xl border flex items-start gap-2.5 shadow-sm hover:border-indigo-300 relative">
-                        <input type="checkbox" data-qb-key="${q.qbKey}" class="qb-select-checkbox mt-1 w-3.5 h-3.5 text-indigo-600 rounded">
-                        <div class="flex-1 text-xs">
-                            <div class="flex items-center justify-between mb-1">
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span class="bg-indigo-100 text-indigo-800 font-bold px-1.5 py-0.5 rounded text-[9px]">કોર્ષ: ${q.course || 'સામાન્ય'}</span>
-                                    <span class="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[9px]">વિષય: ${q.subject || 'સામાન્ય'}</span>
-                                    <span class="bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase">${q.type || 'MCQ'}</span>
-                                </div>
-                                <div class="flex gap-1">
-                                    <button onclick="openEditQbQuestionModal('${q.qbKey}')" class="text-indigo-600 hover:bg-indigo-50 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-200" title="પ્રશ્ન સુધારો">
-                                        <i class="fa-solid fa-pen"></i> સુધારો
-                                    </button>
-                                    <button onclick="deleteQbQuestionOnly('${q.qbKey}')" class="text-rose-600 hover:bg-rose-50 px-1.5 py-0.5 rounded text-[10px] font-bold border border-rose-200" title="પ્રશ્ન બેંકમાંથી ડિલીટ કરો">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
+                    <div class="bg-white p-2.5 rounded-xl border flex items-start gap-2.5 shadow-sm hover:border-indigo-300 relative text-xs">
+                        <input type="checkbox" data-qb-key="${q.qbKey}" class="qb-select-checkbox mt-1 rounded border-slate-300 text-indigo-600">
+                        <div class="flex-1 space-y-1">
+                            <div class="flex justify-between items-start">
+                                <p class="font-bold text-slate-800">${formatFractions(q.question)}</p>
+                                <span class="bg-indigo-50 text-indigo-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0">${q.type || 'mcq'}</span>
                             </div>
-                            <p class="font-bold text-slate-800 text-xs mb-1">${formatFractions(q.question)}</p>
-                            ${q.image ? `<img src="${q.image}" class="max-h-20 rounded border mb-1">` : ''}
-                            ${q.passage ? `<p class="text-[10px] bg-slate-50 p-1.5 rounded border text-slate-600 italic line-clamp-2 mb-1">ફકરો: ${q.passage}</p>` : ''}
-                            <div class="grid grid-cols-2 gap-1 text-[10px] text-slate-500 font-medium">
+                            ${q.image ? `<img src="${q.image}" class="max-h-20 my-1 rounded border">` : ''}
+                            <div class="grid grid-cols-2 gap-1 text-[10px] text-slate-500">
                                 <div>(A) ${formatFractions(opts[0])}</div><div>(B) ${formatFractions(opts[1])}</div>
                                 <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
                             </div>
-                            <span class="inline-block mt-1 font-bold text-emerald-600 text-[10px]">સાચો જવાબ: ${q.answer}</span>
+                            <div class="text-[10px] font-bold text-emerald-600">સાચો જવાબ: ${q.answer}</div>
                         </div>
                     </div>
                 `;
             });
-
             container.innerHTML = html;
         }
 
-        function deleteQbQuestionOnly(qbKey) {
-            if (confirm("શું તમે આ પ્રશ્નને પ્રશ્ન બેંકમાંથી કાયમી માટે ડિલીટ કરવા માગો છો?")) {
-                database.ref(`question_bank/${qbKey}`).remove();
+        function deleteSelectedQbQuestions() {
+            const checkboxes = document.querySelectorAll('.qb-select-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert("કૃપા કરીને ડિલીટ કરવા માટે ઓછામાં ઓછો એક પ્રશ્ન પસંદ કરો!");
+                return;
+            }
+            if (confirm(`શું તમે પસંદ કરેલા ${checkboxes.length} પ્રશ્નો પ્રશ્ન બેંકમાંથી ડિલીટ કરવા માગો છો?`)) {
+                checkboxes.forEach(cb => {
+                    const key = cb.getAttribute('data-qb-key');
+                    database.ref(`question_bank/${key}`).remove();
+                });
             }
         }
 
-        function addSelectedQbQuestionsToCurrentTest() {
-            if (currentTests[activeTestKey]?.meta?.status === 'active') {
-                alert("આ ટેસ્ટ એક્ટિવ હોવાથી પ્રશ્નો ઉમેરી શકાશે નહીં!");
-                return;
-            }
+        function addSelectedQbQuestionsToTest() {
             const checkboxes = document.querySelectorAll('.qb-select-checkbox:checked');
             if (checkboxes.length === 0) {
                 alert("કૃપા કરીને ઉમેરવા માટે ઓછામાં ઓછો એક પ્રશ્ન પસંદ કરો!");
@@ -1516,8 +1429,8 @@
                 updateTimerDisplay();
                 if (studentTimeLeft <= 0) {
                     clearInterval(studentTimerInterval);
-                    alert("સમય પૂર્ણ થયો છે! ટેસ્ટ ઓટો-સબમિટ થઈ રહી છે.");
-                    finishStudentQuiz();
+                    alert("સમય પૂર્ણ થઈ ગયો છે! ટેસ્ટ ઓટો-સબમિટ થઈ રહી છે.");
+                    submitStudentQuiz();
                 }
             }, 1000);
         }
@@ -1525,69 +1438,37 @@
         function updateTimerDisplay() {
             const m = Math.floor(studentTimeLeft / 60);
             const s = studentTimeLeft % 60;
-            document.getElementById('timerDisplay').textContent = `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
+            document.getElementById('timerDisplay').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
         function renderQuizQuestions() {
             const container = document.getElementById('quizQuestionsContainer');
             let html = '';
 
-            let i = 0;
-            while (i < currentStudentQuizData.questions.length) {
-                const q = currentStudentQuizData.questions[i];
-
-                if (q.passage) {
-                    const currentPassage = q.passage;
-                    let passageQuestions = [];
-                    while (i < currentStudentQuizData.questions.length && currentStudentQuizData.questions[i].passage === currentPassage) {
-                        passageQuestions.push({ q: currentStudentQuizData.questions[i], originalIdx: i });
-                        i++;
-                    }
-
-                    html += `
-                        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow border border-slate-200 mb-6 flex flex-col md:flex-row gap-5 items-start relative">
-                            <div class="w-full md:w-1/2 sticky-passage-box bg-amber-50/90 p-4 rounded-xl border-2 border-amber-200 shadow-sm">
-                                <span class="bg-amber-200 text-amber-900 font-bold px-2.5 py-0.5 rounded-full text-xs mb-2 inline-block">
-                                    <i class="fa-solid fa-paragraph"></i> ફકરો વાંચી નીચેના પ્રશ્નોના જવાબ આપો
-                                </span>
-                                <div class="text-xs sm:text-sm font-semibold text-slate-800 leading-relaxed whitespace-pre-line">
-                                    ${currentPassage}
-                                </div>
-                            </div>
-                            <div class="w-full md:w-1/2 space-y-5">
-                                ${passageQuestions.map(item => renderSingleQuestionCard(item.q, item.originalIdx)).join('')}
-                            </div>
+            currentStudentQuizData.questions.forEach((q, idx) => {
+                const opts = q.options || ['A', 'B', 'C', 'D'];
+                html += `
+                    <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-3">
+                        ${q.passage ? `<div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs font-semibold leading-relaxed mb-2">${formatFractions(q.passage)}</div>` : ''}
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="font-bold text-indigo-700 text-sm">પ્રશ્ન ${idx + 1}.</span>
+                            <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold uppercase">${q.type || 'MCQ'}</span>
                         </div>
-                    `;
-                } else {
-                    html += `<div class="bg-white p-5 rounded-2xl shadow border border-slate-200 mb-4">${renderSingleQuestionCard(q, i)}</div>`;
-                    i++;
-                }
-            }
+                        <p class="font-bold text-slate-800 text-sm leading-snug">${formatFractions(q.question)}</p>
+                        ${q.image ? `<div class="my-2"><img src="${q.image}" class="max-h-48 mx-auto rounded-lg border shadow-sm" alt="Question Image"></div>` : ''}
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            ${['A', 'B', 'C', 'D'].map((optKey, optIdx) => `
+                                <button type="button" onclick="selectAnswer(${idx}, '${optKey}')" id="btn_q${idx}_${optKey}" class="quiz-opt-btn p-2.5 text-left rounded-xl border border-slate-200 hover:border-indigo-400 bg-white text-xs font-semibold flex items-center gap-2 transition">
+                                    <span class="w-6 h-6 rounded-lg bg-slate-100 font-bold text-slate-600 flex items-center justify-center text-[11px] shrink-0">${optKey}</span>
+                                    <span class="flex-1">${formatFractions(opts[optIdx] || '')}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
             container.innerHTML = html;
-        }
-
-        function renderSingleQuestionCard(q, idx) {
-            const opts = q.options || ['A', 'B', 'C', 'D'];
-            return `
-                <div class="space-y-3 ${q.passage ? 'bg-slate-50 p-3 rounded-xl border border-slate-200' : ''}">
-                    <div class="flex justify-between items-start gap-2">
-                        <span class="font-bold text-indigo-700 text-sm">પ્રશ્ન ${idx + 1}.</span>
-                        <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold uppercase">${q.type || 'MCQ'}</span>
-                    </div>
-                    <p class="font-bold text-slate-800 text-sm leading-snug">${formatFractions(q.question)}</p>
-                    ${q.image ? `<div class="my-2"><img src="${q.image}" class="max-h-48 mx-auto rounded-lg border shadow-sm" alt="Question Image"></div>` : ''}
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                        ${['A', 'B', 'C', 'D'].map((optKey, optIdx) => `
-                            <button type="button" onclick="selectAnswer(${idx}, '${optKey}')" id="btn_q${idx}_${optKey}" class="quiz-opt-btn p-2.5 text-left rounded-xl border border-slate-200 hover:border-indigo-400 bg-white text-xs font-semibold flex items-center gap-2 transition">
-                                <span class="w-6 h-6 rounded-lg bg-slate-100 font-bold text-slate-600 flex items-center justify-center text-[11px] shrink-0">${optKey}</span>
-                                <span class="flex-1">${formatFractions(opts[optIdx] || '')}</span>
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
         }
 
         function selectAnswer(qIdx, optKey) {
@@ -1596,85 +1477,76 @@
                 const btn = document.getElementById(`btn_q${qIdx}_${k}`);
                 if (btn) btn.classList.remove('selected-ans');
             });
-            const selectedBtn = document.getElementById(`btn_q${qIdx}_${optKey}`);
-            if (selectedBtn) selectedBtn.classList.add('selected-ans');
+            const selBtn = document.getElementById(`btn_q${qIdx}_${optKey}`);
+            if (selBtn) selBtn.classList.add('selected-ans');
         }
 
         function confirmSubmitQuiz() {
-            const answeredCount = Object.keys(currentStudentQuizData.userAnswers).length;
-            const total = currentStudentQuizData.questions.length;
-            if (answeredCount < total) {
-                if (!confirm(`તમે ${total} માંથી માત્ર ${answeredCount} પ્રશ્નોના જવાબ આપ્યા છે. શું તમે ખરેખર સબમિટ કરવા માગો છો?`)) {
-                    return;
-                }
+            if (confirm("શું તમે ખરેખર આ ટેસ્ટ સબમિટ કરવા માગો છો?")) {
+                submitStudentQuiz();
             }
-            clearInterval(studentTimerInterval);
-            finishStudentQuiz();
         }
 
-        function finishStudentQuiz() {
-            let correctCount = 0;
-            let wrongCount = 0;
-            const totalQuestions = currentStudentQuizData.questions.length;
+        function submitStudentQuiz() {
+            clearInterval(studentTimerInterval);
+            let correct = 0;
+            let wrong = 0;
+            const total = currentStudentQuizData.questions.length;
 
             currentStudentQuizData.questions.forEach((q, idx) => {
                 const userAns = currentStudentQuizData.userAnswers[idx];
                 if (userAns === q.answer) {
-                    correctCount++;
+                    correct++;
                 } else {
-                    wrongCount++;
+                    wrong++;
                 }
             });
 
-            const percentage = Math.round((correctCount / totalQuestions) * 100);
-
-            const submission = {
+            const percentage = ((correct / total) * 100).toFixed(1);
+            const subData = {
                 studentName: currentStudentQuizData.studentName,
                 std: currentStudentQuizData.std,
                 testKey: currentStudentQuizData.testKey,
                 testTitle: currentStudentQuizData.testTitle,
                 course: currentStudentQuizData.course,
                 subject: currentStudentQuizData.subject,
-                correctCount,
-                wrongCount,
-                totalQuestions,
-                percentage,
-                userAnswers: currentStudentQuizData.userAnswers || {},
-                questions: currentStudentQuizData.questions || [],
-                date: new Date().toLocaleString('gu-IN')
+                correctCount: correct,
+                wrongCount: wrong,
+                totalQuestions: total,
+                percentage: percentage,
+                userAnswers: currentStudentQuizData.userAnswers,
+                questions: currentStudentQuizData.questions,
+                date: new Date().toLocaleDateString('gu-IN'),
+                timestamp: Date.now()
             };
 
-            database.ref('submissions').push(submission);
+            database.ref('submissions').push(subData);
 
-            const attempts = parseInt(localStorage.getItem(`attempts_${currentStudentQuizData.testKey}`) || 0);
-            localStorage.setItem(`attempts_${currentStudentQuizData.testKey}`, attempts + 1);
-            localStorage.setItem(`lastScore_${currentStudentQuizData.testKey}`, `${correctCount} / ${totalQuestions} (${percentage}%) - ${new Date().toLocaleDateString('gu-IN')}`);
+            const localAttempts = JSON.parse(localStorage.getItem(`attempts_${currentStudentQuizData.testKey}`) || '[]');
+            localAttempts.push({ score: correct, total: total, percentage: percentage });
+            localStorage.setItem(`attempts_${currentStudentQuizData.testKey}`, JSON.stringify(localAttempts));
 
-            showQuizResultScreen(submission);
-        }
-
-        function showQuizResultScreen(res) {
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('quizHeaderTimerBox').classList.add('hidden');
             document.getElementById('resultScreen').classList.remove('hidden');
 
-            document.getElementById('resTotalScore').textContent = `${res.correctCount} / ${res.totalQuestions}`;
-            document.getElementById('resPercentage').textContent = `${res.percentage}%`;
+            document.getElementById('resTotalScore').textContent = `${correct} / ${total}`;
+                document.getElementById('resPercentage').textContent = `${percentage}%`;
 
-            let quote = "ખૂબ સરસ પ્રયાસ! સતત મહેનત કરવાથી તમે વધુ પ્રગતિ કરશો 👍";
-            if (res.percentage >= 80) quote = "શાનદાર પ્રદર્શન! તમારી મહેનત રંગ લાવી રહી છે 🏆🎉";
-            else if (res.percentage < 50) quote = "વધુ પ્રેક્ટિસની જરૂર છે. હાર ન માનશો, આગળની ટેસ્ટમાં વધુ સારું કરશો 💪";
-
+            let quote = "ખૂબ સરસ પ્રયાસ! સતત મહેનત કરવાથી જ સફળતા પ્રાપ્ત થશે.";
+            if (percentage >= 80) quote = "🌟 અદ્ભુત પરિણામ! તમારી મહેનત અને સમર્પણ ઉત્કૃષ્ટ છે. આવી જ રીતે આગળ વધતા રહો!";
+            else if (percentage >= 50) quote = "👍 સારો પ્રયાસ! થોડું વધુ પુનરાવર્તન કરશો તો 100% માર્ક્સ પણ મેળવી શકશો.";
             document.getElementById('motivationalQuoteBox').textContent = quote;
-            renderResultReviewList();
+
+            renderResultReview(subData);
         }
 
-        function renderResultReviewList() {
+        function renderResultReview(sub) {
             const container = document.getElementById('reviewContainer');
             let html = '';
 
-            currentStudentQuizData.questions.forEach((q, idx) => {
-                const userAns = currentStudentQuizData.userAnswers[idx] || 'અનઉત્તર (None)';
+            sub.questions.forEach((q, idx) => {
+                const userAns = sub.userAnswers[idx] || 'અનઉત્તર (None)';
                 const isCorrect = userAns === q.answer;
                 const opts = q.options || ['A', 'B', 'C', 'D'];
 
@@ -1701,76 +1573,29 @@
             container.innerHTML = html;
         }
 
-        function renderSubmissionsList() {
-            const container = document.getElementById('submissionsList');
-            if (allSubmissionsGlobal.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 italic">હજુ સુધી કોઈ પરિણામ ઉપલબ્ધ નથી.</p>`;
-                return;
-            }
-
-            let html = '';
-            [...allSubmissionsGlobal].reverse().forEach(sub => {
-                html += `
-                    <div class="p-2.5 bg-slate-50 rounded-lg border flex justify-between items-center text-xs">
-                        <div>
-                            <span class="font-bold text-indigo-700 text-xs block">${sub.studentName} (${sub.std})</span>
-                            <span class="text-slate-500 font-semibold text-[10px]">${sub.testTitle} | ${sub.date}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="text-right font-bold">
-                                <span class="text-indigo-600 text-xs block">${sub.correctCount} / ${sub.totalQuestions} (${sub.percentage}%)</span>
-                                <span class="text-slate-400 text-[9px]">કોર્ષ: ${sub.course || '-'}</span>
-                            </div>
-                            <button onclick="viewStudentAnswerSheet('${sub.id}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-1.5 rounded-lg border border-indigo-200 text-xs font-bold flex items-center gap-1" title="ઉત્તરવહી જુઓ">
-                                <i class="fa-solid fa-eye"></i> ઉત્તરવહી
-                            </button>
-                            <button onclick="deleteSubmission('${sub.id}')" class="text-rose-600 hover:bg-rose-100 p-1.5 rounded-lg border border-rose-200 transition" title="પરિણામ ડિલીટ કરો">
-                                <i class="fa-solid fa-trash-can text-xs"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function deleteSubmission(id) {
-            if (confirm("શું તમે આ વિદ્યાર્થીનું પરિણામ ડિલીટ કરવા માગો છો?")) {
-                database.ref(`submissions/${id}`).remove();
-            }
-        }
-
-        function clearAllSubmissionsHistory() {
-            if (confirm("શું તમે બધા જ વિદ્યાર્થીઓના પરિણામોનો હિસ્ટ્રી કાયમી માટે ડિલીટ કરવા માગો છો?")) {
-                database.ref('submissions').remove();
-            }
-        }
-
-        function populateStudentFilterDropdown() {
+        function updateStudentFilterDropdown() {
             const select = document.getElementById('studentFilterSelect');
-            const currentSelected = select.value;
+            if (!select) return;
+
+            const studentNames = [...new Set(allSubmissionsGlobal.map(s => s.studentName))];
             select.innerHTML = '<option value="">-- વિદ્યાર્થી પસંદ કરો --</option>';
-
-            const uniqueStudents = Array.from(new Set(allSubmissionsGlobal.map(s => s.studentName))).sort();
-            uniqueStudents.forEach(name => {
-                select.innerHTML += `<option value="${name}" ${name === currentSelected ? 'selected' : ''}>${name}</option>`;
+            studentNames.forEach(name => {
+                select.innerHTML += `<option value="${name}">${name}</option>`;
             });
-
-            if (currentSelected) renderStudentMultiTestReport();
         }
 
         function renderStudentMultiTestReport() {
-            const studentName = document.getElementById('studentFilterSelect').value;
+            const name = document.getElementById('studentFilterSelect').value;
             const container = document.getElementById('studentMultiReportContainer');
             const tbody = document.getElementById('studentMultiReportTableBody');
 
-            if (!studentName) {
+            if (!name) {
                 container.classList.add('hidden');
                 return;
             }
 
-            const studentSubs = allSubmissionsGlobal.filter(s => s.studentName === studentName);
-            document.getElementById('selectedStudentTitle').textContent = `વિદ્યાર્થી: ${studentName}`;
+            const studentSubs = allSubmissionsGlobal.filter(s => s.studentName === name);
+            document.getElementById('selectedStudentTitle').textContent = `વિદ્યાર્થી: ${name}`;
             document.getElementById('selectedStudentTotalCount').textContent = `કુલ ટેસ્ટ આપેલી: ${studentSubs.length}`;
 
             let html = '';
@@ -1791,7 +1616,6 @@
                     </tr>
                 `;
             });
-
             tbody.innerHTML = html;
             container.classList.remove('hidden');
         }
@@ -1803,51 +1627,33 @@
                 return;
             }
 
-            document.getElementById('adminSheetStudentName').innerHTML = `<i class="fa-solid fa-file-signature text-amber-300"></i> ${sub.studentName} (${sub.std}) - ઉત્તરવહી`;
-            document.getElementById('adminSheetSubMeta').textContent = `ટેસ્ટ: ${sub.testTitle} | મેળવેલ ગુણ: ${sub.correctCount}/${sub.totalQuestions} (${sub.percentage}%) | તારીખ: ${sub.date}`;
+            document.getElementById('adminSheetStudentName').innerHTML = `<i class="fa-solid fa-file-signature text-amber-300"></i> ${sub.studentName} (${sub.std})`;
+            document.getElementById('adminSheetSubMeta').textContent = `ટેસ્ટ: ${sub.testTitle} | મેળવેલ ગુણ: ${sub.correctCount}/${sub.totalQuestions} (${sub.percentage}%)`;
 
             const container = document.getElementById('adminSheetContainer');
-            
-            let questionsToDisplay = sub.questions;
-            if (!questionsToDisplay || questionsToDisplay.length === 0) {
-                const test = currentTests[sub.testKey];
-                if (test && test.questions) {
-                    questionsToDisplay = Array.isArray(test.questions) ? test.questions : Object.values(test.questions);
-                }
-            }
-
-            if (!questionsToDisplay || questionsToDisplay.length === 0) {
-                container.innerHTML = `<div class="p-4 text-center text-slate-500 font-bold text-xs">આ ટેસ્ટ માટેના પ્રશ્નોની વિગતો ઉપલબ્ધ નથી.</div>`;
-                document.getElementById('adminViewSheetModal').classList.remove('hidden');
-                return;
-            }
-
-            const userAnswers = sub.userAnswers || {};
             let html = '';
 
-            questionsToDisplay.forEach((q, idx) => {
-                const userAns = userAnswers[idx] || 'અનઉત્તર (None)';
+            const questions = sub.questions || [];
+            questions.forEach((q, idx) => {
+                const userAns = sub.userAnswers ? sub.userAnswers[idx] : 'અનઉત્તર';
                 const isCorrect = userAns === q.answer;
                 const opts = q.options || ['A', 'B', 'C', 'D'];
 
                 html += `
-                    <div class="bg-white p-3.5 rounded-xl border ${isCorrect ? 'correct-card' : 'wrong-card'} shadow-sm space-y-2">
+                    <div class="bg-white p-3 rounded-xl border ${isCorrect ? 'correct-card' : 'wrong-card'} text-xs space-y-1.5">
                         <div class="flex justify-between items-start gap-2">
-                            <span class="font-bold text-xs text-slate-800">પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</span>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                            <span class="font-bold text-slate-800">પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'} shrink-0">
                                 ${isCorrect ? '✓ સાચો' : '✗ ખોટો'}
                             </span>
                         </div>
-                        ${q.passage ? `<div class="bg-amber-50 p-2 rounded text-xs text-amber-900 border border-amber-200"><strong>ફકરો:</strong> ${q.passage}</div>` : ''}
                         ${q.image ? `<img src="${q.image}" class="max-h-28 my-1 rounded border">` : ''}
-                        
-                        <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600 bg-slate-50/50 p-2 rounded">
+                        <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
                             <div class="${userAns === 'A' ? (q.answer === 'A' ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold') : (q.answer === 'A' ? 'text-emerald-700 font-bold' : '')}">(A) ${formatFractions(opts[0])}</div>
                             <div class="${userAns === 'B' ? (q.answer === 'B' ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold') : (q.answer === 'B' ? 'text-emerald-700 font-bold' : '')}">(B) ${formatFractions(opts[1])}</div>
                             <div class="${userAns === 'C' ? (q.answer === 'C' ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold') : (q.answer === 'C' ? 'text-emerald-700 font-bold' : '')}">(C) ${formatFractions(opts[2])}</div>
                             <div class="${userAns === 'D' ? (q.answer === 'D' ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold') : (q.answer === 'D' ? 'text-emerald-700 font-bold' : '')}">(D) ${formatFractions(opts[3])}</div>
                         </div>
-
                         <div class="text-xs font-bold flex justify-between items-center pt-1 border-t">
                             <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">વિદ્યાર્થીનો જવાબ: ${userAns}</span>
                             <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">સાચો જવાબ: ${q.answer}</span>
@@ -1868,49 +1674,31 @@
             const input = document.getElementById('shareLinkInput');
             input.select();
             document.execCommand('copy');
-            alert("ટેસ્ટ લિંક કોપી થઈ ગઈ છે!");
+            alert("ટેસ્ટની લિંક કોપી થઈ ગઈ છે!");
         }
 
         function shareWhatsApp() {
             const link = document.getElementById('shareLinkInput').value;
             const test = currentTests[activeTestKey];
-            const title = test?.meta?.title || activeTestKey;
-            const text = `*નિર્મળા નવોદય સ્ટડી ઝોન*\n\nઓનલાઇન કસોટી: *${title}*\n\nટેસ્ટ આપવા માટે નીચેની લિંક પર ક્લિક કરો:\n${link}`;
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-        }
-
-        function openCloudTestModal() {
-            document.getElementById('cloudTestModal').classList.remove('hidden');
-            renderTestBoxes();
-        }
-
-        function closeCloudTestModal() {
-            document.getElementById('cloudTestModal').classList.add('hidden');
+            const title = test?.meta?.title || 'ઓનલાઇન કસોટી';
+            const msg = `*${title}*\n\nનીચે આપેલ લિંક પર ક્લિક કરી ઓનલાઇન ટેસ્ટ આપો:\n${link}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function exportTestToPDF() {
             const test = currentTests[activeTestKey];
-            if (!test || !test.questions) {
-                alert("આ ટેસ્ટમાં છાપવા માટે કોઈ પ્રશ્નો નથી!");
-                return;
-            }
-
-            const questions = Array.isArray(test.questions) ? test.questions : Object.values(test.questions);
-            if (questions.length === 0) {
-                alert("આ ટેસ્ટ ખાલી છે!");
-                return;
-            }
+            if (!test) return;
 
             const pdfContainer = document.getElementById('pdfExportContainer');
-            let qHtml = '';
+            const questions = Array.isArray(test.questions) ? test.questions : Object.values(test.questions);
 
+            let qHtml = '';
             questions.forEach((q, idx) => {
                 const opts = q.options || ['A', 'B', 'C', 'D'];
                 qHtml += `
                     <div style="margin-bottom: 15px; page-break-inside: avoid;">
-                        <div style="font-weight: bold; font-size: 14px;">પ્રશ્ન ${idx + 1}: ${formatFractions(q.question)}</div>
-                        ${q.passage ? `<div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; font-size: 12px; margin-bottom: 8px;">${q.passage}</div>` : ''}
-                        ${q.image ? `<img src="${q.image}" style="max-height: 120px; display: block; margin: 5px 0;">` : ''}
+                        <p style="font-weight: bold; font-size: 14px;">પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</p>
+                        ${q.image ? `<img src="${q.image}" style="max-height: 150px; margin: 5px 0;">` : ''}
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
                             <div>(A) ${formatFractions(opts[0])}</div><div>(B) ${formatFractions(opts[1])}</div>
                             <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>

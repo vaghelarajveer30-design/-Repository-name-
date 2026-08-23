@@ -231,13 +231,14 @@
                 </div>
             </div>
 
+            <!-- ગૂગલ ક્લાઉડ સિંક બોક્ષ - કોર્ષ અને વિષયવાર ફિલ્ટર બટન્સ -->
             <div class="bg-white p-5 rounded-xl shadow border space-y-4">
                 <div class="flex flex-wrap justify-between items-center border-b pb-2 gap-2">
                     <h3 class="font-bold text-indigo-700 text-sm flex items-center gap-2">
                         <i class="fa-solid fa-cloud text-indigo-600"></i> ગૂગલ ક્લાઉડ સિંક બોક્ષ (Google Cloud Sync)
                     </h3>
                     <div class="flex gap-2 flex-wrap items-center">
-                        <select id="filterCourseSelect" onchange="filterTestBoxes(activeBoxFilter)" class="text-xs border rounded-lg p-1.5 font-bold bg-white text-indigo-700">
+                        <select id="filterCourseSelect" onchange="onFilterCourseChange()" class="text-xs border rounded-lg p-1.5 font-bold bg-white text-indigo-700">
                             <option value="all">બધા કોર્ષ</option>
                             <option value="નવોદય">નવોદય</option>
                             <option value="Cet">Cet</option>
@@ -245,6 +246,11 @@
                             <option value="English">English</option>
                             <option value="સામાન્ય">સામાન્ય</option>
                         </select>
+                        
+                        <select id="filterSubjectSelect" onchange="filterTestBoxes(activeBoxFilter)" class="text-xs border rounded-lg p-1.5 font-bold bg-white text-indigo-700">
+                            <option value="all">બધા વિષય</option>
+                        </select>
+
                         <button onclick="filterTestBoxes('all')" id="btnFilterAll" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white">બધી ટેસ્ટ</button>
                         <button onclick="filterTestBoxes('draft')" id="btnFilterDraft" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300">📝 ડ્રાફ્ટ ટેસ્ટ</button>
                         <button onclick="filterTestBoxes('active')" id="btnFilterActive" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300">🚀 એક્ટિવ ટેસ્ટ</button>
@@ -600,6 +606,7 @@
             initMode2QuestionsInput();
             setupFirebaseListeners();
             checkUrlParameters();
+            onFilterCourseChange();
         });
 
         function setupFirebaseListeners() {
@@ -810,6 +817,20 @@
             subjSelect.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
         }
 
+        // ફિલ્ટર બોક્ષ માટે કોર્ષ બદલાય ત્યારે વિષય બદલવાનું ફંક્શન
+        function onFilterCourseChange() {
+            const course = document.getElementById('filterCourseSelect').value;
+            const subjSelect = document.getElementById('filterSubjectSelect');
+            
+            if (course === 'all') {
+                subjSelect.innerHTML = `<option value="all">બધા વિષય</option>`;
+            } else {
+                const subjects = courseSubjectsMap[course] || ['સામાન્ય'];
+                subjSelect.innerHTML = `<option value="all">બધા વિષય</option>` + subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+            filterTestBoxes(activeBoxFilter);
+        }
+
         function setTestStatusExplicit(status) {
             if (!currentTests[activeTestKey]) return;
             database.ref(`tests/${activeTestKey}/meta/status`).set(status, () => {
@@ -820,12 +841,16 @@
         function createNewTest() {
             const title = prompt("નવી ટેસ્ટનું નામ લખો (દા.ત. નવોદય ગણિત કસોટી ૦૧):");
             if (!title) return;
+
+            const course = document.getElementById('adminCourse').value || 'સામાન્ય';
+            const subject = document.getElementById('adminSubjectSelect').value || 'સામાન્ય';
+
             const newKey = `test_${Date.now()}`;
             const newTestData = {
                 meta: {
                     title: title,
-                    course: 'સામાન્ય',
-                    subject: 'સામાન્ય',
+                    course: course,
+                    subject: subject,
                     totalMarks: 100,
                     timeLimit: 60,
                     status: 'draft'
@@ -895,10 +920,12 @@
             renderTestBoxes();
         }
 
+        // ટેસ્ટ બોક્ષ દર્શાવવાનું કાર્યક્ષમ ફંક્શન (કોર્ષ અને વિષય મુજબ)
         function renderTestBoxes() {
             const container = document.getElementById('testBoxesContainer');
             const modalContainer = document.getElementById('modalCloudTestBoxes');
             const selectedCourseFilter = document.getElementById('filterCourseSelect').value;
+            const selectedSubjectFilter = document.getElementById('filterSubjectSelect').value;
 
             let html = '';
             Object.keys(currentTests).forEach(key => {
@@ -909,6 +936,7 @@
                 if (activeBoxFilter === 'draft' && meta.status !== 'draft') return;
                 if (activeBoxFilter === 'active' && meta.status !== 'active') return;
                 if (selectedCourseFilter !== 'all' && meta.course !== selectedCourseFilter) return;
+                if (selectedSubjectFilter !== 'all' && meta.subject !== selectedSubjectFilter) return;
 
                 const isSelected = key === activeTestKey;
                 const testSubs = allSubmissionsGlobal.filter(s => s.testKey === key || s.testTitle === meta.title);
@@ -1354,76 +1382,98 @@
             if (confirm(`શું તમે પસંદ કરેલા ${checkboxes.length} પ્રશ્નો પ્રશ્ન બેંકમાંથી ડિલીટ કરવા માગો છો?`)) {
                 checkboxes.forEach(cb => {
                     const key = cb.getAttribute('data-qb-key');
-                    database.ref(`question_bank/${key}`).remove();
+                    if (key) database.ref(`question_bank/${key}`).remove();
                 });
             }
         }
 
         function addSelectedQbQuestionsToTest() {
+            if (currentTests[activeTestKey]?.meta?.status === 'active') {
+                alert("આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!");
+                return;
+            }
             const checkboxes = document.querySelectorAll('.qb-select-checkbox:checked');
             if (checkboxes.length === 0) {
-                alert("કૃપા કરીને ઉમેરવા માટે ઓછામાં ઓછો એક પ્રશ્ન પસંદ કરો!");
+                alert("કૃપા કરીને પસંદ કરેલા પ્રશ્નો ટેસ્ટમાં ઉમેરવા માટે ટીક માર્ક કરો!");
                 return;
             }
 
-            let questionsToAdd = [];
+            let selectedQuestions = [];
             checkboxes.forEach(cb => {
                 const key = cb.getAttribute('data-qb-key');
-                if (questionBankData[key]) {
-                    const { qbKey, ...qData } = questionBankData[key];
-                    questionsToAdd.push(qData);
+                if (key && questionBankData[key]) {
+                    selectedQuestions.push(questionBankData[key]);
                 }
             });
 
-            saveMultipleQuestionsToCurrentTest(questionsToAdd);
-            alert(`${questionsToAdd.length} પ્રશ્નો સફળતાપૂર્વક વર્તમાન ટેસ્ટમાં ઉમેરાયા!`);
-            closeQuestionBankModal();
+            let questions = currentTests[activeTestKey].questions ? (Array.isArray(currentTests[activeTestKey].questions) ? [...currentTests[activeTestKey].questions] : Object.values(currentTests[activeTestKey].questions)) : [];
+            questions.push(...selectedQuestions);
+
+            database.ref(`tests/${activeTestKey}/questions`).set(questions, () => {
+                alert(`${selectedQuestions.length} પ્રશ્નો સફળતાપૂર્વક ઉમેરાઈ ગયા!`);
+                closeQuestionBankModal();
+            });
         }
 
-        function startStudentQuiz(e) {
-            e.preventDefault();
+        function copyShareLink() {
+            const linkInput = document.getElementById('shareLinkInput');
+            linkInput.select();
+            document.execCommand('copy');
+            alert("લિંક કોપી થઈ ગઈ છે!");
+        }
+
+        function shareWhatsApp() {
+            const link = document.getElementById('shareLinkInput').value;
+            const meta = currentTests[activeTestKey]?.meta || {};
+            const text = `*${meta.title || 'ઓનલાઇન ટેસ્ટ'}*\nકોર્ષ: ${meta.course || 'સામાન્ય'}\nવિષય: ${meta.subject || 'સામાન્ય'}\n\nઓનલાઇન ટેસ્ટ આપવા માટે નીચેની લિંક પર ક્લિક કરો:\n${link}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function startStudentQuiz(event) {
+            event.preventDefault();
             const name = document.getElementById('studentName').value.trim();
             const std = document.getElementById('studentStd').value;
 
-            const test = currentTests[activeTestKey];
+            if (!name) return;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            let testKeyToLoad = urlParams.get('t') || urlParams.get('test') || activeTestKey;
+            const test = currentTests[testKeyToLoad];
+
             if (!test || !test.questions) {
-                alert("આ ટેસ્ટમાં કોઈ પ્રશ્નો ઉપલબ્ધ નથી!");
+                alert("આ ટેસ્ટમાં હજુ સુધી કોઈ પ્રશ્નો ઉમેરેલા નથી!");
                 return;
             }
 
             const questions = Array.isArray(test.questions) ? test.questions : Object.values(test.questions);
             if (questions.length === 0) {
-                alert("આ ટેસ્ટ ખાલી છે!");
+                alert("આ ટેસ્ટમાં હજુ સુધી કોઈ પ્રશ્નો ઉમેરેલા નથી!");
                 return;
             }
 
             currentStudentQuizData = {
+                testKey: testKeyToLoad,
                 studentName: name,
                 std: std,
-                testKey: activeTestKey,
-                testTitle: test.meta?.title || activeTestKey,
-                course: test.meta?.course || 'સામાન્ય',
-                subject: test.meta?.subject || 'સામાન્ય',
-                timeLimit: parseInt(test.meta?.timeLimit || 60),
+                meta: test.meta || {},
                 questions: questions,
-                userAnswers: {}
+                answers: {}
             };
 
             document.getElementById('studentRegScreen').classList.add('hidden');
             document.getElementById('quizScreen').classList.remove('hidden');
             document.getElementById('quizHeaderTimerBox').classList.remove('hidden');
 
-            document.getElementById('quizTitleDisplay').textContent = currentStudentQuizData.testTitle;
-            document.getElementById('quizSubDisplay').textContent = `${name} (${std})`;
+            document.getElementById('quizTitleDisplay').textContent = test.meta?.title || 'ઓનલાઇન ટેસ્ટ';
 
-            renderQuizQuestions();
-            startStudentTimer(currentStudentQuizData.timeLimit * 60);
+            renderStudentQuizQuestions();
+            startStudentTimer((test.meta?.timeLimit || 60) * 60);
         }
 
-        function startStudentTimer(seconds) {
-            studentTimeLeft = seconds;
+        function startStudentTimer(duration) {
+            studentTimeLeft = duration;
             updateTimerDisplay();
-            clearInterval(studentTimerInterval);
+            if (studentTimerInterval) clearInterval(studentTimerInterval);
             studentTimerInterval = setInterval(() => {
                 studentTimeLeft--;
                 updateTimerDisplay();
@@ -1438,231 +1488,239 @@
         function updateTimerDisplay() {
             const m = Math.floor(studentTimeLeft / 60);
             const s = studentTimeLeft % 60;
-            document.getElementById('timerDisplay').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            document.getElementById('timerDisplay').textContent = `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
         }
 
-        function renderQuizQuestions() {
+        function renderStudentQuizQuestions() {
             const container = document.getElementById('quizQuestionsContainer');
-            let html = '';
+            container.innerHTML = '';
 
-            currentStudentQuizData.questions.forEach((q, idx) => {
+            const questions = currentStudentQuizData.questions;
+            let currentPassage = '';
+
+            questions.forEach((q, idx) => {
                 const opts = q.options || ['A', 'B', 'C', 'D'];
-                html += `
-                    <div class="bg-white p-5 rounded-2xl shadow border border-slate-200 space-y-3">
-                        ${q.passage ? `<div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs font-semibold leading-relaxed mb-2">${formatFractions(q.passage)}</div>` : ''}
-                        <div class="flex justify-between items-start gap-2">
-                            <span class="font-bold text-indigo-700 text-sm">પ્રશ્ન ${idx + 1}.</span>
-                            <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold uppercase">${q.type || 'MCQ'}</span>
+
+                if (q.type === 'passage' && q.passage !== currentPassage) {
+                    currentPassage = q.passage;
+                    container.innerHTML += `
+                        <div class="bg-indigo-50 border-2 border-indigo-200 p-4 rounded-2xl shadow-sm space-y-2 sticky-passage-box">
+                            <h4 class="font-bold text-indigo-900 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-paragraph"></i> નીચે આપેલ ફકરો વાંચો અને તેના પ્રશ્નોના જવાબ આપો:
+                            </h4>
+                            <p class="text-xs text-slate-700 leading-relaxed font-semibold whitespace-pre-line">${q.passage}</p>
                         </div>
-                        <p class="font-bold text-slate-800 text-sm leading-snug">${formatFractions(q.question)}</p>
-                        ${q.image ? `<div class="my-2"><img src="${q.image}" class="max-h-48 mx-auto rounded-lg border shadow-sm" alt="Question Image"></div>` : ''}
+                    `;
+                }
+
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl shadow border space-y-3">
+                        <h3 class="font-bold text-sm text-slate-800">
+                            પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}
+                        </h3>
+                        ${q.image ? `<img src="${q.image}" class="max-h-48 mx-auto my-2 rounded border shadow-sm">` : ''}
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                            ${['A', 'B', 'C', 'D'].map((optKey, optIdx) => `
-                                <button type="button" onclick="selectAnswer(${idx}, '${optKey}')" id="btn_q${idx}_${optKey}" class="quiz-opt-btn p-2.5 text-left rounded-xl border border-slate-200 hover:border-indigo-400 bg-white text-xs font-semibold flex items-center gap-2 transition">
-                                    <span class="w-6 h-6 rounded-lg bg-slate-100 font-bold text-slate-600 flex items-center justify-center text-[11px] shrink-0">${optKey}</span>
-                                    <span class="flex-1">${formatFractions(opts[optIdx] || '')}</span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            ${['A', 'B', 'C', 'D'].map((letter, oIdx) => `
+                                <button type="button" onclick="selectStudentAnswer(${idx}, '${letter}')" id="opt_${idx}_${letter}" class="p-3 rounded-xl border text-left font-medium transition hover:border-indigo-400 flex items-center gap-2 bg-slate-50">
+                                    <span class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[11px] shrink-0">${letter}</span>
+                                    <span>${formatFractions(opts[oIdx])}</span>
                                 </button>
                             `).join('')}
                         </div>
                     </div>
                 `;
             });
-            container.innerHTML = html;
         }
 
-        function selectAnswer(qIdx, optKey) {
-            currentStudentQuizData.userAnswers[qIdx] = optKey;
-            ['A', 'B', 'C', 'D'].forEach(k => {
-                const btn = document.getElementById(`btn_q${qIdx}_${k}`);
-                if (btn) btn.classList.remove('selected-ans');
+        function selectStudentAnswer(qIdx, letter) {
+            currentStudentQuizData.answers[qIdx] = letter;
+            ['A', 'B', 'C', 'D'].forEach(l => {
+                const btn = document.getElementById(`opt_${qIdx}_${l}`);
+                if (btn) btn.className = "p-3 rounded-xl border text-left font-medium transition hover:border-indigo-400 flex items-center gap-2 bg-slate-50";
             });
-            const selBtn = document.getElementById(`btn_q${qIdx}_${optKey}`);
-            if (selBtn) selBtn.classList.add('selected-ans');
+            const selBtn = document.getElementById(`opt_${qIdx}_${letter}`);
+            if (selBtn) selBtn.className = "p-3 rounded-xl border text-left font-medium transition flex items-center gap-2 selected-ans";
         }
 
         function confirmSubmitQuiz() {
-            if (confirm("શું તમે ખરેખર આ ટેસ્ટ સબમિટ કરવા માગો છો?")) {
+            if (confirm("શું તમે ખરેખર ટેસ્ટ સબમિટ કરવા માગો છો?")) {
                 submitStudentQuiz();
             }
         }
 
         function submitStudentQuiz() {
-            clearInterval(studentTimerInterval);
-            let correct = 0;
-            let wrong = 0;
-            const total = currentStudentQuizData.questions.length;
+            if (studentTimerInterval) clearInterval(studentTimerInterval);
 
-            currentStudentQuizData.questions.forEach((q, idx) => {
-                const userAns = currentStudentQuizData.userAnswers[idx];
-                if (userAns === q.answer) {
-                    correct++;
-                } else {
-                    wrong++;
+            const questions = currentStudentQuizData.questions;
+            let correctCount = 0;
+
+            questions.forEach((q, idx) => {
+                if (currentStudentQuizData.answers[idx] === q.answer) {
+                    correctCount++;
                 }
             });
 
-            const percentage = ((correct / total) * 100).toFixed(1);
-            const subData = {
+            const total = questions.length;
+            const percentage = Math.round((correctCount / total) * 100);
+
+            const submissionObj = {
+                testKey: currentStudentQuizData.testKey,
+                testTitle: currentStudentQuizData.meta?.title || 'ટેસ્ટ',
                 studentName: currentStudentQuizData.studentName,
                 std: currentStudentQuizData.std,
-                testKey: currentStudentQuizData.testKey,
-                testTitle: currentStudentQuizData.testTitle,
-                course: currentStudentQuizData.course,
-                subject: currentStudentQuizData.subject,
-                correctCount: correct,
-                wrongCount: wrong,
+                correctCount: correctCount,
                 totalQuestions: total,
                 percentage: percentage,
-                userAnswers: currentStudentQuizData.userAnswers,
-                questions: currentStudentQuizData.questions,
-                date: new Date().toLocaleDateString('gu-IN'),
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                answers: currentStudentQuizData.answers,
+                questions: questions
             };
 
-            database.ref('submissions').push(subData);
+            database.ref('submissions').push(submissionObj);
 
+            // Local storage attempts limit save
             const localAttempts = JSON.parse(localStorage.getItem(`attempts_${currentStudentQuizData.testKey}`) || '[]');
-            localAttempts.push({ score: correct, total: total, percentage: percentage });
+            localAttempts.push({ score: correctCount, total: total, percentage: percentage, date: new Date().toISOString() });
             localStorage.setItem(`attempts_${currentStudentQuizData.testKey}`, JSON.stringify(localAttempts));
 
+            showResultsScreen(submissionObj);
+        }
+
+        function showResultsScreen(sub) {
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('quizHeaderTimerBox').classList.add('hidden');
             document.getElementById('resultScreen').classList.remove('hidden');
 
-            document.getElementById('resTotalScore').textContent = `${correct} / ${total}`;
-                document.getElementById('resPercentage').textContent = `${percentage}%`;
+            document.getElementById('resTotalScore').textContent = `${sub.correctCount} / ${sub.totalQuestions}`;
+            document.getElementById('resPercentage').textContent = `${sub.percentage}%`;
 
-            let quote = "ખૂબ સરસ પ્રયાસ! સતત મહેનત કરવાથી જ સફળતા પ્રાપ્ત થશે.";
-            if (percentage >= 80) quote = "🌟 અદ્ભુત પરિણામ! તમારી મહેનત અને સમર્પણ ઉત્કૃષ્ટ છે. આવી જ રીતે આગળ વધતા રહો!";
-            else if (percentage >= 50) quote = "👍 સારો પ્રયાસ! થોડું વધુ પુનરાવર્તન કરશો તો 100% માર્ક્સ પણ મેળવી શકશો.";
-            document.getElementById('motivationalQuoteBox').textContent = quote;
+            const quoteBox = document.getElementById('motivationalQuoteBox');
+            if (sub.percentage >= 80) {
+                quoteBox.textContent = "🏆 ઉત્કૃષ્ટ પ્રદર્શન! તમારી મહેનત અને લગન પ્રશંસનીય છે. ખૂબ ખૂબ અભિનંદન!";
+            } else if (sub.percentage >= 50) {
+                quoteBox.textContent = "👍 સરસ પ્રયાસ! થોડી વધુ પ્રેક્ટિસથી તમે હજુ પણ ઉત્તમ સ્કોર મેળવી શકશો.";
+            } else {
+                quoteBox.textContent = "💪 હાર ન માનો! ભૂલોમાંથી શીખીને ફરીથી પ્રયાસ કરો, તમે ચોક્કસ સફળ થશો.";
+            }
 
-            renderResultReview(subData);
+            renderReviewQuestions(sub);
         }
 
-        function renderResultReview(sub) {
+        function renderReviewQuestions(sub) {
             const container = document.getElementById('reviewContainer');
-            let html = '';
+            container.innerHTML = '';
 
             sub.questions.forEach((q, idx) => {
-                const userAns = sub.userAnswers[idx] || 'અનઉત્તર (None)';
+                const userAns = sub.answers[idx];
                 const isCorrect = userAns === q.answer;
                 const opts = q.options || ['A', 'B', 'C', 'D'];
 
-                html += `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border ${isCorrect ? 'correct-card' : 'wrong-card'}">
-                        <div class="flex justify-between items-start gap-2 mb-1">
-                            <span class="font-bold text-xs text-slate-700">પ્રશ્ન ${idx + 1}: ${formatFractions(q.question)}</span>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-                                ${isCorrect ? '✓ સાચો' : '✗ ખોટો'}
+                container.innerHTML += `
+                    <div class="p-4 rounded-2xl border shadow-sm space-y-2 text-xs ${isCorrect ? 'correct-card' : 'wrong-card'}">
+                        <div class="flex justify-between items-start font-bold">
+                            <span>પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</span>
+                            <span class="${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
+                                ${isCorrect ? '<i class="fa-solid fa-circle-check"></i> સાચો' : '<i class="fa-solid fa-circle-xmark"></i> ખોટો'}
                             </span>
                         </div>
-                        ${q.image ? `<img src="${q.image}" class="max-h-28 my-1 rounded border">` : ''}
-                        <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600 my-2">
+                        ${q.image ? `<img src="${q.image}" class="max-h-36 rounded border my-1">` : ''}
+                        <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600 pt-1">
                             <div>(A) ${formatFractions(opts[0])}</div><div>(B) ${formatFractions(opts[1])}</div>
                             <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
                         </div>
-                        <div class="text-xs font-bold space-x-3 pt-1 border-t border-slate-100">
-                            <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">તમારો જવાબ: ${userAns}</span>
+                        <div class="pt-2 border-t flex justify-between font-bold text-[11px]">
+                            <span class="text-slate-600">તમારો જવાબ: <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</span></span>
                             <span class="text-emerald-700">સાચો જવાબ: ${q.answer}</span>
                         </div>
                     </div>
                 `;
             });
-            container.innerHTML = html;
         }
 
         function updateStudentFilterDropdown() {
             const select = document.getElementById('studentFilterSelect');
             if (!select) return;
 
-            const studentNames = [...new Set(allSubmissionsGlobal.map(s => s.studentName))];
-            select.innerHTML = '<option value="">-- વિદ્યાર્થી પસંદ કરો --</option>';
-            studentNames.forEach(name => {
-                select.innerHTML += `<option value="${name}">${name}</option>`;
-            });
+            const students = [...new Set(allSubmissionsGlobal.map(s => s.studentName))];
+            select.innerHTML = `<option value="">-- વિદ્યાર્થી પસંદ કરો --</option>` + students.map(s => `<option value="${s}">${s}</option>`).join('');
         }
 
         function renderStudentMultiTestReport() {
-            const name = document.getElementById('studentFilterSelect').value;
+            const selectedStudent = document.getElementById('studentFilterSelect').value;
             const container = document.getElementById('studentMultiReportContainer');
             const tbody = document.getElementById('studentMultiReportTableBody');
 
-            if (!name) {
+            if (!selectedStudent) {
                 container.classList.add('hidden');
                 return;
             }
 
-            const studentSubs = allSubmissionsGlobal.filter(s => s.studentName === name);
-            document.getElementById('selectedStudentTitle').textContent = `વિદ્યાર્થી: ${name}`;
-            document.getElementById('selectedStudentTotalCount').textContent = `કુલ ટેસ્ટ આપેલી: ${studentSubs.length}`;
+            const studentSubs = allSubmissionsGlobal.filter(s => s.studentName === selectedStudent);
+            document.getElementById('selectedStudentTitle').textContent = `વિદ્યાર્થી: ${selectedStudent}`;
+            document.getElementById('selectedStudentTotalCount').textContent = `કુલ આપેલ ટેસ્ટ: ${studentSubs.length}`;
 
             let html = '';
-            studentSubs.forEach(sub => {
+            studentSubs.forEach(s => {
+                const dateStr = s.timestamp ? new Date(s.timestamp).toLocaleDateString('gu-IN') : '-';
+                const wrongCount = s.totalQuestions - s.correctCount;
                 html += `
-                    <tr class="border-b hover:bg-slate-50">
-                        <td class="p-1.5 border font-semibold text-slate-600">${sub.date}</td>
-                        <td class="p-1.5 border font-bold text-indigo-900">${sub.testTitle}</td>
-                        <td class="p-1.5 border">${sub.std}</td>
-                        <td class="p-1.5 border font-bold text-indigo-600">${sub.correctCount} / ${sub.totalQuestions}</td>
-                        <td class="p-1.5 border font-bold text-rose-600">${sub.wrongCount}</td>
-                        <td class="p-1.5 border font-bold text-amber-600">${sub.percentage}%</td>
+                    <tr class="hover:bg-slate-50 border-b">
+                        <td class="p-1.5 border">${dateStr}</td>
+                        <td class="p-1.5 border font-bold text-indigo-700">${s.testTitle}</td>
+                        <td class="p-1.5 border">${s.std}</td>
+                        <td class="p-1.5 border font-bold text-emerald-600">${s.correctCount} / ${s.totalQuestions}</td>
+                        <td class="p-1.5 border font-bold text-rose-600">${wrongCount}</td>
+                        <td class="p-1.5 border font-bold text-amber-600">${s.percentage}%</td>
                         <td class="p-1.5 border text-center">
-                            <button onclick="viewStudentAnswerSheet('${sub.id}')" class="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">
-                                <i class="fa-solid fa-eye"></i> ઉત્તરવહી જુઓ
+                            <button onclick="viewStudentAnswerSheet('${s.id}')" class="bg-indigo-600 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow">
+                                ઉત્તરવહી
                             </button>
                         </td>
                     </tr>
                 `;
             });
+
             tbody.innerHTML = html;
             container.classList.remove('hidden');
         }
 
         function viewStudentAnswerSheet(subId) {
             const sub = allSubmissionsGlobal.find(s => s.id === subId);
-            if (!sub) {
-                alert("પરિણામની વિગતો મળી નથી!");
-                return;
-            }
+            if (!sub) return;
 
-            document.getElementById('adminSheetStudentName').innerHTML = `<i class="fa-solid fa-file-signature text-amber-300"></i> ${sub.studentName} (${sub.std})`;
-            document.getElementById('adminSheetSubMeta').textContent = `ટેસ્ટ: ${sub.testTitle} | મેળવેલ ગુણ: ${sub.correctCount}/${sub.totalQuestions} (${sub.percentage}%)`;
+            document.getElementById('adminSheetStudentName').textContent = `વિદ્યાર્થી: ${sub.studentName} (${sub.std})`;
+            document.getElementById('adminSheetSubMeta').textContent = `ટેસ્ટ: ${sub.testTitle} | મેળવેલ માર્ક્સ: ${sub.correctCount}/${sub.totalQuestions} (${sub.percentage}%)`;
 
             const container = document.getElementById('adminSheetContainer');
-            let html = '';
+            container.innerHTML = '';
 
-            const questions = sub.questions || [];
-            questions.forEach((q, idx) => {
-                const userAns = sub.userAnswers ? sub.userAnswers[idx] : 'અનઉત્તર';
+            sub.questions.forEach((q, idx) => {
+                const userAns = sub.answers ? sub.answers[idx] : undefined;
                 const isCorrect = userAns === q.answer;
                 const opts = q.options || ['A', 'B', 'C', 'D'];
 
-                html += `
-                    <div class="bg-white p-3 rounded-xl border ${isCorrect ? 'correct-card' : 'wrong-card'} text-xs space-y-1.5">
-                        <div class="flex justify-between items-start gap-2">
-                            <span class="font-bold text-slate-800">પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</span>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'} shrink-0">
+                container.innerHTML += `
+                    <div class="p-3 rounded-xl border space-y-1.5 text-xs ${isCorrect ? 'correct-card' : 'wrong-card'}">
+                        <div class="flex justify-between font-bold">
+                            <span>પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</span>
+                            <span class="${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
                                 ${isCorrect ? '✓ સાચો' : '✗ ખોટો'}
                             </span>
                         </div>
-                        ${q.image ? `<img src="${q.image}" class="max-h-28 my-1 rounded border">` : ''}
+                        ${q.image ? `<img src="${q.image}" class="max-h-28 rounded border my-1">` : ''}
                         <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
-                            <div class="${userAns === 'A' ? (q.answer === 'A' ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold') : (q.answer === 'A' ? 'text-emerald-700 font-bold' : '')}">(A) ${formatFractions(opts[0])}</div>
-                            <div class="${userAns === 'B' ? (q.answer === 'B' ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold') : (q.answer === 'B' ? 'text-emerald-700 font-bold' : '')}">(B) ${formatFractions(opts[1])}</div>
-                            <div class="${userAns === 'C' ? (q.answer === 'C' ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold') : (q.answer === 'C' ? 'text-emerald-700 font-bold' : '')}">(C) ${formatFractions(opts[2])}</div>
-                            <div class="${userAns === 'D' ? (q.answer === 'D' ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold') : (q.answer === 'D' ? 'text-emerald-700 font-bold' : '')}">(D) ${formatFractions(opts[3])}</div>
+                            <div>(A) ${formatFractions(opts[0])}</div><div>(B) ${formatFractions(opts[1])}</div>
+                            <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
                         </div>
-                        <div class="text-xs font-bold flex justify-between items-center pt-1 border-t">
-                            <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">વિદ્યાર્થીનો જવાબ: ${userAns}</span>
-                            <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">સાચો જવાબ: ${q.answer}</span>
+                        <div class="pt-1.5 border-t flex justify-between font-bold text-[10px]">
+                            <span>વિદ્યાર્થીનો જવાબ: <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</span></span>
+                            <span class="text-emerald-700">સાચો જવાબ: ${q.answer}</span>
                         </div>
                     </div>
                 `;
             });
 
-            container.innerHTML = html;
             document.getElementById('adminViewSheetModal').classList.remove('hidden');
         }
 
@@ -1670,62 +1728,52 @@
             document.getElementById('adminViewSheetModal').classList.add('hidden');
         }
 
-        function copyShareLink() {
-            const input = document.getElementById('shareLinkInput');
-            input.select();
-            document.execCommand('copy');
-            alert("ટેસ્ટની લિંક કોપી થઈ ગઈ છે!");
-        }
-
-        function shareWhatsApp() {
-            const link = document.getElementById('shareLinkInput').value;
-            const test = currentTests[activeTestKey];
-            const title = test?.meta?.title || 'ઓનલાઇન કસોટી';
-            const msg = `*${title}*\n\nનીચે આપેલ લિંક પર ક્લિક કરી ઓનલાઇન ટેસ્ટ આપો:\n${link}`;
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-
         function exportTestToPDF() {
             const test = currentTests[activeTestKey];
-            if (!test) return;
+            if (!test || !test.questions) {
+                alert("પીડીએફ ડાઉનલોડ કરવા માટે પ્રશ્નો હોવા જરૂરી છે!");
+                return;
+            }
 
-            const pdfContainer = document.getElementById('pdfExportContainer');
             const questions = Array.isArray(test.questions) ? test.questions : Object.values(test.questions);
+            const container = document.getElementById('pdfExportContainer');
 
-            let qHtml = '';
+            let html = `
+                <div style="font-family: 'Hind Vadodara', sans-serif;">
+                    <div style="text-align: center; border-bottom: 2px solid #4338ca; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h2 style="font-size: 20px; font-weight: bold; color: #1e1b4b; margin: 0;">નિર્મળા નવોદય સ્ટડી ઝોન</h2>
+                        <h3 style="font-size: 16px; font-weight: bold; color: #4338ca; margin: 5px 0;">${test.meta?.title || 'ઓનલાઇન કસોટી'}</h3>
+                        <p style="font-size: 12px; color: #475569; margin: 0;">કોર્ષ: ${test.meta?.course || 'સામાન્ય'} | વિષય: ${test.meta?.subject || 'સામાન્ય'} | કુલ ગુણ: ${test.meta?.totalMarks || 100}</p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+            `;
+
             questions.forEach((q, idx) => {
                 const opts = q.options || ['A', 'B', 'C', 'D'];
-                qHtml += `
-                    <div style="margin-bottom: 15px; page-break-inside: avoid;">
-                        <p style="font-weight: bold; font-size: 14px;">પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</p>
-                        ${q.image ? `<img src="${q.image}" style="max-height: 150px; margin: 5px 0;">` : ''}
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
-                            <div>(A) ${formatFractions(opts[0])}</div><div>(B) ${formatFractions(opts[1])}</div>
-                            <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
+                html += `
+                    <div style="font-size: 13px; page-break-inside: avoid;">
+                        <p style="font-weight: bold; margin-bottom: 5px;">પ્રશ્ન ${idx + 1}. ${q.question}</p>
+                        ${q.image ? `<img src="${q.image}" style="max-height: 120px; display: block; margin: 5px 0;">` : ''}
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 12px; color: #334155;">
+                            <div>(A) ${opts[0]}</div><div>(B) ${opts[1]}</div>
+                            <div>(C) ${opts[2]}</div><div>(D) ${opts[3]}</div>
                         </div>
                     </div>
                 `;
             });
 
-            pdfContainer.innerHTML = `
-                <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
-                    ${customLogoBase64 ? `<img src="${customLogoBase64}" style="height: 50px; margin: 0 auto 5px auto;">` : ''}
-                    <h1 style="font-size: 22px; font-weight: bold;">નિર્મળા નવોદય સ્ટડી ઝોન</h1>
-                    <h2 style="font-size: 16px;">${test.meta?.title || activeTestKey} - (કોર્ષ: ${test.meta?.course || 'સામાન્ય'} | વિષય: ${test.meta?.subject || 'સામાન્ય'})</h2>
-                </div>
-                ${qHtml}
-            `;
+            html += `</div></div>`;
+            container.innerHTML = html;
 
-            pdfContainer.classList.remove('hidden');
-            html2pdf().set({
-                margin: 0.5,
-                filename: `${activeTestKey}_paper.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            }).from(pdfContainer).save().then(() => {
-                pdfContainer.classList.add('hidden');
-            });
+            const opt = {
+                margin:       10,
+                filename:     `${test.meta?.title || 'Test'}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(container).save();
         }
     </script>
 </body>

@@ -1694,68 +1694,142 @@
                 const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
                 const ext = format === 'jpg' ? 'jpg' : 'png';
                 const fileName = `${safeName}_Result_${style}.${ext}`;
-
-                // Android WebViewમાં data:image/png;base64... ને download કરવાથી
-                // 'Download File XXXXX.png' જેવી સમસ્યા થાય છે. તેથી Blob URL વાપરીએ છીએ.
                 canvas.toBlob(function(blob){
-                    if(!blob){
-                        showResultImagePreview(canvas, fileName);
-                        return;
-                    }
-                    const blobUrl = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = blobUrl;
-                    a.download = fileName;
-                    a.rel = 'noopener';
-                    a.style.display = 'none';
-                    document.body.appendChild(a);
-
-                    try {
-                        a.click();
-                    } catch(e) {
-                        showResultImagePreview(canvas, fileName);
-                    }
-
-                    setTimeout(()=>{
-                        a.remove();
-                        URL.revokeObjectURL(blobUrl);
-                    },1500);
+                    if (!blob) { showResultImagePreview(canvas, fileName, mime); return; }
+                    showResultImagePreview(canvas, fileName, mime, blob);
                 }, mime, .95);
             }).catch(()=>showResultImagePreview(null, `${safeName}_Result_${style}.${format}`)).finally(()=>wrap.remove());
         }
 
-        function showResultImagePreview(canvas, fileName) {
-            // WebViewમાં download API block હોય તો ઇમેજ સ્ક્રીન પર બતાવો.
-            // અહીંથી long-press/save અથવા Share દ્વારા ઇમેજ સાચવી શકાય છે.
-            if(!canvas) {
-                alert('ઇમેજ બનાવવામાં સમસ્યા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.');
-                return;
+        async function copyResultImage(blob) {
+            try {
+                if (navigator.clipboard && window.ClipboardItem && window.isSecureContext) {
+                    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+                    alert('ઇમેજ કોપી થઈ ગઈ છે. હવે Paste કરી શકો છો.');
+                    return true;
+                }
+            } catch(e) {}
+            return false;
+        }
+
+        async function shareResultImage(blob, fileName, dataUrl) {
+            try {
+                if (navigator.share) {
+                    const file = new File([blob], fileName, {type: blob.type || 'image/png'});
+                    if (navigator.canShare && navigator.canShare({files:[file]})) {
+                        await navigator.share({title:'વિદ્યાર્થીનું રિઝલ્ટ',text:'Nirmala Study Zone - Online Test Result',files:[file]});
+                        return true;
+                    }
+                    // Some Android WebViews support text/url sharing even when file sharing is blocked.
+                    await navigator.share({title:'વિદ્યાર્થીનું રિઝલ્ટ',text:'Nirmala Study Zone - Online Test Result'});
+                    return true;
+                }
+            } catch(e) {}
+            return false;
+        }
+
+        function forceSaveResultImage(dataUrl, fileName) {
+            // First try the normal HTML download mechanism using a DATA URL.
+            // DATA URLs work more reliably than blob: URLs in Android WebViews.
+            try {
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = fileName;
+                a.rel = 'noopener';
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => a.remove(), 1000);
+                return true;
+            } catch(e) {
+                return false;
             }
-            const dataUrl = canvas.toDataURL('image/png', .95);
+        }
+
+        function openResultImage(dataUrl, fileName) {
+            try {
+                // Open a real HTML document containing the image. This avoids blob URL
+                // restrictions and lets Android/WebView use its normal image context menu.
+                const html = '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
+                    escapeHtmlForResult(fileName) +
+                    '</title><style>body{margin:0;background:#222;text-align:center;font-family:Arial,sans-serif}img{max-width:100%;height:auto;display:block;margin:auto}p{color:#fff;font-size:14px;padding:10px}</style></head><body>' +
+                    '<img src="' + dataUrl + '" alt="Result"><p>ઇમેજ પર લાંબું દબાવીને <b>Save image</b> અથવા <b>Copy image</b> પસંદ કરો.</p></body></html>';
+                const w = window.open();
+                if (w) {
+                    w.document.open();
+                    w.document.write(html);
+                    w.document.close();
+                    return true;
+                }
+            } catch(e) {}
+            return false;
+        }
+
+        function showResultImagePreview(canvas, fileName, mime='image/png', blob=null) {
+            if(!canvas) { alert('ઇમેજ બનાવવામાં સમસ્યા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.'); return; }
+
+            // IMPORTANT: keep the final image as a DATA URL. Android WebViews often
+            // cannot save/copy blob: URLs generated by URL.createObjectURL().
+            const dataUrl = canvas.toDataURL(mime, .95);
             const old = document.getElementById('resultImagePreviewModal');
             if(old) old.remove();
+
             const modal = document.createElement('div');
             modal.id = 'resultImagePreviewModal';
-            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:999999;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;';
             modal.innerHTML = `
-                <div style="background:#fff;border-radius:18px;max-width:720px;width:100%;max-height:92vh;overflow:auto;padding:14px;box-sizing:border-box;text-align:center;">
+                <div style="background:#fff;border-radius:18px;max-width:760px;width:100%;max-height:96vh;overflow:auto;padding:12px;box-sizing:border-box;text-align:center;">
                     <div style="font-size:18px;font-weight:800;color:#1e1b4b;margin-bottom:8px;">રિઝલ્ટ ઇમેજ તૈયાર છે</div>
-                    <img src="${dataUrl}" style="width:100%;height:auto;display:block;border-radius:10px;border:1px solid #ddd;" />
-                    <div style="font-size:12px;color:#64748b;margin:10px 0;">જો એપમાં સીધું Download ન થાય તો ઇમેજ પર લાંબું દબાવીને Save/Download Image પસંદ કરો.</div>
-                    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-                        <button id="previewSaveBtn" style="background:#4f46e5;color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:700;">⬇️ ફરી Download</button>
-                        <button id="previewCloseBtn" style="background:#e2e8f0;color:#0f172a;border:0;border-radius:10px;padding:10px 16px;font-weight:700;">બંધ કરો</button>
+                    <img id="resultPreviewImage" src="${dataUrl}" alt="Result" style="width:100%;height:auto;display:block;border-radius:10px;border:1px solid #ddd;user-select:text;-webkit-user-select:text;-webkit-touch-callout:default;" />
+                    <div style="font-size:12px;color:#475569;margin:9px 0;">નીચેના <b>સેવ / કોપી / શેર</b> બટન અજમાવો. જરૂરી હોય તો ઇમેજ પર લાંબું દબાવો.</div>
+                    <div style="display:flex;gap:7px;justify-content:center;flex-wrap:wrap;">
+                        <a id="previewDownloadBtn" href="${dataUrl}" download="${fileName}" style="background:#16a34a;color:#fff;text-decoration:none;border-radius:10px;padding:10px 13px;font-weight:700;">💾 ઇમેજ સેવ કરો</a>
+                        <button id="previewShareBtn" style="background:#0284c7;color:#fff;border:0;border-radius:10px;padding:10px 13px;font-weight:700;">📤 Share</button>
+                        <button id="previewCopyBtn" style="background:#7c3aed;color:#fff;border:0;border-radius:10px;padding:10px 13px;font-weight:700;">📋 Copy Image</button>
+                        <button id="previewOpenBtn" style="background:#2563eb;color:#fff;border:0;border-radius:10px;padding:10px 13px;font-weight:700;">🖼️ અલગથી ખોલો</button>
+                        <button id="previewCloseBtn" style="background:#e2e8f0;color:#0f172a;border:0;border-radius:10px;padding:10px 13px;font-weight:700;">બંધ કરો</button>
                     </div>
                 </div>`;
             document.body.appendChild(modal);
+
             document.getElementById('previewCloseBtn').onclick=()=>modal.remove();
-            document.getElementById('previewSaveBtn').onclick=()=>{
-                const link=document.createElement('a');
-                link.href=dataUrl;
-                link.download=fileName;
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
+
+            document.getElementById('previewDownloadBtn').onclick=(e)=>{
+                // Do not prevent default: the browser/WebView gets the actual data URL.
+                // Also try programmatic download as a second fallback.
+                setTimeout(()=>forceSaveResultImage(dataUrl,fileName),100);
+            };
+
+            document.getElementById('previewCopyBtn').onclick=async()=>{
+                let copied=false;
+                try {
+                    if (navigator.clipboard && window.ClipboardItem && window.isSecureContext) {
+                        const res=await fetch(dataUrl);
+                        const b=await res.blob();
+                        copied=await copyResultImage(b);
+                    }
+                } catch(e) {}
+                if(!copied) {
+                    // Best WebView fallback: select the actual image in a separate page
+                    // so Android's native long-press Copy Image menu can handle it.
+                    const ok=openResultImage(dataUrl,fileName);
+                    if(!ok) alert('આ એપમાં સીધું Copy Image ઉપલબ્ધ નથી. “અલગથી ખોલો” પછી ઇમેજ પર લાંબું દબાવો.');
+                }
+            };
+
+            document.getElementById('previewShareBtn').onclick=async()=>{
+                let b=blob;
+                try { if(!b) b=await (await fetch(dataUrl)).blob(); } catch(e) {}
+                const ok=await shareResultImage(b,fileName,dataUrl);
+                if(!ok) {
+                    const opened=openResultImage(dataUrl,fileName);
+                    if(!opened) alert('આ એપમાં Share ઉપલબ્ધ નથી. “અલગથી ખોલો” દબાવીને Androidનું Share/Save વિકલ્પ વાપરો.');
+                }
+            };
+
+            document.getElementById('previewOpenBtn').onclick=()=>{
+                const ok=openResultImage(dataUrl,fileName);
+                if(!ok) alert('ઇમેજ અલગથી ખોલી શકાઈ નથી. “ઇમેજ સેવ કરો” બટન દબાવો.');
             };
         }
 

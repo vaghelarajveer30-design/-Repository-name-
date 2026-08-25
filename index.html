@@ -29,6 +29,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         body { font-family: 'Hind Vadodara', sans-serif; background-color: #f1f5f9; }
@@ -190,6 +191,25 @@
                     <div class="bg-amber-50 p-3 rounded-xl border">
                         <span class="text-[10px] text-amber-700 block">ટકાવારી</span>
                         <span id="resPercentage" class="text-xl font-bold text-amber-600">0%</span>
+                    </div>
+                </div>
+                <div class="mt-4 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fa-solid fa-image text-indigo-600 text-lg"></i>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm">તમારું રિઝલ્ટ ઇમેજમાં ડાઉનલોડ કરો</h3>
+                            <p class="text-[10px] text-slate-500">અલગ અલગ સ્ટાઇલ પસંદ કરીને સુંદર રિઝલ્ટ કાર્ડ સેવ કરો.</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button onclick="downloadResultImage('classic')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-xs shadow"><i class="fa-solid fa-award"></i> ક્લાસિક</button>
+                        <button onclick="downloadResultImage('modern')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs shadow"><i class="fa-solid fa-bolt"></i> મોડર્ન</button>
+                        <button onclick="downloadResultImage('certificate')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl text-xs shadow"><i class="fa-solid fa-certificate"></i> સર્ટિફિકેટ</button>
+                        <button onclick="downloadResultImage('scorecard')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow"><i class="fa-solid fa-chart-simple"></i> સ્કોરકાર્ડ</button>
+                    </div>
+                    <div class="flex justify-center gap-2 mt-3">
+                        <button onclick="downloadResultImage('classic','png')" class="px-3 py-1.5 rounded-lg border bg-white text-xs font-bold text-slate-700 hover:bg-slate-100">PNG</button>
+                        <button onclick="downloadResultImage('classic','jpg')" class="px-3 py-1.5 rounded-lg border bg-white text-xs font-bold text-slate-700 hover:bg-slate-100">JPG</button>
                     </div>
                 </div>
                 <p class="text-xs font-semibold text-slate-600">તમે આપેલી ટેસ્ટનું સોલ્યુશન નીચે મુજબ છે:</p>
@@ -567,6 +587,16 @@
                     </div>
                     <button onclick="closeAdminSheetModal()" class="text-white hover:text-slate-200 text-2xl font-bold leading-none">&times;</button>
                 </div>
+                <div class="p-3 bg-slate-50 border-b space-y-2">
+                    <div id="adminResultSummary" class="grid grid-cols-3 gap-2 text-center"></div>
+                    <div class="flex flex-wrap justify-center gap-2 pt-1">
+                        <button onclick="downloadAdminResultImage('classic','png')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">🏆 ક્લાસિક PNG</button>
+                        <button onclick="downloadAdminResultImage('modern','png')" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">⚡ મોડર્ન PNG</button>
+                        <button onclick="downloadAdminResultImage('certificate','png')" class="bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">🏅 સર્ટિફિકેટ PNG</button>
+                        <button onclick="downloadAdminResultImage('scorecard','png')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">📊 સ્કોરકાર્ડ PNG</button>
+                        <button onclick="downloadAdminResultImage('classic','jpg')" class="bg-white border text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold">JPG</button>
+                    </div>
+                </div>
                 <div class="p-4 overflow-y-auto flex-1 space-y-4" id="adminSheetContainer">
                 </div>
                 <div class="p-3 bg-slate-100 border-t text-right">
@@ -601,6 +631,8 @@
         let currentStudentQuizData = null;
         let studentTimerInterval = null;
         let studentTimeLeft = 0;
+        let lastResultSubmission = null;
+        let adminResultSubmission = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             initMode2QuestionsInput();
@@ -1574,7 +1606,9 @@
                 percentage: percentage,
                 timestamp: Date.now(),
                 answers: currentStudentQuizData.answers,
-                questions: questions
+                questions: questions,
+                course: currentStudentQuizData.meta?.course || '',
+                subject: currentStudentQuizData.meta?.subject || ''
             };
 
             database.ref('submissions').push(submissionObj);
@@ -1588,6 +1622,7 @@
         }
 
         function showResultsScreen(sub) {
+            lastResultSubmission = sub;
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('quizHeaderTimerBox').classList.add('hidden');
             document.getElementById('resultScreen').classList.remove('hidden');
@@ -1638,6 +1673,28 @@
             });
         }
 
+        function downloadResultImage(style = 'classic', forcedFormat = null) {
+            const sub = lastResultSubmission || adminResultSubmission;
+            if (!sub) { alert("રિઝલ્ટ ઉપલબ્ધ નથી."); return; }
+            const format = forcedFormat || 'png';
+            const safeName = String(sub.studentName || 'વિદ્યાર્થી').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+            const wrap = document.createElement('div');
+            wrap.style.position='fixed'; wrap.style.left='-10000px'; wrap.style.top='0'; wrap.style.width=style==='certificate'?'1000px':'900px'; wrap.style.zIndex='-1'; wrap.style.fontFamily="'Hind Vadodara',sans-serif"; wrap.style.background='#fff';
+            const palette={
+                classic:{bg:'linear-gradient(135deg,#eef2ff,#fff 55%,#ecfdf5)',head:'#4338ca',accent:'#10b981',text:'#172554',icon:'🏆',title:'પરિણામ કાર્ડ'},
+                modern:{bg:'linear-gradient(135deg,#0f172a,#312e81,#111827)',head:'#fff',accent:'#fbbf24',text:'#fff',icon:'⚡',title:'TEST RESULT'},
+                certificate:{bg:'linear-gradient(135deg,#fffbeb,#fff 50%,#fef3c7)',head:'#92400e',accent:'#d97706',text:'#451a03',icon:'🏅',title:'પ્રશંસાપત્ર'},
+                scorecard:{bg:'linear-gradient(135deg,#ecfdf5,#fff 50%,#eff6ff)',head:'#065f46',accent:'#2563eb',text:'#0f172a',icon:'📊',title:'સ્કોરકાર્ડ'}
+            }[style] || null;
+            const pct=Number(sub.percentage||0), wrong=Math.max(0,Number(sub.totalQuestions||0)-Number(sub.correctCount||0)), attempted=(sub.answers||[]).filter(Boolean).length, unanswered=Math.max(0,Number(sub.totalQuestions||0)-attempted);
+            const date=sub.timestamp?new Date(sub.timestamp).toLocaleString('gu-IN'):new Date().toLocaleString('gu-IN');
+            wrap.innerHTML=`<div style="padding:32px;background:${palette.bg};color:${palette.text};min-height:520px;box-sizing:border-box"><div style="border:3px solid ${palette.accent};border-radius:28px;padding:28px;background:rgba(255,255,255,.94);box-shadow:0 12px 35px rgba(15,23,42,.15)"><div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid ${palette.accent};padding-bottom:18px"><div><div style="font-size:30px;font-weight:800;color:${palette.head}">નિર્મળા નવોદય સ્ટડી ઝોન</div><div style="font-size:19px;font-weight:700">${escapeHtmlForResult(sub.testTitle||'ઓનલાઇન કસોટી')}</div></div><div style="font-size:55px">${palette.icon}</div></div><div style="text-align:center;padding:22px 10px 16px"><div style="font-size:17px;font-weight:700;color:${palette.head}">${palette.title}</div><div style="font-size:38px;font-weight:900">${sub.correctCount} / ${sub.totalQuestions}</div><div style="font-size:26px;font-weight:800;color:${palette.accent}">${pct}%</div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:8px 0 20px"><div style="padding:15px;border-radius:16px;background:#ecfdf5;text-align:center;border:1px solid #a7f3d0"><div style="font-size:12px;color:#047857;font-weight:700">સાચા જવાબ</div><div style="font-size:25px;font-weight:900;color:#047857">${sub.correctCount}</div></div><div style="padding:15px;border-radius:16px;background:#fef2f2;text-align:center;border:1px solid #fecaca"><div style="font-size:12px;color:#b91c1c;font-weight:700">ખોટા જવાબ</div><div style="font-size:25px;font-weight:900;color:#b91c1c">${wrong}</div></div><div style="padding:15px;border-radius:16px;background:#eff6ff;text-align:center;border:1px solid #bfdbfe"><div style="font-size:12px;color:#1d4ed8;font-weight:700">જવાબ બાકી</div><div style="font-size:25px;font-weight:900;color:#1d4ed8">${unanswered}</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#f8fafc;border-radius:18px;padding:16px;border:1px solid #e2e8f0"><div><b>વિદ્યાર્થી:</b> ${escapeHtmlForResult(sub.studentName||'-')}</div><div><b>ધોરણ:</b> ${escapeHtmlForResult(sub.std||'-')}</div><div><b>કોર્ષ:</b> ${escapeHtmlForResult(sub.course || currentStudentQuizData?.meta?.course || '-')}</div><div><b>વિષય:</b> ${escapeHtmlForResult(sub.subject || currentStudentQuizData?.meta?.subject || '-')}</div><div><b>કુલ પ્રશ્નો:</b> ${sub.totalQuestions}</div><div><b>તારીખ:</b> ${date}</div></div><div style="text-align:center;margin-top:22px;font-size:15px;font-weight:700;color:${palette.head}">${pct>=80?'🌟 ઉત્કૃષ્ટ પ્રદર્શન! ખૂબ ખૂબ અભિનંદન!':pct>=50?'👍 સરસ પ્રયાસ! વધુ પ્રેક્ટિસથી વધુ સારું પરિણામ મળશે.':'💪 હાર ન માનો! ફરી પ્રયાસ કરો અને સફળતા મેળવો.'}</div><div style="text-align:center;margin-top:14px;font-size:11px;color:#64748b">Nirmala Study Zone • Online Test Result</div></div></div>`;
+            document.body.appendChild(wrap);
+            html2canvas(wrap,{scale:2,backgroundColor:'#fff',useCORS:true,logging:false}).then(canvas=>{const mime=format==='jpg'?'image/jpeg':'image/png',ext=format==='jpg'?'jpg':'png';const a=document.createElement('a');a.download=`${safeName}_Result_${style}.${ext}`;a.href=canvas.toDataURL(mime,.95);document.body.appendChild(a);a.click();a.remove();}).catch(()=>alert('રિઝલ્ટ ઇમેજ બનાવવામાં સમસ્યા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.')).finally(()=>wrap.remove());
+        }
+
+        function escapeHtmlForResult(value) { return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+
         function updateStudentFilterDropdown() {
             const select = document.getElementById('studentFilterSelect');
             if (!select) return;
@@ -1673,9 +1730,10 @@
                         <td class="p-1.5 border font-bold text-rose-600">${wrongCount}</td>
                         <td class="p-1.5 border font-bold text-amber-600">${s.percentage}%</td>
                         <td class="p-1.5 border text-center">
-                            <button onclick="viewStudentAnswerSheet('${s.id}')" class="bg-indigo-600 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow">
-                                ઉત્તરવહી
-                            </button>
+                            <div class="flex gap-1 justify-center">
+                                <button onclick="viewStudentAnswerSheet('${s.id}')" class="bg-indigo-600 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow">ઉત્તરવહી</button>
+                                <button onclick="viewAdminResult('${s.id}')" class="bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow">રિઝલ્ટ</button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -1683,6 +1741,35 @@
 
             tbody.innerHTML = html;
             container.classList.remove('hidden');
+        }
+
+        function viewAdminResult(subId) {
+            const sub = allSubmissionsGlobal.find(s => s.id === subId);
+            if (!sub) return;
+            adminResultSubmission = sub;
+            document.getElementById('adminSheetStudentName').textContent = `વિદ્યાર્થી: ${sub.studentName} (${sub.std})`;
+            document.getElementById('adminSheetSubMeta').textContent = `ટેસ્ટ: ${sub.testTitle} | ${sub.correctCount}/${sub.totalQuestions} (${sub.percentage}%)`;
+            const wrong = Math.max(0, Number(sub.totalQuestions || 0) - Number(sub.correctCount || 0));
+            const attempted = (sub.answers || []).filter(Boolean).length;
+            const unanswered = Math.max(0, Number(sub.totalQuestions || 0) - attempted);
+            document.getElementById('adminResultSummary').innerHTML = `
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2"><div class="text-[10px] font-bold text-emerald-700">સાચા</div><div class="text-xl font-black text-emerald-700">${sub.correctCount}</div></div>
+                <div class="bg-rose-50 border border-rose-200 rounded-xl p-2"><div class="text-[10px] font-bold text-rose-700">ખોટા</div><div class="text-xl font-black text-rose-700">${wrong}</div></div>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-2"><div class="text-[10px] font-bold text-amber-700">ટકાવારી</div><div class="text-xl font-black text-amber-700">${sub.percentage}%</div></div>`;
+            document.getElementById('adminSheetContainer').innerHTML = `
+                <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 text-center">
+                    <div class="text-xs font-bold text-indigo-700">વિદ્યાર્થીનું રિઝલ્ટ</div>
+                    <div class="text-3xl font-black text-indigo-800 mt-1">${sub.correctCount} / ${sub.totalQuestions}</div>
+                    <div class="text-xl font-black text-amber-600">${sub.percentage}%</div>
+                    <div class="text-xs text-slate-600 mt-2">${sub.percentage >= 80 ? '🏆 ઉત્કૃષ્ટ પ્રદર્શન!' : sub.percentage >= 50 ? '👍 સરસ પ્રયાસ!' : '💪 ફરી પ્રયાસ કરો, સફળતા મળશે!'}</div>
+                </div>`;
+            document.getElementById('adminViewSheetModal').classList.remove('hidden');
+        }
+
+        function downloadAdminResultImage(style='classic', format='png') {
+            if (!adminResultSubmission) { alert('પહેલા વિદ્યાર્થીનું રિઝલ્ટ ખોલો.'); return; }
+            lastResultSubmission = adminResultSubmission;
+            downloadResultImage(style, format);
         }
 
         function viewStudentAnswerSheet(subId) {

@@ -251,7 +251,6 @@
                 </div>
             </div>
 
-            <!-- ગૂગલ ક્લાઉડ સિંક બોક્ષ - કોર્ષ અને વિષયવાર ફિલ્ટર બટન્સ -->
             <div class="bg-white p-5 rounded-xl shadow border space-y-4">
                 <div class="flex flex-wrap justify-between items-center border-b pb-2 gap-2">
                     <h3 class="font-bold text-indigo-700 text-sm flex items-center gap-2">
@@ -634,6 +633,11 @@
         let lastResultSubmission = null;
         let adminResultSubmission = null;
 
+        function escapeHtmlForResult(text) {
+            if (!text) return '';
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             initMode2QuestionsInput();
             setupFirebaseListeners();
@@ -849,7 +853,6 @@
             subjSelect.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
         }
 
-        // ફિલ્ટર બોક્ષ માટે કોર્ષ બદલાય ત્યારે વિષય બદલવાનું ફંક્શન
         function onFilterCourseChange() {
             const course = document.getElementById('filterCourseSelect').value;
             const subjSelect = document.getElementById('filterSubjectSelect');
@@ -952,7 +955,6 @@
             renderTestBoxes();
         }
 
-        // ટેસ્ટ બોક્ષ દર્શાવવાનું કાર્યક્ષમ ફંક્શન (કોર્ષ અને વિષય મુજબ)
         function renderTestBoxes() {
             const container = document.getElementById('testBoxesContainer');
             const modalContainer = document.getElementById('modalCloudTestBoxes');
@@ -1613,7 +1615,6 @@
 
             database.ref('submissions').push(submissionObj);
 
-            // Local storage attempts limit save
             const localAttempts = JSON.parse(localStorage.getItem(`attempts_${currentStudentQuizData.testKey}`) || '[]');
             localAttempts.push({ score: correctCount, total: total, percentage: percentage, date: new Date().toISOString() });
             localStorage.setItem(`attempts_${currentStudentQuizData.testKey}`, JSON.stringify(localAttempts));
@@ -1673,207 +1674,158 @@
             });
         }
 
+        // સુધારેલું ફંક્શન: ડાયરેક્ટ ઇમેજ ડાઉનલોડ & ઓટોમેટિક મેમરી ક્લીનઅપ (Memory Leak & Storage Fix)
         function downloadResultImage(style = 'classic', forcedFormat = null) {
             const sub = lastResultSubmission || adminResultSubmission;
             if (!sub) { alert("રિઝલ્ટ ઉપલબ્ધ નથી."); return; }
+            
             const format = forcedFormat || 'png';
             const safeName = String(sub.studentName || 'વિદ્યાર્થી').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+            
             const wrap = document.createElement('div');
-            wrap.style.position='fixed'; wrap.style.left='-10000px'; wrap.style.top='0'; wrap.style.width=style==='certificate'?'1000px':'900px'; wrap.style.zIndex='-1'; wrap.style.fontFamily="'Hind Vadodara',sans-serif"; wrap.style.background='#fff';
-            const palette={
-                classic:{bg:'linear-gradient(135deg,#eef2ff,#fff 55%,#ecfdf5)',head:'#4338ca',accent:'#10b981',text:'#172554',icon:'🏆',title:'પરિણામ કાર્ડ'},
-                modern:{bg:'linear-gradient(135deg,#0f172a,#312e81,#111827)',head:'#fff',accent:'#fbbf24',text:'#fff',icon:'⚡',title:'TEST RESULT'},
-                certificate:{bg:'linear-gradient(135deg,#fffbeb,#fff 50%,#fef3c7)',head:'#92400e',accent:'#d97706',text:'#451a03',icon:'🏅',title:'પ્રશંસાપત્ર'},
-                scorecard:{bg:'linear-gradient(135deg,#ecfdf5,#fff 50%,#eff6ff)',head:'#065f46',accent:'#2563eb',text:'#0f172a',icon:'📊',title:'સ્કોરકાર્ડ'}
-            }[style] || null;
-            const pct=Number(sub.percentage||0), wrong=Math.max(0,Number(sub.totalQuestions||0)-Number(sub.correctCount||0)), attempted=(sub.answers||[]).filter(Boolean).length, unanswered=Math.max(0,Number(sub.totalQuestions||0)-attempted);
-            const date=sub.timestamp?new Date(sub.timestamp).toLocaleString('gu-IN'):new Date().toLocaleString('gu-IN');
-            wrap.innerHTML=`<div style="padding:32px;background:${palette.bg};color:${palette.text};min-height:520px;box-sizing:border-box"><div style="border:3px solid ${palette.accent};border-radius:28px;padding:28px;background:rgba(255,255,255,.94);box-shadow:0 12px 35px rgba(15,23,42,.15)"><div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid ${palette.accent};padding-bottom:18px"><div><div style="font-size:30px;font-weight:800;color:${palette.head}">નિર્મળા નવોદય સ્ટડી ઝોન</div><div style="font-size:19px;font-weight:700">${escapeHtmlForResult(sub.testTitle||'ઓનલાઇન કસોટી')}</div></div><div style="font-size:55px">${palette.icon}</div></div><div style="text-align:center;padding:22px 10px 16px"><div style="font-size:17px;font-weight:700;color:${palette.head}">${palette.title}</div><div style="font-size:38px;font-weight:900">${sub.correctCount} / ${sub.totalQuestions}</div><div style="font-size:26px;font-weight:800;color:${palette.accent}">${pct}%</div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:8px 0 20px"><div style="padding:15px;border-radius:16px;background:#ecfdf5;text-align:center;border:1px solid #a7f3d0"><div style="font-size:12px;color:#047857;font-weight:700">સાચા જવાબ</div><div style="font-size:25px;font-weight:900;color:#047857">${sub.correctCount}</div></div><div style="padding:15px;border-radius:16px;background:#fef2f2;text-align:center;border:1px solid #fecaca"><div style="font-size:12px;color:#b91c1c;font-weight:700">ખોટા જવાબ</div><div style="font-size:25px;font-weight:900;color:#b91c1c">${wrong}</div></div><div style="padding:15px;border-radius:16px;background:#eff6ff;text-align:center;border:1px solid #bfdbfe"><div style="font-size:12px;color:#1d4ed8;font-weight:700">જવાબ બાકી</div><div style="font-size:25px;font-weight:900;color:#1d4ed8">${unanswered}</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#f8fafc;border-radius:18px;padding:16px;border:1px solid #e2e8f0"><div><b>વિદ્યાર્થી:</b> ${escapeHtmlForResult(sub.studentName||'-')}</div><div><b>ધોરણ:</b> ${escapeHtmlForResult(sub.std||'-')}</div><div><b>કોર્ષ:</b> ${escapeHtmlForResult(sub.course || currentStudentQuizData?.meta?.course || '-')}</div><div><b>વિષય:</b> ${escapeHtmlForResult(sub.subject || currentStudentQuizData?.meta?.subject || '-')}</div><div><b>કુલ પ્રશ્નો:</b> ${sub.totalQuestions}</div><div><b>તારીખ:</b> ${date}</div></div><div style="text-align:center;margin-top:22px;font-size:15px;font-weight:700;color:${palette.head}">${pct>=80?'🌟 ઉત્કૃષ્ટ પ્રદર્શન! ખૂબ ખૂબ અભિનંદન!':pct>=50?'👍 સરસ પ્રયાસ! વધુ પ્રેક્ટિસથી વધુ સારું પરિણામ મળશે.':'💪 હાર ન માનો! ફરી પ્રયાસ કરો અને સફળતા મેળવો.'}</div><div style="text-align:center;margin-top:14px;font-size:11px;color:#64748b">Nirmala Study Zone • Online Test Result</div></div></div>`;
+            wrap.style.position = 'fixed'; 
+            wrap.style.left = '-10000px'; 
+            wrap.style.top = '0'; 
+            wrap.style.width = style === 'certificate' ? '1000px' : '900px'; 
+            wrap.style.zIndex = '-1'; 
+            wrap.style.fontFamily = "'Hind Vadodara', sans-serif"; 
+            wrap.style.background = '#fff';
+            
+            const palette = {
+                classic: {bg: 'linear-gradient(135deg,#eef2ff,#fff 55%,#ecfdf5)', head: '#4338ca', accent: '#10b981', text: '#172554', icon: '🏆', title: 'પરિણામ કાર્ડ'},
+                modern: {bg: 'linear-gradient(135deg,#0f172a,#312e81,#111827)', head: '#fff', accent: '#fbbf24', text: '#fff', icon: '⚡', title: 'TEST RESULT'},
+                certificate: {bg: 'linear-gradient(135deg,#fffbeb,#fff 50%,#fef3c7)', head: '#92400e', accent: '#d97706', text: '#451a03', icon: '🏅', title: 'પ્રશંસાપત્ર'},
+                scorecard: {bg: 'linear-gradient(135deg,#ecfdf5,#fff 50%,#eff6ff)', head: '#065f46', accent: '#2563eb', text: '#0f172a', icon: '📊', title: 'સ્કોરકાર્ડ'}
+            }[style] || palette.classic;
+
+            const pct = Number(sub.percentage || 0);
+            const wrong = Math.max(0, Number(sub.totalQuestions || 0) - Number(sub.correctCount || 0));
+            const attempted = sub.answers ? Object.keys(sub.answers).length : 0;
+            const unanswered = Math.max(0, Number(sub.totalQuestions || 0) - attempted);
+            const date = sub.timestamp ? new Date(sub.timestamp).toLocaleString('gu-IN') : new Date().toLocaleString('gu-IN');
+
+            wrap.innerHTML = `
+                <div style="padding:32px;background:${palette.bg};color:${palette.text};min-height:520px;box-sizing:border-box">
+                    <div style="border:3px solid ${palette.accent};border-radius:28px;padding:28px;background:rgba(255,255,255,.94);box-shadow:0 12px 35px rgba(15,23,42,.15)">
+                        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid ${palette.accent};padding-bottom:18px">
+                            <div>
+                                <div style="font-size:30px;font-weight:800;color:${palette.head}">નિર્મળા નવોદય સ્ટડી ઝોન</div>
+                                <div style="font-size:19px;font-weight:700">${escapeHtmlForResult(sub.testTitle || 'ઓનલાઇન કસોટી')}</div>
+                            </div>
+                            <div style="font-size:55px">${palette.icon}</div>
+                        </div>
+                        <div style="text-align:center;padding:22px 10px 16px">
+                            <div style="font-size:17px;font-weight:700;color:${palette.head}">${palette.title}</div>
+                            <div style="font-size:38px;font-weight:900">${sub.correctCount} / ${sub.totalQuestions}</div>
+                            <div style="font-size:26px;font-weight:800;color:${palette.accent}">${pct}%</div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:8px 0 20px">
+                            <div style="padding:15px;border-radius:16px;background:#ecfdf5;text-align:center;border:1px solid #a7f3d0">
+                                <div style="font-size:12px;color:#047857;font-weight:700">સાચા જવાબ</div>
+                                <div style="font-size:25px;font-weight:900;color:#047857">${sub.correctCount}</div>
+                            </div>
+                            <div style="padding:15px;border-radius:16px;background:#fef2f2;text-align:center;border:1px solid #fecaca">
+                                <div style="font-size:12px;color:#b91c1c;font-weight:700">ખોટા જવાબ</div>
+                                <div style="font-size:25px;font-weight:900;color:#b91c1c">${wrong}</div>
+                            </div>
+                            <div style="padding:15px;border-radius:16px;background:#eff6ff;text-align:center;border:1px solid #bfdbfe">
+                                <div style="font-size:12px;color:#1d4ed8;font-weight:700">જવાબ બાકી</div>
+                                <div style="font-size:25px;font-weight:900;color:#1d4ed8">${unanswered}</div>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#f8fafc;border-radius:18px;padding:16px;border:1px solid #e2e8f0">
+                            <div><b>વિદ્યાર્થી:</b> ${escapeHtmlForResult(sub.studentName || '-')}</div>
+                            <div><b>ધોરણ:</b> ${escapeHtmlForResult(sub.std || '-')}</div>
+                            <div><b>કોર્ષ:</b> ${escapeHtmlForResult(sub.course || currentStudentQuizData?.meta?.course || '-')}</div>
+                            <div><b>વિષય:</b> ${escapeHtmlForResult(sub.subject || currentStudentQuizData?.meta?.subject || '-')}</div>
+                            <div><b>કુલ પ્રશ્નો:</b> ${sub.totalQuestions}</div>
+                            <div><b>તારીખ:</b> ${date}</div>
+                        </div>
+                        <div style="text-align:center;margin-top:22px;font-size:15px;font-weight:700;color:${palette.head}">
+                            ${pct >= 80 ? '🌟 ઉત્કૃષ્ટ પ્રદર્શન! ખૂબ ખૂબ અભિનંદન!' : pct >= 50 ? '👍 સરસ પ્રયાસ! વધુ પ્રેક્ટિસથી વધુ સારું પરિણામ મળશે.' : '💪 હાર ન માનો! ફરી પ્રયાસ કરો અને સફળતા મેળવો.'}
+                        </div>
+                        <div style="text-align:center;margin-top:14px;font-size:11px;color:#64748b">Nirmala Study Zone • Online Test Result</div>
+                    </div>
+                </div>
+            `;
+            
             document.body.appendChild(wrap);
-            html2canvas(wrap,{scale:2,backgroundColor:'#fff',useCORS:true,logging:false}).then(canvas=>{
+
+            html2canvas(wrap, { scale: 2, backgroundColor: '#fff', useCORS: true, logging: false }).then(canvas => {
                 const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
                 const ext = format === 'jpg' ? 'jpg' : 'png';
                 const fileName = `${safeName}_Result_${style}.${ext}`;
-                canvas.toBlob(function(blob){
-                    if (!blob) { showResultImagePreview(canvas, fileName, mime); return; }
-                    showResultImagePreview(canvas, fileName, mime, blob);
-                }, mime, .95);
-            }).catch(()=>showResultImagePreview(null, `${safeName}_Result_${style}.${format}`)).finally(()=>wrap.remove());
-        }
 
-        async function copyResultImage(blob) {
-            try {
-                if (navigator.clipboard && window.ClipboardItem && window.isSecureContext) {
-                    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-                    alert('ઇમેજ કોપી થઈ ગઈ છે. હવે Paste કરી શકો છો.');
-                    return true;
-                }
-            } catch(e) {}
-            return false;
-        }
-
-        async function shareResultImage(blob, fileName, dataUrl) {
-            try {
-                if (navigator.share) {
-                    const file = new File([blob], fileName, {type: blob.type || 'image/png'});
-                    if (navigator.canShare && navigator.canShare({files:[file]})) {
-                        await navigator.share({title:'વિદ્યાર્થીનું રિઝલ્ટ',text:'Nirmala Study Zone - Online Test Result',files:[file]});
-                        return true;
+                canvas.toBlob(function(blob) {
+                    if (blob) {
+                        const blobUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = fileName;
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        // મેમરી લીક અટકાવવા માટે ઓબ્જેક્ટ ઓટો-ક્લીનઅપ (Cleanup memory)
+                        setTimeout(() => {
+                            a.remove();
+                            URL.revokeObjectURL(blobUrl);
+                        }, 500);
                     }
-                    // Some Android WebViews support text/url sharing even when file sharing is blocked.
-                    await navigator.share({title:'વિદ્યાર્થીનું રિઝલ્ટ',text:'Nirmala Study Zone - Online Test Result'});
-                    return true;
+                }, mime, 0.95);
+            }).catch(err => {
+                alert("ઇમેજ ડાઉનલોડ કરવામાં સમસ્યા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.");
+            }).finally(() => {
+                // DOM Element ક્લીનઅપ
+                if (wrap && wrap.parentNode) {
+                    wrap.parentNode.removeChild(wrap);
                 }
-            } catch(e) {}
-            return false;
+            });
         }
 
-        function forceSaveResultImage(dataUrl, fileName) {
-            // First try the normal HTML download mechanism using a DATA URL.
-            // DATA URLs work more reliably than blob: URLs in Android WebViews.
-            try {
-                const a = document.createElement('a');
-                a.href = dataUrl;
-                a.download = fileName;
-                a.rel = 'noopener';
-                a.style.display = 'none';
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => a.remove(), 1000);
-                return true;
-            } catch(e) {
-                return false;
-            }
+        function downloadAdminResultImage(style, format) {
+            downloadResultImage(style, format);
         }
-
-        function openResultImage(dataUrl, fileName) {
-            try {
-                // Open a real HTML document containing the image. This avoids blob URL
-                // restrictions and lets Android/WebView use its normal image context menu.
-                const html = '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
-                    escapeHtmlForResult(fileName) +
-                    '</title><style>body{margin:0;background:#222;text-align:center;font-family:Arial,sans-serif}img{max-width:100%;height:auto;display:block;margin:auto}p{color:#fff;font-size:14px;padding:10px}</style></head><body>' +
-                    '<img src="' + dataUrl + '" alt="Result"><p>ઇમેજ પર લાંબું દબાવીને <b>Save image</b> અથવા <b>Copy image</b> પસંદ કરો.</p></body></html>';
-                const w = window.open();
-                if (w) {
-                    w.document.open();
-                    w.document.write(html);
-                    w.document.close();
-                    return true;
-                }
-            } catch(e) {}
-            return false;
-        }
-
-        function showResultImagePreview(canvas, fileName, mime='image/png', blob=null) {
-            if(!canvas) { alert('ઇમેજ બનાવવામાં સમસ્યા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.'); return; }
-
-            // IMPORTANT: keep the final image as a DATA URL. Android WebViews often
-            // cannot save/copy blob: URLs generated by URL.createObjectURL().
-            const dataUrl = canvas.toDataURL(mime, .95);
-            const old = document.getElementById('resultImagePreviewModal');
-            if(old) old.remove();
-
-            const modal = document.createElement('div');
-            modal.id = 'resultImagePreviewModal';
-            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:999999;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;';
-            modal.innerHTML = `
-                <div style="background:#fff;border-radius:18px;max-width:760px;width:100%;max-height:96vh;overflow:auto;padding:12px;box-sizing:border-box;text-align:center;">
-                    <div style="font-size:18px;font-weight:800;color:#1e1b4b;margin-bottom:8px;">રિઝલ્ટ ઇમેજ તૈયાર છે</div>
-                    <img id="resultPreviewImage" src="${dataUrl}" alt="Result" style="width:100%;height:auto;display:block;border-radius:10px;border:1px solid #ddd;user-select:text;-webkit-user-select:text;-webkit-touch-callout:default;" />
-                    <div style="font-size:12px;color:#475569;margin:9px 0;">નીચેના <b>સેવ / કોપી / શેર</b> બટન અજમાવો. જરૂરી હોય તો ઇમેજ પર લાંબું દબાવો.</div>
-                    <div style="display:flex;gap:7px;justify-content:center;flex-wrap:wrap;">
-                        <a id="previewDownloadBtn" href="${dataUrl}" download="${fileName}" style="background:#16a34a;color:#fff;text-decoration:none;border-radius:10px;padding:10px 13px;font-weight:700;">💾 ઇમેજ સેવ કરો</a>
-                        <button id="previewShareBtn" style="background:#0284c7;color:#fff;border:0;border-radius:10px;padding:10px 13px;font-weight:700;">📤 Share</button>
-                        <button id="previewCopyBtn" style="background:#7c3aed;color:#fff;border:0;border-radius:10px;padding:10px 13px;font-weight:700;">📋 Copy Image</button>
-                        <button id="previewOpenBtn" style="background:#2563eb;color:#fff;border:0;border-radius:10px;padding:10px 13px;font-weight:700;">🖼️ અલગથી ખોલો</button>
-                        <button id="previewCloseBtn" style="background:#e2e8f0;color:#0f172a;border:0;border-radius:10px;padding:10px 13px;font-weight:700;">બંધ કરો</button>
-                    </div>
-                </div>`;
-            document.body.appendChild(modal);
-
-            document.getElementById('previewCloseBtn').onclick=()=>modal.remove();
-
-            document.getElementById('previewDownloadBtn').onclick=(e)=>{
-                // Do not prevent default: the browser/WebView gets the actual data URL.
-                // Also try programmatic download as a second fallback.
-                setTimeout(()=>forceSaveResultImage(dataUrl,fileName),100);
-            };
-
-            document.getElementById('previewCopyBtn').onclick=async()=>{
-                let copied=false;
-                try {
-                    if (navigator.clipboard && window.ClipboardItem && window.isSecureContext) {
-                        const res=await fetch(dataUrl);
-                        const b=await res.blob();
-                        copied=await copyResultImage(b);
-                    }
-                } catch(e) {}
-                if(!copied) {
-                    // Best WebView fallback: select the actual image in a separate page
-                    // so Android's native long-press Copy Image menu can handle it.
-                    const ok=openResultImage(dataUrl,fileName);
-                    if(!ok) alert('આ એપમાં સીધું Copy Image ઉપલબ્ધ નથી. “અલગથી ખોલો” પછી ઇમેજ પર લાંબું દબાવો.');
-                }
-            };
-
-            document.getElementById('previewShareBtn').onclick=async()=>{
-                let b=blob;
-                try { if(!b) b=await (await fetch(dataUrl)).blob(); } catch(e) {}
-                const ok=await shareResultImage(b,fileName,dataUrl);
-                if(!ok) {
-                    const opened=openResultImage(dataUrl,fileName);
-                    if(!opened) alert('આ એપમાં Share ઉપલબ્ધ નથી. “અલગથી ખોલો” દબાવીને Androidનું Share/Save વિકલ્પ વાપરો.');
-                }
-            };
-
-            document.getElementById('previewOpenBtn').onclick=()=>{
-                const ok=openResultImage(dataUrl,fileName);
-                if(!ok) alert('ઇમેજ અલગથી ખોલી શકાઈ નથી. “ઇમેજ સેવ કરો” બટન દબાવો.');
-            };
-        }
-
-        function escapeHtmlForResult(value) { return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 
         function updateStudentFilterDropdown() {
             const select = document.getElementById('studentFilterSelect');
             if (!select) return;
+            const studentNames = [...new Set(allSubmissionsGlobal.map(s => s.studentName))].filter(Boolean);
 
-            const students = [...new Set(allSubmissionsGlobal.map(s => s.studentName))];
-            select.innerHTML = `<option value="">-- વિદ્યાર્થી પસંદ કરો --</option>` + students.map(s => `<option value="${s}">${s}</option>`).join('');
+            select.innerHTML = `<option value="">-- વિદ્યાર્થી પસંદ કરો (${studentNames.length}) --</option>` +
+                studentNames.map(name => `<option value="${escapeHtmlForResult(name)}">${escapeHtmlForResult(name)}</option>`).join('');
         }
 
         function renderStudentMultiTestReport() {
-            const selectedStudent = document.getElementById('studentFilterSelect').value;
+            const name = document.getElementById('studentFilterSelect').value;
             const container = document.getElementById('studentMultiReportContainer');
             const tbody = document.getElementById('studentMultiReportTableBody');
 
-            if (!selectedStudent) {
+            if (!name) {
                 container.classList.add('hidden');
                 return;
             }
 
-            const studentSubs = allSubmissionsGlobal.filter(s => s.studentName === selectedStudent);
-            document.getElementById('selectedStudentTitle').textContent = `વિદ્યાર્થી: ${selectedStudent}`;
+            const studentSubs = allSubmissionsGlobal.filter(s => s.studentName === name);
+            document.getElementById('selectedStudentTitle').textContent = `વિદ્યાર્થી: ${name}`;
             document.getElementById('selectedStudentTotalCount').textContent = `કુલ આપેલ ટેસ્ટ: ${studentSubs.length}`;
 
             let html = '';
-            studentSubs.forEach(s => {
-                const dateStr = s.timestamp ? new Date(s.timestamp).toLocaleDateString('gu-IN') : '-';
-                const wrongCount = s.totalQuestions - s.correctCount;
+            studentSubs.forEach(sub => {
+                const dateStr = sub.timestamp ? new Date(sub.timestamp).toLocaleDateString('gu-IN') : '-';
+                const wrong = Math.max(0, (sub.totalQuestions || 0) - (sub.correctCount || 0));
+
                 html += `
-                    <tr class="hover:bg-slate-50 border-b">
+                    <tr class="border-b hover:bg-slate-50 font-semibold">
                         <td class="p-1.5 border">${dateStr}</td>
-                        <td class="p-1.5 border font-bold text-indigo-700">${s.testTitle}</td>
-                        <td class="p-1.5 border">${s.std}</td>
-                        <td class="p-1.5 border font-bold text-emerald-600">${s.correctCount} / ${s.totalQuestions}</td>
-                        <td class="p-1.5 border font-bold text-rose-600">${wrongCount}</td>
-                        <td class="p-1.5 border font-bold text-amber-600">${s.percentage}%</td>
+                        <td class="p-1.5 border font-bold text-indigo-900">${escapeHtmlForResult(sub.testTitle)}</td>
+                        <td class="p-1.5 border">${escapeHtmlForResult(sub.std)}</td>
+                        <td class="p-1.5 border text-emerald-700 font-bold">${sub.correctCount} / ${sub.totalQuestions}</td>
+                        <td class="p-1.5 border text-rose-600 font-bold">${wrong}</td>
+                        <td class="p-1.5 border font-bold text-indigo-700">${sub.percentage}%</td>
                         <td class="p-1.5 border text-center">
-                            <div class="flex gap-1 justify-center">
-                                <button onclick="viewStudentAnswerSheet('${s.id}')" class="bg-indigo-600 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow">ઉત્તરવહી</button>
-                                <button onclick="viewAdminResult('${s.id}')" class="bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow">રિઝલ્ટ</button>
-                            </div>
+                            <button onclick="viewStudentAnswerSheet('${sub.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">
+                                ઉત્તરવહી
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -1883,65 +1835,53 @@
             container.classList.remove('hidden');
         }
 
-        function viewAdminResult(subId) {
-            const sub = allSubmissionsGlobal.find(s => s.id === subId);
-            if (!sub) return;
-            adminResultSubmission = sub;
-            document.getElementById('adminSheetStudentName').textContent = `વિદ્યાર્થી: ${sub.studentName} (${sub.std})`;
-            document.getElementById('adminSheetSubMeta').textContent = `ટેસ્ટ: ${sub.testTitle} | ${sub.correctCount}/${sub.totalQuestions} (${sub.percentage}%)`;
-            const wrong = Math.max(0, Number(sub.totalQuestions || 0) - Number(sub.correctCount || 0));
-            const attempted = (sub.answers || []).filter(Boolean).length;
-            const unanswered = Math.max(0, Number(sub.totalQuestions || 0) - attempted);
-            document.getElementById('adminResultSummary').innerHTML = `
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2"><div class="text-[10px] font-bold text-emerald-700">સાચા</div><div class="text-xl font-black text-emerald-700">${sub.correctCount}</div></div>
-                <div class="bg-rose-50 border border-rose-200 rounded-xl p-2"><div class="text-[10px] font-bold text-rose-700">ખોટા</div><div class="text-xl font-black text-rose-700">${wrong}</div></div>
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-2"><div class="text-[10px] font-bold text-amber-700">ટકાવારી</div><div class="text-xl font-black text-amber-700">${sub.percentage}%</div></div>`;
-            document.getElementById('adminSheetContainer').innerHTML = `
-                <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 text-center">
-                    <div class="text-xs font-bold text-indigo-700">વિદ્યાર્થીનું રિઝલ્ટ</div>
-                    <div class="text-3xl font-black text-indigo-800 mt-1">${sub.correctCount} / ${sub.totalQuestions}</div>
-                    <div class="text-xl font-black text-amber-600">${sub.percentage}%</div>
-                    <div class="text-xs text-slate-600 mt-2">${sub.percentage >= 80 ? '🏆 ઉત્કૃષ્ટ પ્રદર્શન!' : sub.percentage >= 50 ? '👍 સરસ પ્રયાસ!' : '💪 ફરી પ્રયાસ કરો, સફળતા મળશે!'}</div>
-                </div>`;
-            document.getElementById('adminViewSheetModal').classList.remove('hidden');
-        }
-
-        function downloadAdminResultImage(style='classic', format='png') {
-            if (!adminResultSubmission) { alert('પહેલા વિદ્યાર્થીનું રિઝલ્ટ ખોલો.'); return; }
-            lastResultSubmission = adminResultSubmission;
-            downloadResultImage(style, format);
-        }
-
         function viewStudentAnswerSheet(subId) {
             const sub = allSubmissionsGlobal.find(s => s.id === subId);
             if (!sub) return;
 
-            document.getElementById('adminSheetStudentName').textContent = `વિદ્યાર્થી: ${sub.studentName} (${sub.std})`;
-            document.getElementById('adminSheetSubMeta').textContent = `ટેસ્ટ: ${sub.testTitle} | મેળવેલ માર્ક્સ: ${sub.correctCount}/${sub.totalQuestions} (${sub.percentage}%)`;
+            adminResultSubmission = sub;
+            document.getElementById('adminSheetStudentName').textContent = `${sub.studentName} (${sub.std})`;
+            document.getElementById('adminSheetSubMeta').textContent = `ટેસ્ટ: ${sub.testTitle} | તારીખ: ${sub.timestamp ? new Date(sub.timestamp).toLocaleString('gu-IN') : '-'}`;
+
+            const wrong = Math.max(0, (sub.totalQuestions || 0) - (sub.correctCount || 0));
+            document.getElementById('adminResultSummary').innerHTML = `
+                <div class="bg-indigo-50 p-2 rounded-lg border text-indigo-900 font-bold text-xs">
+                    સાચા: <span class="text-emerald-600 font-extrabold text-sm">${sub.correctCount}</span> / ${sub.totalQuestions}
+                </div>
+                <div class="bg-rose-50 p-2 rounded-lg border text-rose-900 font-bold text-xs">
+                    ખોટા: <span class="text-rose-600 font-extrabold text-sm">${wrong}</span>
+                </div>
+                <div class="bg-amber-50 p-2 rounded-lg border text-amber-900 font-bold text-xs">
+                    ટકાવારી: <span class="text-amber-600 font-extrabold text-sm">${sub.percentage}%</span>
+                </div>
+            `;
 
             const container = document.getElementById('adminSheetContainer');
             container.innerHTML = '';
 
-            sub.questions.forEach((q, idx) => {
-                const userAns = sub.answers ? sub.answers[idx] : undefined;
+            const questions = sub.questions || [];
+            const answers = sub.answers || {};
+
+            questions.forEach((q, idx) => {
+                const userAns = answers[idx];
                 const isCorrect = userAns === q.answer;
                 const opts = q.options || ['A', 'B', 'C', 'D'];
 
                 container.innerHTML += `
-                    <div class="p-3 rounded-xl border space-y-1.5 text-xs ${isCorrect ? 'correct-card' : 'wrong-card'}">
-                        <div class="flex justify-between font-bold">
+                    <div class="p-3.5 rounded-xl border shadow-sm space-y-2 text-xs ${isCorrect ? 'correct-card' : 'wrong-card'}">
+                        <div class="flex justify-between items-start font-bold">
                             <span>પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</span>
                             <span class="${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
-                                ${isCorrect ? '✓ સાચો' : '✗ ખોટો'}
+                                ${isCorrect ? '<i class="fa-solid fa-circle-check"></i> સાચો' : '<i class="fa-solid fa-circle-xmark"></i> ખોટો'}
                             </span>
                         </div>
-                        ${q.image ? `<img src="${q.image}" class="max-h-28 rounded border my-1">` : ''}
-                        <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
+                        ${q.image ? `<img src="${q.image}" class="max-h-32 rounded border my-1">` : ''}
+                        <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600 pt-1">
                             <div>(A) ${formatFractions(opts[0])}</div><div>(B) ${formatFractions(opts[1])}</div>
                             <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
                         </div>
-                        <div class="pt-1.5 border-t flex justify-between font-bold text-[10px]">
-                            <span>વિદ્યાર્થીનો જવાબ: <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</span></span>
+                        <div class="pt-2 border-t flex justify-between font-bold text-[11px]">
+                            <span class="text-slate-600">વિદ્યાર્થીનો જવાબ: <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</span></span>
                             <span class="text-emerald-700">સાચો જવાબ: ${q.answer}</span>
                         </div>
                     </div>
@@ -1958,49 +1898,59 @@
         function exportTestToPDF() {
             const test = currentTests[activeTestKey];
             if (!test || !test.questions) {
-                alert("પીડીએફ ડાઉનલોડ કરવા માટે પ્રશ્નો હોવા જરૂરી છે!");
+                alert("પીડીએફ બનાવવા માટે કોઈ પ્રશ્નો ઉપલબ્ધ નથી!");
                 return;
             }
 
             const questions = Array.isArray(test.questions) ? test.questions : Object.values(test.questions);
-            const container = document.getElementById('pdfExportContainer');
+            if (questions.length === 0) {
+                alert("પીડીએફ બનાવવા માટે કોઈ પ્રશ્નો ઉપલબ્ધ નથી!");
+                return;
+            }
 
+            const container = document.getElementById('pdfExportContainer');
+            container.innerHTML = '';
+
+            const meta = test.meta || {};
             let html = `
-                <div style="font-family: 'Hind Vadodara', sans-serif;">
-                    <div style="text-align: center; border-bottom: 2px solid #4338ca; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h2 style="font-size: 20px; font-weight: bold; color: #1e1b4b; margin: 0;">નિર્મળા નવોદય સ્ટડી ઝોન</h2>
-                        <h3 style="font-size: 16px; font-weight: bold; color: #4338ca; margin: 5px 0;">${test.meta?.title || 'ઓનલાઇન કસોટી'}</h3>
-                        <p style="font-size: 12px; color: #475569; margin: 0;">કોર્ષ: ${test.meta?.course || 'સામાન્ય'} | વિષય: ${test.meta?.subject || 'સામાન્ય'} | કુલ ગુણ: ${test.meta?.totalMarks || 100}</p>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="text-align:center;border-bottom:2px solid #4338ca;padding-bottom:12px;margin-bottom:20px">
+                    <h2 style="font-size:22px;font-weight:bold;color:#4338ca;margin:0">${escapeHtmlForResult(meta.title || 'ઓનલાઇન કસોટી')}</h2>
+                    <p style="font-size:12px;color:#64748b;margin:4px 0 0">કોર્ષ: ${escapeHtmlForResult(meta.course || 'સામાન્ય')} | વિષય: ${escapeHtmlForResult(meta.subject || 'સામાન્ય')} | કુલ ગુણ: ${meta.totalMarks || 100} | સમય: ${meta.timeLimit || 60} મિનિટ</p>
+                </div>
+                <div style="font-size:13px space-y-4">
             `;
 
             questions.forEach((q, idx) => {
                 const opts = q.options || ['A', 'B', 'C', 'D'];
                 html += `
-                    <div style="font-size: 13px; page-break-inside: avoid;">
-                        <p style="font-weight: bold; margin-bottom: 5px;">પ્રશ્ન ${idx + 1}. ${q.question}</p>
-                        ${q.image ? `<img src="${q.image}" style="max-height: 120px; display: block; margin: 5px 0;">` : ''}
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 12px; color: #334155;">
-                            <div>(A) ${opts[0]}</div><div>(B) ${opts[1]}</div>
-                            <div>(C) ${opts[2]}</div><div>(D) ${opts[3]}</div>
+                    <div style="margin-bottom:16px;page-break-inside:avoid">
+                        <div style="font-weight:bold;margin-bottom:6px">પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</div>
+                        ${q.image ? `<img src="${q.image}" style="max-height:150px;display:block;margin:6px 0;border:1px solid #ccc;border-radius:4px">` : ''}
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+                            <div>(A) ${formatFractions(opts[0])}</div>
+                            <div>(B) ${formatFractions(opts[1])}</div>
+                            <div>(C) ${formatFractions(opts[2])}</div>
+                            <div>(D) ${formatFractions(opts[3])}</div>
                         </div>
                     </div>
                 `;
             });
 
-            html += `</div></div>`;
+            html += `</div>`;
             container.innerHTML = html;
+            container.classList.remove('hidden');
 
             const opt = {
                 margin:       10,
-                filename:     `${test.meta?.title || 'Test'}.pdf`,
+                filename:     `${meta.title || 'Test'}_Question_Paper.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(container).save();
+            html2pdf().set(opt).from(container).save().then(() => {
+                container.classList.add('hidden');
+            });
         }
     </script>
 </body>

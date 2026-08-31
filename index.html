@@ -274,12 +274,24 @@
                             <option value="all">બધા વિષય</option>
                         </select>
 
-                        <button onclick="filterTestBoxes('all')" id="btnFilterAll" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white">બધી ટેસ્ટ</button>
-                        <button onclick="filterTestBoxes('draft')" id="btnFilterDraft" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300">📝 ડ્રાફ્ટ ટેસ્ટ</button>
-                        <button onclick="filterTestBoxes('active')" id="btnFilterActive" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300">🚀 એક્ટિવ ટેસ્ટ</button>
+                        <button onclick="filterTestBoxes('draft')" id="btnFilterDraft" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300">📝 ડ્રાફ્ટ</button>
+                        <button onclick="filterTestBoxes('active')" id="btnFilterActive" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300">🚀 એક્ટિવ</button>
                     </div>
                 </div>
                 <div id="testBoxesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow border">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="font-bold text-indigo-700 text-sm flex items-center gap-2"><i class="fa-solid fa-cloud-arrow-up text-indigo-600"></i> ક્લાઉડ બેકઅપ અને રિસ્ટોર</h3>
+                        <p class="text-[10px] text-slate-500 mt-1">ટેસ્ટ, પ્રશ્ન બેંક, પરિણામ અને સેટિંગ્સનો બેકઅપ ક્લાઉડમાં સેવ/રિસ્ટોર કરો.</p>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="createCloudBackup()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow"><i class="fa-solid fa-cloud-arrow-up"></i> ક્લાઉડ બેકઅપ</button>
+                        <button onclick="restoreCloudBackup()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow"><i class="fa-solid fa-cloud-arrow-down"></i> રિસ્ટોર</button>
+                    </div>
+                </div>
             </div>
 
             <div class="bg-white p-5 rounded-xl shadow border space-y-5">
@@ -636,7 +648,7 @@
         let activeTestKey = 'test_1';
         let allSubmissionsGlobal = [];
         let questionBankData = {};
-        let activeBoxFilter = 'all';
+        let activeBoxFilter = 'none';
         let currentQbTab = 'all';
         let uploadedImageBase64 = '';
         let customLogoBase64 = '';
@@ -652,6 +664,7 @@
             setupFirebaseListeners();
             checkUrlParameters();
             onFilterCourseChange();
+            filterTestBoxes('none');
         });
 
         function setupFirebaseListeners() {
@@ -985,9 +998,10 @@
 
         function filterTestBoxes(filter) {
             activeBoxFilter = filter;
-            document.getElementById('btnFilterAll').className = filter === 'all' ? 'px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white' : 'px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-700';
-            document.getElementById('btnFilterDraft').className = filter === 'draft' ? 'px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500 text-white shadow' : 'px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300';
-            document.getElementById('btnFilterActive').className = filter === 'active' ? 'px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow' : 'px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300';
+            const activeBtn = document.getElementById('btnFilterActive');
+            const draftBtn = document.getElementById('btnFilterDraft');
+            if (activeBtn) activeBtn.className = filter === 'active' ? 'px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow' : 'px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300';
+            if (draftBtn) draftBtn.className = filter === 'draft' ? 'px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500 text-white shadow' : 'px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300';
             renderTestBoxes();
         }
 
@@ -1003,8 +1017,10 @@
                 const meta = test.meta || {};
                 const qCount = test.questions ? (Array.isArray(test.questions) ? test.questions.length : Object.values(test.questions).length) : 0;
 
+                if (activeBoxFilter === 'none') return;
                 if (activeBoxFilter === 'draft' && meta.status !== 'draft') return;
                 if (activeBoxFilter === 'active' && meta.status !== 'active') return;
+                if (activeBoxFilter === 'selected' && key !== activeTestKey) return;
                 if (selectedCourseFilter !== 'all' && meta.course !== selectedCourseFilter) return;
                 if (selectedSubjectFilter !== 'all' && meta.subject !== selectedSubjectFilter) return;
 
@@ -1065,6 +1081,7 @@
 
         function selectTestBox(key) {
             activeTestKey = key;
+            activeBoxFilter = 'selected';
             const select = document.getElementById('adminTestSelect');
             if (select) select.value = key;
             loadAdminTestData();
@@ -1483,6 +1500,39 @@
                 alert(`${selectedQuestions.length} પ્રશ્નો સફળતાપૂર્વક ઉમેરાઈ ગયા!`);
                 closeQuestionBankModal();
             });
+        }
+
+        async function createCloudBackup() {
+            try {
+                const [testsSnap, submissionsSnap, qbSnap, logoSnap, passSnap] = await Promise.all([
+                    database.ref('tests').once('value'),
+                    database.ref('submissions').once('value'),
+                    database.ref('question_bank').once('value'),
+                    database.ref('customLogo').once('value'),
+                    database.ref('adminPassword').once('value')
+                ]);
+                const backup = { version: 1, createdAt: Date.now(), tests: testsSnap.val() || {}, submissions: submissionsSnap.val() || {}, question_bank: qbSnap.val() || {}, customLogo: logoSnap.val() || '', adminPassword: passSnap.val() || adminPasscode };
+                await database.ref('cloudBackups/latest').set(backup);
+                await database.ref(`cloudBackups/history/${backup.createdAt}`).set(backup);
+                alert('ક્લાઉડ બેકઅપ સફળતાપૂર્વક સેવ થઈ ગયો છે!');
+            } catch (e) { console.error(e); alert('ક્લાઉડ બેકઅપ કરવામાં સમસ્યા આવી. Firebase Database Rules/Internet ચકાસો.'); }
+        }
+
+        async function restoreCloudBackup() {
+            if (!confirm('શું તમે છેલ્લો ક્લાઉડ બેકઅપ રિસ્ટોર કરવા માંગો છો? વર્તમાન ડેટા બેકઅપની માહિતીથી બદલાઈ શકે છે.')) return;
+            try {
+                const snap = await database.ref('cloudBackups/latest').once('value');
+                const backup = snap.val();
+                if (!backup) { alert('કોઈ ક્લાઉડ બેકઅપ મળ્યો નથી.'); return; }
+                await Promise.all([
+                    database.ref('tests').set(backup.tests || {}),
+                    database.ref('submissions').set(backup.submissions || {}),
+                    database.ref('question_bank').set(backup.question_bank || {}),
+                    backup.customLogo ? database.ref('customLogo').set(backup.customLogo) : database.ref('customLogo').remove(),
+                    backup.adminPassword ? database.ref('adminPassword').set(backup.adminPassword) : Promise.resolve()
+                ]);
+                alert('ક્લાઉડ બેકઅપ સફળતાપૂર્વક રિસ્ટોર થઈ ગયો છે!');
+            } catch (e) { console.error(e); alert('રિસ્ટોર કરવામાં સમસ્યા આવી. Firebase Database Rules/Internet ચકાસો.'); }
         }
 
         function copyShareLink() {

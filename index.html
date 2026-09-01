@@ -56,6 +56,10 @@
         }
         .frac-num { border-bottom: 1.5px solid currentColor; padding-bottom: 2px; font-weight: bold; display: block; }
         .frac-den { padding-top: 2px; font-weight: bold; display: block; }
+
+        .test-number-box { max-height: 96px; overflow-y: auto; }
+        .test-number-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 7px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; font-size:10px; font-weight:700; cursor:pointer; }
+        .test-number-chip:has(input:checked) { background:#eef2ff; border-color:#6366f1; color:#3730a3; }
     </style>
 </head>
 <body class="text-slate-800">
@@ -201,11 +205,17 @@
                             <p class="text-[10px] text-slate-500">અલગ અલગ સ્ટાઇલ પસંદ કરીને સુંદર રિઝલ્ટ કાર્ડ સેવ કરો.</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <button onclick="downloadResultImage('classic')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-xs shadow"><i class="fa-solid fa-award"></i> ક્લાસિક</button>
-                        <button onclick="downloadResultImage('modern')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs shadow"><i class="fa-solid fa-bolt"></i> મોડર્ન</button>
-                        <button onclick="downloadResultImage('certificate')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl text-xs shadow"><i class="fa-solid fa-certificate"></i> સર્ટિફિકેટ</button>
-                        <button onclick="downloadResultImage('scorecard')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow"><i class="fa-solid fa-chart-simple"></i> સ્કોરકાર્ડ</button>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        <button onclick="downloadResultImage('classic')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-xs shadow">🏆 ક્લાસિક</button>
+                        <button onclick="downloadResultImage('modern')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs shadow">⚡ મોડર્ન</button>
+                        <button onclick="downloadResultImage('certificate')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl text-xs shadow">🏅 સર્ટિફિકેટ</button>
+                        <button onclick="downloadResultImage('scorecard')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow">📊 સ્કોરકાર્ડ</button>
+                        <button onclick="downloadResultImage('minimal')" class="bg-white border text-slate-700 font-bold py-2 rounded-xl text-xs shadow">◻️ મિનિમલ</button>
+                        <button onclick="downloadResultImage('academic')" class="bg-blue-600 text-white font-bold py-2 rounded-xl text-xs shadow">🎓 એકેડેમિક</button>
+                        <button onclick="downloadResultImage('neon')" class="bg-violet-700 text-white font-bold py-2 rounded-xl text-xs shadow">✨ નીઓન</button>
+                        <button onclick="downloadResultImage('royal')" class="bg-purple-700 text-white font-bold py-2 rounded-xl text-xs shadow">👑 રોયલ</button>
+                        <button onclick="downloadResultImage('nature')" class="bg-teal-600 text-white font-bold py-2 rounded-xl text-xs shadow">🌿 નેચર</button>
+                        <button onclick="downloadResultImage('newspaper')" class="bg-gray-700 text-white font-bold py-2 rounded-xl text-xs shadow">📰 ન્યૂઝ</button>
                     </div>
                     <div class="flex justify-center gap-2 mt-3">
                         <button onclick="downloadResultImage('classic','png')" class="px-3 py-1.5 rounded-lg border bg-white text-xs font-bold text-slate-700 hover:bg-slate-100">PNG</button>
@@ -277,6 +287,13 @@
                         <button onclick="filterTestBoxes('draft')" id="btnFilterDraft" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300">📝 ડ્રાફ્ટ</button>
                         <button onclick="filterTestBoxes('active')" id="btnFilterActive" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300">🚀 એક્ટિવ</button>
                     </div>
+                </div>
+                <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-2.5">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <span class="text-[11px] font-bold text-indigo-800"><i class="fa-solid fa-list-ol"></i> ટેસ્ટ નંબર પસંદ કરો:</span>
+                        <button onclick="clearTestNumberSelection()" class="text-[10px] font-bold text-rose-600">બધા નંબર સાફ કરો</button>
+                    </div>
+                    <div id="testNumberSelector" class="test-number-box flex flex-wrap gap-1.5"></div>
                 </div>
                 <div id="testBoxesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
@@ -456,10 +473,19 @@
                     <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
                         <i class="fa-solid fa-id-card text-indigo-600"></i> વિદ્યાર્થીવાર ઓલ ટેસ્ટ રિપોર્ટ
                     </h4>
-                    <div class="flex gap-2">
-                        <select id="studentFilterSelect" onchange="renderStudentMultiTestReport()" class="p-2 border rounded-lg font-bold text-indigo-700 bg-white flex-1 text-xs">
+                    <div class="flex gap-2 flex-wrap">
+                        <select id="studentFilterSelect" onchange="renderStudentMultiTestReport()" class="p-2 border rounded-lg font-bold text-indigo-700 bg-white flex-1 text-xs min-w-[180px]">
                             <option value="">-- વિદ્યાર્થી પસંદ કરો --</option>
                         </select>
+                        <button onclick="showSelectedStudentCurrentTestReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-[11px] font-bold shadow">
+                            👤 એક વિદ્યાર્થી + એક ટેસ્ટ
+                        </button>
+                        <button onclick="showAllStudentsCurrentTestReport()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-[11px] font-bold shadow">
+                            👥 બધા વિદ્યાર્થી + એક ટેસ્ટ
+                        </button>
+                        <button onclick="showSelectedStudentAllTestsReport()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg text-[11px] font-bold shadow">
+                            📚 એક વિદ્યાર્થી + બધી ટેસ્ટ
+                        </button>
                     </div>
 
                     <div id="studentMultiReportContainer" class="hidden bg-white p-3 rounded-xl border space-y-2">
@@ -614,10 +640,16 @@
                 <div class="p-3 bg-slate-50 border-b space-y-2">
                     <div id="adminResultSummary" class="grid grid-cols-3 gap-2 text-center"></div>
                     <div class="flex flex-wrap justify-center gap-2 pt-1">
-                        <button onclick="downloadAdminResultImage('classic','png')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">🏆 ક્લાસિક PNG</button>
-                        <button onclick="downloadAdminResultImage('modern','png')" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">⚡ મોડર્ન PNG</button>
-                        <button onclick="downloadAdminResultImage('certificate','png')" class="bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">🏅 સર્ટિફિકેટ PNG</button>
-                        <button onclick="downloadAdminResultImage('scorecard','png')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">📊 સ્કોરકાર્ડ PNG</button>
+                        <button onclick="downloadAdminResultImage('classic','png')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">🏆 ક્લાસિક</button>
+                        <button onclick="downloadAdminResultImage('modern','png')" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">⚡ મોડર્ન</button>
+                        <button onclick="downloadAdminResultImage('certificate','png')" class="bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">🏅 સર્ટિફિકેટ</button>
+                        <button onclick="downloadAdminResultImage('scorecard','png')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">📊 સ્કોરકાર્ડ</button>
+                        <button onclick="downloadAdminResultImage('minimal','png')" class="bg-white border text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold">◻️ મિનિમલ</button>
+                        <button onclick="downloadAdminResultImage('academic','png')" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">🎓 એકેડેમિક</button>
+                        <button onclick="downloadAdminResultImage('neon','png')" class="bg-violet-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">✨ નીઓન</button>
+                        <button onclick="downloadAdminResultImage('royal','png')" class="bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">👑 રોયલ</button>
+                        <button onclick="downloadAdminResultImage('nature','png')" class="bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">🌿 નેચર</button>
+                        <button onclick="downloadAdminResultImage('newspaper','png')" class="bg-gray-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">📰 ન્યૂઝપેપર</button>
                         <button onclick="downloadAdminResultImage('classic','jpg')" class="bg-white border text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold">JPG</button>
                     </div>
                 </div>
@@ -627,6 +659,25 @@
                     <button onclick="closeAdminSheetModal()" class="bg-indigo-600 text-white font-bold px-5 py-1.5 rounded-lg text-xs shadow">
                         બંધ કરો
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultFormatsModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[60] flex justify-center items-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+                <div class="bg-indigo-700 text-white p-3 flex justify-between items-center">
+                    <div>
+                        <h3 id="resultFormatsTitle" class="text-sm font-bold">રિઝલ્ટ રિપોર્ટ</h3>
+                        <p class="text-[10px] text-indigo-200">10 અલગ અલગ ફોર્મેટમાંથી પસંદ કરો</p>
+                    </div>
+                    <button onclick="closeResultFormatsModal()" class="text-xl font-bold">&times;</button>
+                </div>
+                <div class="p-3 overflow-y-auto">
+                    <div id="resultFormatsButtons" class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3"></div>
+                    <div id="resultFormatsPreview" class="bg-slate-50 border rounded-xl p-2 min-h-[160px] overflow-auto"></div>
+                </div>
+                <div class="p-3 bg-slate-100 border-t flex justify-end">
+                    <button onclick="closeResultFormatsModal()" class="bg-slate-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold">બંધ કરો</button>
                 </div>
             </div>
         </div>
@@ -836,7 +887,7 @@
             select.innerHTML = '';
             const keys = Object.keys(currentTests);
             if (keys.length === 0) {
-                currentTests['test_1'] = { meta: { title: 'ટેસ્ટ ૧', course: 'સામાન્ય', subject: 'સામાન્ય', totalMarks: 100, timeLimit: 60, status: 'draft' }, questions: [] };
+                currentTests['test_1'] = { meta: { title: 'ટેસ્ટ ૧', course: 'સામાન્ય', subject: 'સામાન્ય', totalMarks: 100, timeLimit: 60, status: 'draft', testNumber: 1 }, questions: [] };
                 database.ref('tests/test_1').set(currentTests['test_1']);
                 return;
             }
@@ -922,6 +973,11 @@
             });
         }
 
+        function getNextTestNumber() {
+            const nums = Object.values(currentTests).map(t => Number(t?.meta?.testNumber)).filter(n => Number.isInteger(n) && n > 0);
+            return nums.length ? Math.max(...nums) + 1 : Object.keys(currentTests).length + 1;
+        }
+
         function createNewTest() {
             const title = prompt("નવી ટેસ્ટનું નામ લખો (દા.ત. નવોદય ગણિત કસોટી ૦૧):");
             if (!title) return;
@@ -937,7 +993,8 @@
                     subject: subject,
                     totalMarks: 100,
                     timeLimit: 60,
-                    status: 'draft'
+                    status: 'draft',
+                    testNumber: getNextTestNumber()
                 },
                 questions: []
             };
@@ -996,12 +1053,60 @@
             });
         }
 
+        function getTestNumberMap() {
+            const keys = Object.keys(currentTests);
+            const used = new Set();
+            const map = {};
+            keys.forEach(k => {
+                const n = Number(currentTests[k]?.meta?.testNumber);
+                if (Number.isInteger(n) && n > 0 && !used.has(n)) {
+                    map[k] = n; used.add(n);
+                }
+            });
+            let next = 1;
+            keys.forEach(k => {
+                if (map[k]) return;
+                while (used.has(next)) next++;
+                map[k] = next++;
+            });
+            return map;
+        }
+
+        function getSelectedTestNumbers() {
+            return Array.from(document.querySelectorAll('.test-number-checkbox:checked')).map(cb => cb.value);
+        }
+
+        function renderTestNumberSelector() {
+            const box = document.getElementById('testNumberSelector');
+            if (!box) return;
+            const map = getTestNumberMap();
+            const entries = Object.keys(map).sort((a,b) => map[a] - map[b]);
+            if (!entries.length) {
+                box.innerHTML = '<span class="text-[10px] text-slate-400 font-bold">હજી કોઈ ટેસ્ટ નંબર ઉપલબ્ધ નથી.</span>';
+                return;
+            }
+            const selected = new Set(getSelectedTestNumbers());
+            box.innerHTML = entries.map(key => `
+                <label class="test-number-chip">
+                    <input type="checkbox" class="test-number-checkbox" value="${key}" ${selected.has(key) ? 'checked' : ''} onchange="filterTestBoxes(activeBoxFilter)" />
+                    <span>ટેસ્ટ ${map[key]}</span>
+                </label>
+            `).join('');
+        }
+
+        function clearTestNumberSelection() {
+            document.querySelectorAll('.test-number-checkbox').forEach(cb => cb.checked = false);
+            renderTestNumberSelector();
+            renderTestBoxes();
+        }
+
         function filterTestBoxes(filter) {
             activeBoxFilter = filter;
             const activeBtn = document.getElementById('btnFilterActive');
             const draftBtn = document.getElementById('btnFilterDraft');
             if (activeBtn) activeBtn.className = filter === 'active' ? 'px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow' : 'px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300';
             if (draftBtn) draftBtn.className = filter === 'draft' ? 'px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500 text-white shadow' : 'px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-100 text-amber-800 border border-amber-300';
+            renderTestNumberSelector();
             renderTestBoxes();
         }
 
@@ -1010,6 +1115,8 @@
             const modalContainer = document.getElementById('modalCloudTestBoxes');
             const selectedCourseFilter = document.getElementById('filterCourseSelect').value;
             const selectedSubjectFilter = document.getElementById('filterSubjectSelect').value;
+            const selectedNumbers = getSelectedTestNumbers();
+            const numberMap = getTestNumberMap();
 
             let html = '';
             Object.keys(currentTests).forEach(key => {
@@ -1021,6 +1128,7 @@
                 if (activeBoxFilter === 'draft' && meta.status !== 'draft') return;
                 if (activeBoxFilter === 'active' && meta.status !== 'active') return;
                 if (activeBoxFilter === 'selected' && key !== activeTestKey) return;
+                if (selectedNumbers.length > 0 && !selectedNumbers.includes(key)) return;
                 if (selectedCourseFilter !== 'all' && meta.course !== selectedCourseFilter) return;
                 if (selectedSubjectFilter !== 'all' && meta.subject !== selectedSubjectFilter) return;
 
@@ -1039,7 +1147,7 @@
                                 ${testSubs.map(sub => `
                                     <div class="bg-white p-1.5 rounded border border-slate-200 flex justify-between items-center gap-2">
                                         <div class="truncate">
-                                            <span class="font-bold text-slate-800 block truncate">${sub.studentName} <span class="text-[9px] text-slate-500">(${sub.std})</span></span>
+                                            <span class="font-bold text-slate-800 block truncate">${escapeHtmlForResult(sub.studentName)} <span class="text-[9px] text-slate-500">(${escapeHtmlForResult(sub.std)})</span></span>
                                             <span class="text-[10px] text-emerald-600 font-bold">ગુણ: ${sub.correctCount}/${sub.totalQuestions} (${sub.percentage}%)</span>
                                         </div>
                                         <button onclick="event.stopPropagation(); viewStudentAnswerSheet('${sub.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold px-2 py-1 rounded shadow shrink-0">
@@ -1048,35 +1156,30 @@
                                     </div>
                                 `).join('')}
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 } else {
-                    studentsListHtml = `
-                        <div class="mt-2.5 pt-2 border-t border-slate-200 text-[10px] text-slate-400 font-bold text-center">
-                            કોઈ વિદ્યાર્થીએ હજી આ ટેસ્ટ આપી નથી.
-                        </div>
-                    `;
+                    studentsListHtml = `<div class="mt-2.5 pt-2 border-t border-slate-200 text-[10px] text-slate-400 font-bold text-center">કોઈ વિદ્યાર્થીએ હજી આ ટેસ્ટ આપી નથી.</div>`;
                 }
 
                 html += `
                     <div onclick="selectTestBox('${key}')" class="p-3 rounded-xl border-2 cursor-pointer transition shadow-sm ${isSelected ? 'border-indigo-600 bg-indigo-50/50 shadow-md' : 'border-slate-200 bg-white hover:border-indigo-300'}">
                         <div class="flex justify-between items-start mb-1.5">
-                            <h4 class="font-bold text-slate-800 text-xs">${meta.title || key}</h4>
+                            <h4 class="font-bold text-slate-800 text-xs">ટેસ્ટ ${numberMap[key]} — ${escapeHtmlForResult(meta.title || key)}</h4>
                             <span class="px-1.5 py-0.5 text-[9px] font-bold rounded ${meta.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
                                 ${meta.status === 'active' ? '🚀 એક્ટિવ' : '📝 ડ્રાફ્ટ'}
                             </span>
                         </div>
                         <div class="text-[11px] text-slate-600 space-y-0.5 font-semibold">
-                            <div><i class="fa-solid fa-bookmark text-indigo-500"></i> કોર્ષ: ${meta.course || 'સામાન્ય'} | ${meta.subject || 'સામાન્ય'}</div>
+                            <div><i class="fa-solid fa-bookmark text-indigo-500"></i> કોર્ષ: ${escapeHtmlForResult(meta.course || 'સામાન્ય')} | ${escapeHtmlForResult(meta.subject || 'સામાન્ય')}</div>
                             <div><i class="fa-solid fa-circle-question text-indigo-500"></i> પ્રશ્નો: ${qCount} | સમય: ${meta.timeLimit || 60} મિનિટ</div>
                         </div>
                         ${studentsListHtml}
-                    </div>
-                `;
+                    </div>`;
             });
 
-            if (container) container.innerHTML = html || `<div class="col-span-full text-center text-slate-400 py-6 text-xs font-bold">કોઈ ટેસ્ટ ઉપલબ્ધ નથી.</div>`;
-            if (modalContainer) modalContainer.innerHTML = html || `<div class="col-span-full text-center text-slate-400 py-6 text-xs font-bold">કોઈ ટેસ્ટ ઉપલબ્ધ નથી.</div>`;
+            const empty = `<div class="col-span-full text-center text-slate-400 py-6 text-xs font-bold">પસંદગી પ્રમાણે કોઈ ટેસ્ટ ઉપલબ્ધ નથી.</div>`;
+            if (container) container.innerHTML = html || empty;
+            if (modalContainer) modalContainer.innerHTML = html || empty;
         }
 
         function selectTestBox(key) {
@@ -1776,7 +1879,13 @@
                 classic:{bg:'linear-gradient(135deg,#eef2ff,#fff 55%,#ecfdf5)',head:'#4338ca',accent:'#10b981',text:'#172554',icon:'🏆',title:'પરિણામ કાર્ડ'},
                 modern:{bg:'linear-gradient(135deg,#0f172a,#312e81,#111827)',head:'#fff',accent:'#fbbf24',text:'#fff',icon:'⚡',title:'TEST RESULT'},
                 certificate:{bg:'linear-gradient(135deg,#fffbeb,#fff 50%,#fef3c7)',head:'#92400e',accent:'#d97706',text:'#451a03',icon:'🏅',title:'પ્રશંસાપત્ર'},
-                scorecard:{bg:'linear-gradient(135deg,#ecfdf5,#fff 50%,#eff6ff)',head:'#065f46',accent:'#2563eb',text:'#0f172a',icon:'📊',title:'સ્કોરકાર્ડ'}
+                scorecard:{bg:'linear-gradient(135deg,#ecfdf5,#fff 50%,#eff6ff)',head:'#065f46',accent:'#2563eb',text:'#0f172a',icon:'📊',title:'સ્કોરકાર્ડ'},
+                minimal:{bg:'#ffffff',head:'#111827',accent:'#111827',text:'#111827',icon:'◻️',title:'મિનિમલ'},
+                academic:{bg:'linear-gradient(135deg,#eff6ff,#fff)',head:'#1d4ed8',accent:'#2563eb',text:'#172554',icon:'🎓',title:'એકેડેમિક'},
+                neon:{bg:'linear-gradient(135deg,#111827,#312e81)',head:'#f5f3ff',accent:'#22d3ee',text:'#fff',icon:'✨',title:'નીઓન'},
+                royal:{bg:'linear-gradient(135deg,#2e1065,#581c87)',head:'#fef3c7',accent:'#fbbf24',text:'#fff',icon:'👑',title:'રોયલ'},
+                nature:{bg:'linear-gradient(135deg,#ecfdf5,#fff)',head:'#065f46',accent:'#059669',text:'#064e3b',icon:'🌿',title:'નેચર'},
+                newspaper:{bg:'#f8fafc',head:'#111827',accent:'#374151',text:'#111827',icon:'📰',title:'ન્યૂઝપેપર'}
             }[style] || null;
             const pct=Number(sub.percentage||0), wrong=Math.max(0,Number(sub.totalQuestions||0)-Number(sub.correctCount||0)), attempted=sub.answers ? Object.keys(sub.answers).length : 0, unanswered=Math.max(0,Number(sub.totalQuestions||0)-attempted);
             const date=sub.timestamp?new Date(sub.timestamp).toLocaleString('gu-IN'):new Date().toLocaleString('gu-IN');
@@ -2142,6 +2251,91 @@
             };
 
             html2pdf().set(opt).from(element).save();
+        }
+
+        function getCurrentTestSubmissions() {
+            return allSubmissionsGlobal.filter(s => s.testKey === activeTestKey ||
+                s.testTitle === (currentTests[activeTestKey]?.meta?.title || ''));
+        }
+
+        function showResultFormatsModal(title, submissions) {
+            if (!submissions || !submissions.length) {
+                alert("પસંદગી પ્રમાણે કોઈ પરિણામ મળ્યું નથી.");
+                return;
+            }
+            window._reportSubmissions = submissions;
+            document.getElementById('resultFormatsTitle').textContent = title;
+            const formats = [
+                ['classic','🏆 ક્લાસિક'],['modern','⚡ મોડર્ન'],['certificate','🏅 સર્ટિફિકેટ'],['scorecard','📊 સ્કોરકાર્ડ'],
+                ['minimal','◻️ મિનિમલ'],['academic','🎓 એકેડેમિક'],['neon','✨ નીઓન'],['royal','👑 રોયલ'],['nature','🌿 નેચર'],['newspaper','📰 ન્યૂઝપેપર']
+            ];
+            document.getElementById('resultFormatsButtons').innerHTML = formats.map(([k,n]) =>
+                `<button onclick="renderMultiSubmissionReport('${k}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-2 rounded-lg text-[10px] font-bold shadow">${n}</button>`
+            ).join('');
+            document.getElementById('resultFormatsPreview').innerHTML =
+                `<div class="text-center py-10 text-xs text-slate-400 font-bold">10 માંથી કોઈ ફોર્મેટ પસંદ કરો.</div>`;
+            document.getElementById('resultFormatsModal').classList.remove('hidden');
+        }
+
+        function closeResultFormatsModal() {
+            document.getElementById('resultFormatsModal').classList.add('hidden');
+            window._reportSubmissions = null;
+        }
+
+        function showSelectedStudentCurrentTestReport() {
+            const name = document.getElementById('studentFilterSelect').value;
+            if (!name) { alert("પહેલા વિદ્યાર્થી પસંદ કરો."); return; }
+            const subs = getCurrentTestSubmissions().filter(s => s.studentName === name);
+            showResultFormatsModal(`વિદ્યાર્થી: ${name} • એક ટેસ્ટ`, subs);
+        }
+
+        function showAllStudentsCurrentTestReport() {
+            showResultFormatsModal(`ટેસ્ટ ${getTestNumberMap()[activeTestKey]} • બધા વિદ્યાર્થીઓ`, getCurrentTestSubmissions());
+        }
+
+        function showSelectedStudentAllTestsReport() {
+            const name = document.getElementById('studentFilterSelect').value;
+            if (!name) { alert("પહેલા વિદ્યાર્થી પસંદ કરો."); return; }
+            showResultFormatsModal(`વિદ્યાર્થી: ${name} • બધી ટેસ્ટ`, allSubmissionsGlobal.filter(s => s.studentName === name));
+        }
+
+        function renderMultiSubmissionReport(style) {
+            const subs = window._reportSubmissions || [];
+            if (!subs.length) return;
+            const palette = {
+                classic:['#eef2ff','#4338ca','#10b981','🏆'], modern:['#0f172a','#fff','#fbbf24','⚡'],
+                certificate:['#fffbeb','#92400e','#d97706','🏅'], scorecard:['#ecfdf5','#065f46','#2563eb','📊'],
+                minimal:['#fff','#111827','#111827','◻️'], academic:['#eff6ff','#1d4ed8','#2563eb','🎓'],
+                neon:['#111827','#f5f3ff','#22d3ee','✨'], royal:['#2e1065','#fef3c7','#fbbf24','👑'],
+                nature:['#ecfdf5','#065f46','#059669','🌿'], newspaper:['#f8fafc','#111827','#374151','📰']
+            }[style] || ['#fff','#111827','#4338ca','📊'];
+            const first = subs[0];
+            const totalCorrect = subs.reduce((a,x)=>a+Number(x.correctCount||0),0);
+            const totalQ = subs.reduce((a,x)=>a+Number(x.totalQuestions||0),0);
+            const overall = totalQ ? Math.round(totalCorrect/totalQ*100) : 0;
+            const rows = subs.map((x,i)=>`<tr><td style="padding:9px;border-bottom:1px solid #e5e7eb">${i+1}</td><td style="padding:9px;border-bottom:1px solid #e5e7eb;font-weight:700">${escapeHtmlForResult(x.studentName)}</td><td style="padding:9px;border-bottom:1px solid #e5e7eb">${escapeHtmlForResult(x.testTitle)}</td><td style="padding:9px;border-bottom:1px solid #e5e7eb">${x.correctCount}/${x.totalQuestions}</td><td style="padding:9px;border-bottom:1px solid #e5e7eb">${x.percentage}%</td></tr>`).join('');
+            const wrap=document.createElement('div');
+            wrap.style.cssText=`background:${palette[0]};padding:24px;font-family:'Hind Vadodara',sans-serif;color:${palette[1]};`;
+            wrap.innerHTML=`<div style="background:#fff;border:3px solid ${palette[2]};border-radius:22px;padding:22px;max-width:820px;margin:auto">
+                <div style="display:flex;justify-content:space-between;border-bottom:2px solid ${palette[2]};padding-bottom:12px">
+                <div><div style="font-size:25px;font-weight:900">નિર્મળા નવોદય સ્ટડી ઝોન</div><div style="font-size:15px;font-weight:700">રિઝલ્ટ રિપોર્ટ</div></div><div style="font-size:42px">${palette[3]}</div></div>
+                <div style="padding:14px 0;font-size:13px"><b>વિદ્યાર્થી:</b> ${escapeHtmlForResult(first.studentName)} &nbsp; <b>કુલ રેકોર્ડ:</b> ${subs.length} &nbsp; <b>ઓવરઓલ:</b> ${overall}%</div>
+                <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left"><thead><tr style="background:${palette[2]};color:#fff"><th style="padding:9px">#</th><th style="padding:9px">વિદ્યાર્થી</th><th style="padding:9px">ટેસ્ટ</th><th style="padding:9px">ગુણ</th><th style="padding:9px">ટકા</th></tr></thead><tbody>${rows}</tbody></table>
+                </div>`;
+            const preview=document.getElementById('resultFormatsPreview');
+            preview.innerHTML='';
+            preview.appendChild(wrap);
+            const buttons=document.getElementById('resultFormatsButtons');
+            buttons.insertAdjacentHTML('beforeend', `<div class="col-span-2 sm:col-span-5 flex justify-center gap-2 pt-1"><button id="saveMultiReport" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold">💾 આ ફોર્મેટ PNG સેવ કરો</button><button id="pdfMultiReport" class="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold">📄 PDF</button></div>`);
+            document.getElementById('saveMultiReport').onclick=()=>{
+                html2canvas(wrap,{scale:2,backgroundColor:'#fff',useCORS:true}).then(c=>{
+                    showResultImagePreview(c,`Result_Report_${style}.png`,'image/png',null);
+                });
+            };
+            document.getElementById('pdfMultiReport').onclick=()=>{
+                const opt={margin:.5,filename:`Result_Report_${style}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2},jsPDF:{unit:'in',format:'letter',orientation:'portrait'}};
+                html2pdf().set(opt).from(wrap).save();
+            };
         }
 
         function exportTestToPDF() {

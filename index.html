@@ -408,14 +408,13 @@
 
                     <div id="builderMode1" class="space-y-3 bg-slate-50 p-3 rounded-xl border text-xs">
                         <p class="text-[11px] text-indigo-700 font-bold"><i class="fa-solid fa-circle-info"></i> ગણિતમાં અપૂર્ણાંક માટે તમે 3/4 લખશો તો તે અંશ અને છેદમાં ડિસ્પ્લે થશે.</p>
-                        <textarea id="m1RawText" rows="4" placeholder="પ્રશ્ન અને ૪ વિકલ્પો પેસ્ટ કરો...&#10;૧. 2/4 + 1/4 = ?&#10;(A) 3/4&#10;(B) 1/2&#10;(C) 2/4&#10;(D) 1" class="w-full p-2 border rounded-lg bg-white"></textarea>
-                        <div class="flex items-center gap-3">
-                            <label class="font-bold text-slate-700">સાચો જવાબ:</label>
-                            <select id="m1Correct" class="p-1 border rounded bg-white font-bold text-emerald-600">
-                                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-                            </select>
-                            <button id="btnAddM1" onclick="addSingleMCQ()" class="bg-indigo-600 text-white font-bold px-4 py-1.5 rounded-lg">પ્રશ્ન ઉમેરો</button>
+                        <textarea id="m1RawText" rows="7" placeholder="અહીં એકસાથે ઘણા MCQ પ્રશ્નો કોપી-પેસ્ટ કરો...&#10;&#10;1. ભારતની રાજધાની કઈ છે?&#10;(A) મુંબઈ&#10;(B) નવી દિલ્હી&#10;(C) અમદાવાદ&#10;(D) કોલકાતા&#10;&#10;2. 5 + 7 = ?&#10;(A) 10&#10;(B) 11&#10;(C) 12&#10;(D) 13" class="w-full p-2 border rounded-lg bg-white"></textarea>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button type="button" onclick="prepareBulkTestMCQ()" class="bg-emerald-600 text-white font-bold px-4 py-1.5 rounded-lg">📥 બધા પ્રશ્નો ગોઠવો</button>
+                            <button id="btnAddM1" type="button" onclick="addSingleMCQ()" class="bg-indigo-600 text-white font-bold px-4 py-1.5 rounded-lg">એક પ્રશ્ન ઉમેરો</button>
+                            <span class="text-[10px] text-slate-500 font-semibold">પહેલા બધા પ્રશ્નો ગોઠવાશે, પછી દરેક પ્રશ્નનો સાચો જવાબ પસંદ કરી શકશો.</span>
                         </div>
+                        <div id="bulkTestMCQPreview" class="mt-2"></div>
                     </div>
 
                     <div id="builderMode2" class="hidden space-y-4 bg-slate-50 p-3 rounded-xl border text-xs">
@@ -1224,6 +1223,97 @@
         function formatFractions(text) {
             if (!text) return '';
             return text.replace(/(\d+)\/(\d+)/g, '<span class="frac"><span class="frac-num">$1</span><span class="frac-den">$2</span></span>');
+        }
+
+        // Bulk MCQ builder for the same MCQ area: paste many questions first,
+        // review/organize them, then choose the correct answer for each question.
+        function prepareBulkTestMCQ() {
+            if (currentTests[activeTestKey]?.meta?.status === 'active') {
+                alert("આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!");
+                return;
+            }
+            const raw = document.getElementById('m1RawText')?.value.trim();
+            if (!raw) { alert("કૃપા કરીને ઘણા MCQ પ્રશ્નો પેસ્ટ કરો!"); return; }
+            const qs = parseBulkTestMCQ(raw);
+            if (!qs.length) {
+                alert("MCQ મળ્યા નથી. દરેક પ્રશ્નમાં પ્રશ્ન + A/B/C/D ચાર વિકલ્પ હોવા જરૂરી છે.");
+                return;
+            }
+            window._bulkTestMCQ = qs;
+            const box = document.getElementById('bulkTestMCQPreview');
+            box.innerHTML = `
+                <div class="p-2 rounded-lg border bg-emerald-50 border-emerald-200 mb-2 text-[11px] font-bold text-emerald-800">
+                    ✅ ${qs.length} પ્રશ્નો ગોઠવાયા છે. હવે દરેક પ્રશ્નનો સાચો જવાબ પસંદ કરો.
+                </div>
+                ${qs.map((q,i)=>`
+                    <div class="p-2.5 mb-2 rounded-xl border ${q.answer?'border-emerald-200 bg-white':'border-amber-300 bg-amber-50'} shadow-sm">
+                        <div class="font-bold text-indigo-700 mb-1">પ્રશ્ન ${i+1}. ${escapeHtmlForResult(q.question)}</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[10px] text-slate-600 mb-2">
+                            <div>(A) ${escapeHtmlForResult(q.options[0])}</div>
+                            <div>(B) ${escapeHtmlForResult(q.options[1])}</div>
+                            <div>(C) ${escapeHtmlForResult(q.options[2])}</div>
+                            <div>(D) ${escapeHtmlForResult(q.options[3])}</div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap text-[11px]">
+                            <b>સાચો જવાબ:</b>
+                            ${['A','B','C','D'].map(a=>`<label class="px-2 py-1 rounded border bg-white cursor-pointer font-bold text-emerald-700"><input type="radio" name="bulkTestAns${i}" value="${a}" ${q.answer===a?'checked':''}> ${a}</label>`).join('')}
+                        </div>
+                    </div>`).join('')}
+                <div class="sticky bottom-0 p-2 bg-white border rounded-xl shadow-lg flex items-center justify-between gap-2 flex-wrap">
+                    <span class="text-[10px] text-slate-500 font-bold">બધા પ્રશ્નોના જવાબ પસંદ કર્યા પછી સેવ કરો.</span>
+                    <button type="button" onclick="saveBulkTestMCQ()" class="bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg">💾 બધા પ્રશ્નો ટેસ્ટમાં ઉમેરો</button>
+                </div>`;
+            box.scrollIntoView({behavior:'smooth',block:'start'});
+        }
+
+        function parseBulkTestMCQ(text) {
+            const guDigits='૦૧૨૩૪૫૬૭૮૯';
+            const normalizeDigits = x => String(x||'').replace(/[૦-૯]/g,d=>String(guDigits.indexOf(d)));
+            const lines = String(text||'').replace(/\r/g,'').split('\n').map(x=>x.trim()).filter(Boolean);
+            const out=[]; let cur=null; let currentOpt=-1;
+            const isQStart = line => {
+                const m=line.match(/^(?:પ્રશ્ન\s*)?([0-9૦-૯]+)\s*[\).:\-]\s*(.+)$/i);
+                return m ? {n:normalizeDigits(m[1]), text:m[2].trim()} : null;
+            };
+            const isOpt = line => line.match(/^\(?([ABCD])\)?\s*[\).:\-]\s*(.*)$/i);
+            const answerLine = line => line.match(/^(?:સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]?\s*([ABCD]|[1-4])\s*$/i);
+            const finish=()=>{ if(!cur)return; const opts=[cur.options[0],cur.options[1],cur.options[2],cur.options[3]]; if(cur.question && opts.every(Boolean)) out.push({question:cur.question,options:opts,answer:cur.answer||''}); cur=null; currentOpt=-1; };
+            for(const line of lines){
+                const qs=isQStart(line);
+                if(qs){ finish(); cur={question:qs.text,options:[],answer:''}; currentOpt=-1; continue; }
+                if(!cur){ cur={question:line,options:[],answer:''}; currentOpt=-1; continue; }
+                const am=answerLine(line);
+                if(am){ let a=am[1].toUpperCase(); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1]; cur.answer=a; continue; }
+                const om=isOpt(line);
+                if(om){ const idx='ABCD'.indexOf(om[1].toUpperCase()); cur.options[idx]=om[2].trim(); currentOpt=idx; continue; }
+                // Continue multi-line question/option text instead of losing it.
+                if(currentOpt>=0) cur.options[currentOpt]=(cur.options[currentOpt]+' '+line).trim();
+                else cur.question=(cur.question+' '+line).trim();
+            }
+            finish();
+            return out;
+        }
+
+        function saveBulkTestMCQ() {
+            if (currentTests[activeTestKey]?.meta?.status === 'active') {
+                alert("આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!");
+                return;
+            }
+            const qs=window._bulkTestMCQ||[];
+            if(!qs.length){alert('પહેલા બધા પ્રશ્નો ગોઠવો.');return;}
+            const missing=qs.filter((q,i)=>!document.querySelector(`input[name="bulkTestAns${i}"]:checked`));
+            if(missing.length){alert(`હજી ${missing.length} પ્રશ્નોના સાચા જવાબ પસંદ કરવાના બાકી છે.`);return;}
+            const course=document.getElementById('adminCourse').value;
+            const subject=document.getElementById('adminSubjectSelect').value;
+            let questions=currentTests[activeTestKey].questions ? (Array.isArray(currentTests[activeTestKey].questions)?[...currentTests[activeTestKey].questions]:Object.values(currentTests[activeTestKey].questions)) : [];
+            qs.forEach((q,i)=>questions.push({type:'mcq',course,subject,question:q.question,options:q.options,answer:document.querySelector(`input[name="bulkTestAns${i}"]:checked`).value}));
+            database.ref(`tests/${activeTestKey}/questions`).set(questions,()=>{
+                alert(`✅ ${qs.length} પ્રશ્નો સાચા જવાબ સાથે ટેસ્ટમાં ઉમેરાઈ ગયા.`);
+                document.getElementById('m1RawText').value='';
+                document.getElementById('bulkTestMCQPreview').innerHTML='';
+                window._bulkTestMCQ=[];
+                if(typeof loadAdminTestData==='function') loadAdminTestData();
+            });
         }
 
         function addSingleMCQ() {
@@ -2393,5 +2483,103 @@
             html2pdf().set(opt).from(container).save();
         }
     </script>
+<style id="enhancedV2Styles">.ev2{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;box-shadow:0 4px 14px rgba(15,23,42,.06)}.ev2stat{padding:10px;border-radius:12px;background:#eef2ff;border:1px solid #c7d2fe}.ev2stat b{font-size:21px;color:#3730a3}.ev2grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}@media(max-width:700px){.ev2grid{grid-template-columns:repeat(2,1fr)}}.ev2bar{height:8px;background:#e2e8f0;border-radius:9px;overflow:hidden}.ev2bar span{display:block;height:100%;background:#4f46e5}.ev2modal{position:fixed;inset:0;background:#0f172acc;z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}.ev2modal>div{background:white;border-radius:18px;max-width:900px;width:100%;max-height:92vh;overflow:auto;padding:16px}.ev2table{width:100%;border-collapse:collapse;font-size:11px}.ev2table th,.ev2table td{border:1px solid #e2e8f0;padding:7px}.ev2table th{background:#eef2ff;color:#3730a3}</style>
+<script>
+(function(){
+const E={esc:v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])),arr:v=>Array.isArray(v)?v:(v?Object.values(v):[]),shuffle:a=>{a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a},key:(n,t)=>'ev2resume_'+encodeURIComponent(String(n).toLowerCase())+'_'+encodeURIComponent(t),grade:p=>p>=90?'A+':p>=80?'A':p>=70?'B+':p>=60?'B':p>=50?'C':p>=40?'D':'E'};
+window.EV2=E;
+function stats(){let d=document.getElementById('ev2dash');if(!d)return;let ts=Object.keys(currentTests||{}),act=ts.filter(k=>currentTests[k]?.meta?.status==='active').length,st=[...new Set(allSubmissionsGlobal.map(x=>x.studentName).filter(Boolean))],avg=allSubmissionsGlobal.length?Math.round(allSubmissionsGlobal.reduce((a,x)=>a+Number(x.percentage||0),0)/allSubmissionsGlobal.length):0;document.getElementById('ev2stats').innerHTML=[['કુલ ટેસ્ટ',ts.length],['એક્ટિવ',act],['વિદ્યાર્થી',st.length],['સરેરાશ',avg+'%']].map(x=>`<div class="ev2stat"><span class="text-[10px] font-bold text-slate-500">${x[0]}</span><br><b>${x[1]}</b></div>`).join('');}
+function dash(){let a=document.getElementById('adminScreen');if(!a||document.getElementById('ev2dash'))return;let d=document.createElement('div');d.id='ev2dash';d.className='ev2 space-y-3';d.innerHTML=`<div class="flex justify-between items-center flex-wrap gap-2"><div><b class="text-sm text-indigo-700">📊 Smart Dashboard</b><div class="text-[10px] text-slate-500">Rank • Analytics • Progress • CSV/JSON • Smart Test Settings</div></div><div class="flex gap-1 flex-wrap"><button onclick="EV2.analytics()" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">📈 Analytics</button><button onclick="EV2.csv()" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">📥 CSV</button><button onclick="EV2.json()" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold">💾 JSON</button><button onclick="EV2.settings()" class="bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">⚙️ Settings</button></div></div><div id="ev2stats" class="ev2grid"></div>`;a.insertBefore(d,a.children[1]||a.firstChild);stats();}
+E.settings=function(){let m=currentTests[activeTestKey]?.meta||{},d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>⚙️ ટેસ્ટ સેટિંગ્સ</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="grid sm:grid-cols-2 gap-3 text-xs mt-3"><label>Random પ્રશ્નો<input id="eQ" type="number" min="0" value="${m.randomQuestionCount||0}" class="w-full border rounded p-2"></label><label>Max Attempts<input id="eA" type="number" min="1" value="${m.maxAttempts||2}" class="w-full border rounded p-2"></label><label>Start<input id="eS" type="datetime-local" value="${m.startAt?new Date(m.startAt).toISOString().slice(0,16):''}" class="w-full border rounded p-2"></label><label>End<input id="eE" type="datetime-local" value="${m.endAt?new Date(m.endAt).toISOString().slice(0,16):''}" class="w-full border rounded p-2"></label><label><input id="eRQ" type="checkbox" ${m.randomizeQuestions?'checked':''}> પ્રશ્નો random</label><label><input id="eRO" type="checkbox" ${m.randomizeOptions?'checked':''}> વિકલ્પો random</label><label><input id="eR" type="checkbox" ${m.allowResume!==false?'checked':''}> Auto-save/Resume</label><label><input id="eC" type="checkbox" ${m.cloudAttemptLimit!==false?'checked':''}> Cloud attempt tracking</label></div><div class="text-right mt-4"><button onclick="EV2.saveSettings(this)" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">સેવ</button></div></div>`;document.body.appendChild(d)};
+E.saveSettings=function(b){let m={...(currentTests[activeTestKey]?.meta||{})};m.randomQuestionCount=+document.getElementById('eQ').value||0;m.maxAttempts=Math.max(1,+document.getElementById('eA').value||2);m.startAt=document.getElementById('eS').value?new Date(document.getElementById('eS').value).getTime():null;m.endAt=document.getElementById('eE').value?new Date(document.getElementById('eE').value).getTime():null;m.randomizeQuestions=document.getElementById('eRQ').checked;m.randomizeOptions=document.getElementById('eRO').checked;m.allowResume=document.getElementById('eR').checked;m.cloudAttemptLimit=document.getElementById('eC').checked;database.ref('tests/'+activeTestKey+'/meta').update(m).then(()=>{alert('સેટિંગ્સ સેવ થઈ ગઈ.');b.closest('.ev2modal').remove()})};
+E.analytics=function(){let k=activeTestKey,s=allSubmissionsGlobal.filter(x=>x.testKey===k),avg=s.length?Math.round(s.reduce((a,x)=>a+Number(x.percentage||0),0)/s.length):0,rank=s.slice().sort((a,b)=>b.percentage-a.percentage||b.correctCount-a.correctCount).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.studentName)}</td><td>${x.correctCount}/${x.totalQuestions}</td><td>${x.percentage}%</td><td>${E.grade(x.percentage)}</td></tr>`).join('');let q={};s.forEach(x=>E.arr(x.questions).forEach((z,i)=>{let id=z.question||i;q[id]??={q:id,t:0,c:0};q[id].t++;if(x.answers?.[i]===z.answer)q[id].c++}));let hard=Object.values(q).sort((a,b)=>a.c/a.t-b.c/b.t).slice(0,10).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.q)}</td><td>${Math.round(x.c/x.t*100)}%</td></tr>`).join('');let d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>📈 ${E.esc(currentTests[k]?.meta?.title||k)} Analytics</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="ev2grid my-3"><div class="ev2stat">Submissions<br><b>${s.length}</b></div><div class="ev2stat">Average<br><b>${avg}%</b></div><div class="ev2stat">Highest<br><b>${s.length?Math.max(...s.map(x=>+x.percentage||0)):'-'}%</b></div><div class="ev2stat">Topper<br><b class="text-sm">${s[0]?E.esc(s.slice().sort((a,b)=>b.percentage-a.percentage)[0].studentName):'-'}</b></div></div><h4 class="font-bold text-xs mb-1">🏆 Rank</h4><table class="ev2table"><tr><th>Rank</th><th>વિદ્યાર્થી</th><th>ગુણ</th><th>%</th><th>Grade</th></tr>${rank||'<tr><td colspan=5>ડેટા નથી</td></tr>'}</table><h4 class="font-bold text-xs mt-4 mb-1">⚠️ મુશ્કેલ પ્રશ્નો</h4><table class="ev2table"><tr><th>#</th><th>પ્રશ્ન</th><th>સાચા</th></tr>${hard||'<tr><td colspan=3>ડેટા નથી</td></tr>'}</table></div>`;document.body.appendChild(d)};
+E.csv=function(){let r=[['તારીખ','ટેસ્ટ','કોર્ષ','વિષય','વિદ્યાર્થી','ધોરણ','સાચા','કુલ','ટકાવારી','Grade']];allSubmissionsGlobal.forEach(x=>r.push([x.timestamp?new Date(x.timestamp).toLocaleString('gu-IN'):'',x.testTitle||'',x.course||'',x.subject||'',x.studentName||'',x.std||'',x.correctCount||0,x.totalQuestions||0,x.percentage||0,E.grade(+x.percentage||0)]));let c='\ufeff'+r.map(a=>a.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv;charset=utf-8'}));a.download='nirmala_results.csv';a.click()};
+E.json=function(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({version:2,exportedAt:Date.now(),tests:currentTests,submissions:allSubmissionsGlobal,question_bank:questionBankData,customLogo:customLogoBase64},null,2)],{type:'application/json'}));a.download='nirmala_backup.json';a.click()};
+function nav(){let q=document.getElementById('quizScreen');if(!q||document.getElementById('ev2nav'))return;let n=document.createElement('div');n.id='ev2nav';n.style.cssText='position:sticky;top:55px;z-index:40;background:white;border:1px solid #e2e8f0;border-radius:12px;padding:7px;margin-bottom:8px';q.insertBefore(n,q.firstChild);updateNav()}function updateNav(){let n=document.getElementById('ev2nav');if(!n||!currentStudentQuizData)return;let t=currentStudentQuizData.questions.length,d=Object.keys(currentStudentQuizData.answers||{}).length;n.innerHTML=`<div class="flex gap-2 items-center text-[11px] font-bold"><span>📝 ${d}/${t}</span><span class="flex-1 ev2bar"><span style="width:${t?d/t*100:0}%"></span></span><button onclick="EV2.unanswered()" class="bg-slate-100 px-2 py-1 rounded">અનઉત્તરિત</button></div>`}
+E.unanswered=function(){let i=currentStudentQuizData?.questions.findIndex((_,i)=>currentStudentQuizData.answers[i]==null);if(i>=0)document.getElementById('opt_'+i+'_A')?.scrollIntoView({behavior:'smooth',block:'center'});else alert('બધા જવાબ અપાઈ ગયા છે.')};
+function save(){if(!currentStudentQuizData||currentStudentQuizData.meta?.allowResume===false)return;localStorage.setItem(E.key(currentStudentQuizData.studentName,currentStudentQuizData.testKey),JSON.stringify({startedAt:currentStudentQuizData.startedAt,answers:currentStudentQuizData.answers,questions:currentStudentQuizData.questions}))}
+function start(ev){ev.preventDefault();let name=document.getElementById('studentName').value.trim(),std=document.getElementById('studentStd').value,u=new URLSearchParams(location.search),k=u.get('t')||u.get('test')||activeTestKey,t=currentTests[k];if(!name||!t)return;let m=t.meta||{},now=Date.now();if(m.status==='draft'){alert('આ ટેસ્ટ Draftમાં છે.');return}if(m.startAt&&now<m.startAt){alert('ટેસ્ટ હજુ શરૂ થઈ નથી.');return}if(m.endAt&&now>m.endAt){alert('ટેસ્ટનો સમયગાળો પૂર્ણ થયો છે.');return}let qs=E.arr(t.questions);if(!qs.length){alert('આ ટેસ્ટમાં પ્રશ્નો નથી.');return}let old=null;try{old=JSON.parse(localStorage.getItem(E.key(name,k))||'null')}catch{};if(old?.questions?.length&&m.allowResume!==false){if(confirm('અધૂરી ટેસ્ટ મળી છે. Resume કરવી છે?'))qs=old.questions;else localStorage.removeItem(E.key(name,k)),old=null}let n=+m.randomQuestionCount||0;if(!old){if(n>0&&n<qs.length)qs=E.shuffle(qs).slice(0,n);else if(m.randomizeQuestions)qs=E.shuffle(qs)}if(m.randomizeOptions){qs=qs.map(q=>{if(!Array.isArray(q.options))return q;let p=q.options.map((v,i)=>({v,i}));p=E.shuffle(p);let x={...q,options:p.map(z=>z.v)};x.answer=['A','B','C','D'][p.findIndex(z=>['A','B','C','D'][z.i]===q.answer)];return x})}currentStudentQuizData={testKey:k,studentName:name,std,meta:m,questions:qs,answers:old?.answers||{},startedAt:old?.startedAt||Date.now()};document.getElementById('studentRegScreen').classList.add('hidden');document.getElementById('quizScreen').classList.remove('hidden');document.getElementById('quizHeaderTimerBox').classList.remove('hidden');document.getElementById('quizTitleDisplay').textContent=m.title||'ઓનલાઇન ટેસ્ટ';nav();renderStudentQuizQuestions();startStudentTimer(Math.max(1,(+m.timeLimit||60)*60-Math.floor((Date.now()-currentStudentQuizData.startedAt)/1000)));save()}
+function answer(i,l){currentStudentQuizData.answers[i]=l;save();['A','B','C','D'].forEach(x=>document.getElementById(`opt_${i}_${x}`)?.classList.remove('selected-ans'));document.getElementById(`opt_${i}_${l}`)?.classList.add('selected-ans');updateNav()}
+let locking=false;function submit(){if(locking||!currentStudentQuizData)return;locking=true;if(studentTimerInterval)clearInterval(studentTimerInterval);let q=currentStudentQuizData.questions,c=0;q.forEach((x,i)=>{if(currentStudentQuizData.answers[i]===x.answer)c++});let total=q.length,p=total?Math.round(c/total*100):0,s={testKey:currentStudentQuizData.testKey,testTitle:currentStudentQuizData.meta?.title||'ટેસ્ટ',studentName:currentStudentQuizData.studentName,std:currentStudentQuizData.std,correctCount:c,totalQuestions:total,percentage:p,timestamp:Date.now(),answers:currentStudentQuizData.answers,questions:q,course:currentStudentQuizData.meta?.course||'',subject:currentStudentQuizData.meta?.subject||'',durationSeconds:Math.floor((Date.now()-currentStudentQuizData.startedAt)/1000),grade:E.grade(p)};database.ref('submissions').push(s);localStorage.removeItem(E.key(s.studentName,s.testKey));let a=JSON.parse(localStorage.getItem('attempts_'+s.testKey)||'[]');a.push({score:c,total,percentage:p,date:new Date().toISOString()});localStorage.setItem('attempts_'+s.testKey,JSON.stringify(a));showResultsScreen(s);setTimeout(()=>locking=false,1200)}
+window.startStudentQuiz=start;window.selectStudentAnswer=answer;window.submitStudentQuiz=submit;
+let oldTimer=window.startStudentTimer;window.startStudentTimer=function(d){studentTimeLeft=d;updateTimerDisplay();if(studentTimerInterval)clearInterval(studentTimerInterval);studentTimerInterval=setInterval(()=>{studentTimeLeft--;updateTimerDisplay();save();if(studentTimeLeft===600)alert('⏰ 10 મિનિટ બાકી.');if(studentTimeLeft===300)alert('⏰ 5 મિનિટ બાકી.');if(studentTimeLeft<=0){clearInterval(studentTimerInterval);alert('સમય પૂર્ણ. ટેસ્ટ સબમિટ થઈ રહી છે.');submit()}},1000)};
+let oldRender=window.renderTestBoxes;window.renderTestBoxes=function(){try{oldRender&&oldRender()}catch(e){}dash();stats()};let oldLoad=window.loadAdminTestData;window.loadAdminTestData=function(){let r=oldLoad?.apply(this,arguments);setTimeout(stats,100);return r};window.updateStudentRegistrationCard=function(){const u=new URLSearchParams(location.search),k=u.get('t')||u.get('test')||activeTestKey,t=currentTests[k],m=t?.meta||{};if(!t)return;document.getElementById('studentTestTitle').textContent=m.title||k;document.getElementById('dispCourse').textContent=m.course||'સામાન્ય';document.getElementById('dispSubject').textContent=m.subject||'સામાન્ય';document.getElementById('dispTotalMarks').textContent=m.totalMarks||100;document.getElementById('dispTimeLimit').textContent=(m.timeLimit||60)+' મિનિટ';const max=Number(m.maxAttempts||2),a=JSON.parse(localStorage.getItem('attempts_'+k)||'[]');document.getElementById('dispDeviceAttempts').textContent=a.length;if(a.length>=max){document.getElementById('studentRegForm').classList.add('hidden');document.getElementById('maxAttemptsReachedBox').classList.remove('hidden');const z=a[a.length-1];document.getElementById('lastAttemptScoreText').textContent=`મેળવેલ માર્ક્સ: ${z.score} / ${z.total} (${z.percentage}%)`; }else{document.getElementById('studentRegForm').classList.remove('hidden');document.getElementById('maxAttemptsReachedBox').classList.add('hidden')}};
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()},800));
+})();
+</script>
+
+<!-- Bulk MCQ Import + Manual Correct Answer Selection -->
+<style>
+.bmcq-modal{position:fixed;inset:0;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
+.bmcq-box{background:#fff;width:min(1000px,100%);max-height:94vh;border-radius:18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.bmcq-head{background:#4338ca;color:#fff;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.bmcq-body{padding:12px;overflow:auto;flex:1}.bmcq-row{border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-bottom:8px;background:#fff}.bmcq-row.bad{border-color:#f59e0b;background:#fffbeb}.bmcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px}.bmcq-answer{margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.bmcq-answer label{padding:5px 9px;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px}.bmcq-answer input{accent-color:#4338ca}.bmcq-foot{padding:10px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+@media(max-width:640px){.bmcq-grid{grid-template-columns:1fr}.bmcq-box{max-height:96vh}.bmcq-body{padding:8px}}
+</style>
+<script>
+(function(){
+  function escB(s){return String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));}
+  function parseBulkMCQ(text){
+    text=(text||'').replace(/\r/g,'').trim();
+    if(!text)return [];
+    const lines=text.split('\n').map(x=>x.trim()).filter(x=>x!=='');
+    const out=[]; let cur=null;
+    const startRe=/^(?:question\s*)?(\d+)[\).:\-]\s*(.*)$/i;
+    const optRe=/^([ABCD])[\).:\-]\s*(.*)$/i;
+    const ansRe=/^(?:સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]?\s*([ABCD]|[1-4])\s*$/i;
+    function finish(){if(!cur)return; if(cur.question&&cur.options.length>=4){cur.options=cur.options.slice(0,4); if(!cur.answer)cur.answer=''; out.push(cur);} cur=null;}
+    for(const line of lines){
+      let m=line.match(startRe);
+      if(m){finish();cur={question:m[2].trim(),options:[],answer:''};continue;}
+      if(!cur){cur={question:'',options:[],answer:''};}
+      m=line.match(optRe);
+      if(m){cur.options["ABCD".indexOf(m[1].toUpperCase())]=m[2].trim();continue;}
+      m=line.match(ansRe);
+      if(m){let a=m[1].toUpperCase(); if(/^[1-4]$/.test(a))a='ABCD'[Number(a)-1];cur.answer=a;continue;}
+      // Accept a few common formats where the answer is written as "B" or "Answer: B) text".
+      m=line.match(/^(?:સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]?\s*([ABCD])(?:\)|\.)?/i);
+      if(m){cur.answer=m[1].toUpperCase();continue;}
+      if(cur.options.length<4 && /^[ABCD][\).]/i.test(line))continue;
+      if(!cur.question)cur.question=line;
+      else cur.question+=' '+line;
+    }
+    finish();
+    return out.filter(q=>q.question && q.options.length===4 && q.options.every(Boolean));
+  }
+  function openBulk(){
+    if(document.getElementById('bulkMcqModal'))return;
+    const d=document.createElement('div');d.id='bulkMcqModal';d.className='bmcq-modal';
+    d.innerHTML=`<div class="bmcq-box">
+      <div class="bmcq-head"><div><b>📥 Bulk MCQ Import</b><div style="font-size:10px;opacity:.9">ઘણા MCQ એકસાથે પેસ્ટ કરો → દરેક પ્રશ્નનો સાચો જવાબ જાતે પસંદ કરો</div></div><button onclick="document.getElementById('bulkMcqModal').remove()" style="font-size:22px">×</button></div>
+      <div class="bmcq-body">
+        <textarea id="bulkMcqText" style="width:100%;min-height:190px;border:1px solid #cbd5e1;border-radius:12px;padding:10px;font-size:12px" placeholder="1. ભારતની રાજધાની કઈ છે?\nA) મુંબઈ\nB) નવી દિલ્હી\nC) અમદાવાદ\nD) કોલકાતા\n\n2. 5 + 7 = ?\nA) 10\nB) 11\nC) 12\nD) 13"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0"><button onclick="window.parseBulkPreview()" class="bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-bold">🔍 પ્રશ્નો તૈયાર કરો</button><span id="bulkMcqCount" style="font-size:11px;color:#64748b">હજુ પ્રશ્નો તૈયાર થયા નથી.</span></div>
+        <div id="bulkMcqPreview"></div>
+      </div>
+      <div class="bmcq-foot"><span style="font-size:10px;color:#64748b">સાચો જવાબ આપેલો હોય તો તે pre-select થશે; ન આપ્યો હોય તો અહીંથી પસંદ કરો.</span><div style="display:flex;gap:6px"><button onclick="document.getElementById('bulkMcqModal').remove()" class="bg-slate-200 px-3 py-2 rounded-lg text-xs font-bold">રદ કરો</button><button onclick="window.saveBulkMCQ()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold">💾 બધા પ્રશ્નો સેવ કરો</button></div></div>
+    </div>`;
+    document.body.appendChild(d);
+  }
+  window.parseBulkPreview=function(){
+    const qs=parseBulkMCQ(document.getElementById('bulkMcqText').value);window._bulkMCQ=qs;
+    const box=document.getElementById('bulkMcqPreview');document.getElementById('bulkMcqCount').textContent=qs.length?`${qs.length} MCQ મળ્યા`:'કોઈ સંપૂર્ણ MCQ મળ્યો નથી. Format ચકાસો.';
+    if(!qs.length){box.innerHTML='<div style="padding:12px;background:#fff7ed;border:1px solid #fdba74;border-radius:10px;font-size:11px">દરેક પ્રશ્નમાં 4 વિકલ્પ A, B, C, D હોવા જરૂરી છે.</div>';return;}
+    box.innerHTML=qs.map((q,i)=>`<div class="bmcq-row ${q.answer?'':'bad'}"><div style="font-weight:800;font-size:12px;margin-bottom:6px">${i+1}. ${escB(q.question)}</div><div class="bmcq-grid"><div>A) ${escB(q.options[0])}</div><div>B) ${escB(q.options[1])}</div><div>C) ${escB(q.options[2])}</div><div>D) ${escB(q.options[3])}</div></div><div class="bmcq-answer"><b>સાચો જવાબ:</b>${['A','B','C','D'].map(a=>`<label><input type="radio" name="bulkAns${i}" value="${a}" ${q.answer===a?'checked':''}> ${a}</label>`).join('')}</div></div>`).join('');
+  };
+  window.saveBulkMCQ=function(){
+    const qs=window._bulkMCQ||[];if(!qs.length){alert('પહેલા પ્રશ્નો તૈયાર કરો.');return;}
+    const missing=qs.filter((q,i)=>!document.querySelector(`input[name="bulkAns${i}"]:checked`));
+    if(missing.length){alert(`હજી ${missing.length} પ્રશ્નનો સાચો જવાબ પસંદ કર્યો નથી.`);return;}
+    const course=document.getElementById('qbCourseFilter')?.value||'સામાન્ય';const subject=document.getElementById('qbSubjectFilter')?.value;const finalSubject=subject&&subject!=='all'?subject:'સામાન્ય';
+    const updates={};const base='question_bank/';
+    qs.forEach((q,i)=>{const key=database.ref('question_bank').push().key;updates[base+key]={question:q.question,options:q.options,answer:document.querySelector(`input[name="bulkAns${i}"]:checked`).value,type:'mcq',course:course==='all'?'સામાન્ય':course,subject:finalSubject,createdAt:Date.now()};});
+    database.ref().update(updates).then(()=>{alert(`${qs.length} MCQ પ્રશ્નો સાચા જવાબ સાથે Question Bankમાં સેવ થઈ ગયા.`);document.getElementById('bulkMcqModal')?.remove();if(typeof renderQbQuestionsList==='function')renderQbQuestionsList();}).catch(e=>{console.error(e);alert('પ્રશ્નો સેવ કરવામાં સમસ્યા આવી. Internet/Firebase Rules ચકાસો.');});
+  };
+  window.openBulkMCQImport=openBulk;
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
+    const h=document.querySelector('#qBankModal .bg-indigo-50');if(h&&!document.getElementById('bulkMcqBtn')){const b=document.createElement('button');b.id='bulkMcqBtn';b.onclick=openBulk;b.className='bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow';b.textContent='📥 Bulk MCQ';h.appendChild(b);}
+  },900));
+})();
+</script>
 </body>
 </html>

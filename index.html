@@ -419,7 +419,41 @@
 
                     <div id="builderMode2" class="hidden space-y-4 bg-slate-50 p-3 rounded-xl border text-xs">
                         <div class="bg-white p-3 rounded-lg border space-y-3">
-                            <h4 class="font-bold text-indigo-700 border-b pb-1"><i class="fa-solid fa-paragraph"></i> ફકરો અને તેના ૫ પ્રશ્નો</h4>
+                            <h4 class="font-bold text-indigo-700 border-b pb-1"><i class="fa-solid fa-paragraph"></i> ફકરો અને તેના પ્રશ્નો</h4>
+                            <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-2 space-y-2">
+                                <div class="font-bold text-indigo-700">📥 ઘણા ફકરા + ઘણા પ્રશ્નો એકસાથે પેસ્ટ કરો</div>
+                                <textarea id="m2BulkText" rows="7" placeholder="ફકરો 1:
+વૃક્ષો આપણા જીવન માટે ખૂબ ઉપયોગી છે...
+
+1. વૃક્ષો આપણને શું આપે છે?
+(A) ઓક્સિજન
+(B) પેટ્રોલ
+(C) લોખંડ
+(D) પ્લાસ્ટિક
+
+2. વૃક્ષોનું રક્ષણ શા માટે કરવું જોઈએ?
+(A) પર્યાવરણ માટે
+(B) રમત માટે
+(C) વેપાર માટે
+(D) પ્રવાસ માટે
+
+ફકરો 2:
+પાણી જીવન માટે જરૂરી છે...
+
+1. પાણી શા માટે જરૂરી છે?
+(A) જીવન માટે
+(B) માત્ર રમત માટે
+(C) માત્ર વાહન માટે
+(D) માત્ર ખેતી માટે" class="w-full p-2 border rounded-lg bg-white"></textarea>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <button type="button" onclick="prepareBulkPassages()" class="bg-emerald-600 text-white font-bold px-4 py-1.5 rounded-lg">📥 બધા ફકરા ગોઠવો</button>
+                                    <span class="text-[10px] text-slate-600 font-semibold">પહેલા ફકરા અને પ્રશ્નો ગોઠવાશે, પછી દરેક પ્રશ્નનો સાચો જવાબ A/B/C/Dમાંથી પસંદ કરો.</span>
+                                </div>
+                                <div id="bulkPassagePreview"></div>
+                            </div>
+                            <div class="border-t pt-3">
+                                <div class="font-bold text-slate-700 mb-2">અથવા એક ફકરો + વધુમાં વધુ ૫ પ્રશ્નો</div>
+                            </div>
                             <div>
                                 <label class="block font-bold text-slate-700 mb-1">૧. ફકરાનું લખાણ:</label>
                                 <textarea id="m2PassageText" rows="3" placeholder="અહીં ફકરાનું લખાણ પેસ્ટ કરો..." class="w-full p-2 border rounded-lg bg-slate-50"></textarea>
@@ -1346,6 +1380,107 @@
 
             saveQuestionToCurrentTest(qObj);
             document.getElementById('m1RawText').value = '';
+        }
+
+        // Bulk passage builder: many passages, each containing any number of MCQs.
+        // Format supported:
+        // ફકરો 1:
+        // passage text...
+        // 1. Question?
+        // (A) ... (B) ... (C) ... (D) ...
+        // 2. Question? ...
+        // ફકરો 2: ...
+        function prepareBulkPassages() {
+            if (currentTests[activeTestKey]?.meta?.status === 'active') {
+                alert("આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!");
+                return;
+            }
+            const raw = document.getElementById('m2BulkText')?.value.trim();
+            if (!raw) { alert('કૃપા કરીને ઘણા ફકરા અને તેમના પ્રશ્નો પેસ્ટ કરો!'); return; }
+            const groups = parseBulkPassages(raw);
+            if (!groups.length) {
+                alert('ફકરા મળ્યા નથી. દરેક ફકરો "ફકરો 1:" / "Passage 1:" જેવી લાઇનથી શરૂ કરો અને પ્રશ્નમાં A/B/C/D ચાર વિકલ્પ આપો.');
+                return;
+            }
+            const total = groups.reduce((n,g)=>n+g.questions.length,0);
+            if (!total) { alert('ફકરા મળ્યા પરંતુ કોઈ સંપૂર્ણ MCQ મળ્યો નથી.'); return; }
+            window._bulkPassages = groups;
+            const box=document.getElementById('bulkPassagePreview');
+            let html=`<div class="mt-2 p-2 rounded-lg border bg-emerald-50 border-emerald-200 text-[11px] font-bold text-emerald-800">✅ ${groups.length} ફકરા અને ${total} પ્રશ્નો ગોઠવાયા છે. હવે દરેક પ્રશ્નનો સાચો જવાબ પસંદ કરો.</div>`;
+            let gi=0;
+            groups.forEach((g,pi)=>{
+                html+=`<div class="mt-2 p-2.5 rounded-xl border border-indigo-200 bg-white shadow-sm"><div class="font-bold text-indigo-700 mb-1">📖 ફકરો ${pi+1}</div><div class="p-2 bg-slate-50 rounded border text-[11px] whitespace-pre-wrap mb-2">${escapeHtmlForResult(g.passage)}</div>`;
+                g.questions.forEach((q,qi)=>{
+                    const idx=gi++;
+                    html+=`<div class="p-2 mb-2 rounded-lg border ${q.answer?'border-emerald-200':'border-amber-300 bg-amber-50'}"><div class="font-bold text-slate-800">પ્રશ્ન ${qi+1}. ${escapeHtmlForResult(q.question)}</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[10px] text-slate-600 my-1">${q.options.map((o,j)=>`<div>(${String.fromCharCode(65+j)}) ${escapeHtmlForResult(o)}</div>`).join('')}</div><div class="flex items-center gap-2 flex-wrap text-[11px]"><b>સાચો જવાબ:</b>${['A','B','C','D'].map(a=>`<label class="px-2 py-1 rounded border bg-white cursor-pointer font-bold text-emerald-700"><input type="radio" name="bulkPassageAns${idx}" value="${a}" ${q.answer===a?'checked':''}> ${a}</label>`).join('')}</div></div>`;
+                });
+                html+='</div>';
+            });
+            html+=`<div class="sticky bottom-0 mt-2 p-2 bg-white border rounded-xl shadow-lg flex items-center justify-between gap-2 flex-wrap"><span class="text-[10px] text-slate-500 font-bold">બધા પ્રશ્નોના જવાબ પસંદ કર્યા પછી સેવ કરો.</span><button type="button" onclick="saveBulkPassages()" class="bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg">💾 બધા ફકરા + પ્રશ્નો સેવ કરો</button></div>`;
+            box.innerHTML=html;
+            box.scrollIntoView({behavior:'smooth',block:'start'});
+        }
+
+        function parseBulkPassages(text) {
+            const lines=String(text||'').replace(/\r/g,'').split('\n');
+            const isPassageStart=line=>line.trim().match(/^(?:ફકરો|પેસેજ|passage|paragraph)\s*(?:નં\.?|નંબર\.?|no\.?)?\s*[0-9૦-૯]+\s*[:.)-]\s*(.*)$/i);
+            const normalizeDigits=x=>String(x||'').replace(/[૦-૯]/g,d=>'૦૧૨૩૪૫૬૭૮૯'.indexOf(d));
+            const qStart=line=>line.trim().match(/^(?:પ્રશ્ન\s*)?([0-9૦-૯]+)\s*[.)\-:]\s*(.+)$/i);
+            const opt=line=>line.trim().match(/^\(?([ABCD])\)?\s*[.)\-:]\s*(.*)$/i);
+            const ans=line=>line.trim().match(/^(?:સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]?\s*([ABCD]|[1-4])\s*$/i);
+            const blocks=[]; let current=null, q=null, optIndex=-1;
+            const finishQ=()=>{ if(!q||!q.question) return; if(q.options.length===4 && q.options.every(Boolean)){ blocks[blocks.length-1].questions.push(q); } q=null; optIndex=-1; };
+            const finishBlock=()=>{ if(!current) return; finishQ(); if(current.passage.trim()) blocks.push(current); current=null; };
+            // We need a temporary block before pushing so finishQ can append correctly.
+            let curBlock=null;
+            const closeQuestion=()=>{ if(!q) return; if(curBlock && q.question && q.options.length===4 && q.options.every(Boolean)) curBlock.questions.push(q); q=null; optIndex=-1; };
+            const closeBlock=()=>{ closeQuestion(); if(curBlock && curBlock.passage.trim() && curBlock.questions.length) blocks.push(curBlock); curBlock=null; };
+            let passageLines=[];
+            for(let i=0;i<lines.length;i++){
+                const line=lines[i].trim();
+                const pm=isPassageStart(line);
+                if(pm){ closeBlock(); curBlock={passage:pm[1]||'',questions:[]}; passageLines=[]; continue; }
+                if(!curBlock) continue;
+                const qm=qStart(line);
+                if(qm){
+                    closeQuestion();
+                    if(curBlock.passage && !curBlock.questions.length && passageLines.length){ curBlock.passage=passageLines.join(' ').trim(); }
+                    q={question:qm[2].trim(),options:[],answer:''}; optIndex=-1; continue;
+                }
+                const am=ans(line); if(am&&q){ let a=am[1].toUpperCase(); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1]; q.answer=a; continue; }
+                const om=opt(line); if(om&&q){ const idx='ABCD'.indexOf(om[1].toUpperCase()); q.options[idx]=om[2].trim(); optIndex=idx; continue; }
+                if(q){ if(optIndex>=0) q.options[optIndex]=(q.options[optIndex]+' '+line).trim(); else q.question=(q.question+' '+line).trim(); }
+                else { if(line) passageLines.push(line); }
+                if(curBlock && !curBlock.questions.length) curBlock.passage=passageLines.length ? passageLines.join(' ').trim() : curBlock.passage;
+            }
+            closeBlock();
+            return blocks;
+        }
+
+        function saveBulkPassages() {
+            if (currentTests[activeTestKey]?.meta?.status === 'active') { alert('આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!'); return; }
+            const groups=window._bulkPassages||[];
+            if(!groups.length){alert('પહેલા ફકરા ગોઠવો.');return;}
+            const all=[]; let idx=0;
+            const course=document.getElementById('adminCourse').value;
+            const subject=document.getElementById('adminSubjectSelect').value;
+            for(const g of groups){
+                for(const q of g.questions){
+                    const el=document.querySelector(`input[name="bulkPassageAns${idx}"]:checked`);
+                    if(!el){alert(`પ્રશ્ન ${idx+1} નો સાચો જવાબ પસંદ કરવો બાકી છે.`);return;}
+                    all.push({type:'passage',passage:g.passage,course,subject,question:q.question,options:q.options,answer:el.value}); idx++;
+                }
+            }
+            let questions=currentTests[activeTestKey].questions ? (Array.isArray(currentTests[activeTestKey].questions)?[...currentTests[activeTestKey].questions]:Object.values(currentTests[activeTestKey].questions)) : [];
+            questions.push(...all);
+            database.ref(`tests/${activeTestKey}/questions`).set(questions,()=>{
+                const updates={}; all.forEach(q=>updates['question_bank/'+database.ref('question_bank').push().key]=q);
+                database.ref().update(updates).then(()=>{
+                    alert(`✅ ${groups.length} ફકરા અને ${all.length} પ્રશ્નો સેવ થઈ ગયા.`);
+                    document.getElementById('m2BulkText').value=''; document.getElementById('bulkPassagePreview').innerHTML=''; window._bulkPassages=[];
+                    if(typeof loadAdminTestData==='function') loadAdminTestData();
+                });
+            });
         }
 
         function addPassageWith5Questions() {

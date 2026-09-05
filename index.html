@@ -75,25 +75,21 @@
 <style id="compactTestEditorFix">
 .compact-test-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;align-items:center}
 .compact-test-controls{display:flex;flex-wrap:wrap;align-items:center;gap:3px}
-.compact-test-actions button{padding:5px 7px !important;font-size:10px !important;line-height:1.1 !important;min-height:28px !important;white-space:nowrap}
-.compact-test-actions #adminTestSelect{max-width:125px;padding:4px 6px !important;font-size:10px !important}
-.compact-meta-grid{grid-template-columns:1.05fr 1.25fr .75fr .85fr !important;gap:5px !important;padding-top:7px !important}
-.compact-meta-grid label{font-size:10px !important;margin-bottom:2px !important}
-.compact-meta-grid select,.compact-meta-grid input{width:100%;min-width:0;height:38px;padding:5px 7px !important;font-size:12px !important}
+.compact-test-actions button{padding:5px 7px!important;font-size:10px!important;min-height:28px!important;white-space:nowrap}
+.compact-test-actions #adminTestSelect{max-width:125px;padding:4px 6px!important;font-size:10px!important}
+.compact-meta-grid{grid-template-columns:1.05fr 1.25fr .75fr .85fr!important;gap:5px!important}
+.compact-meta-grid select,.compact-meta-grid input,.compact-meta-extra select,.compact-meta-extra input{width:100%;min-width:0;height:36px;padding:5px 7px!important;font-size:11px!important}
 .compact-meta-actions{display:grid;grid-template-columns:1.3fr .75fr 1fr 1fr;gap:4px;margin-top:5px}
-.compact-meta-actions button{width:100%;min-height:30px;padding:5px 6px !important;font-size:10px !important;line-height:1.1 !important;white-space:nowrap}
+.compact-meta-actions button{width:100%;min-height:30px;padding:5px 6px!important;font-size:10px!important;white-space:nowrap}
 @media(max-width:600px){
- .compact-test-actions{grid-template-columns:1fr;gap:4px}
- .compact-test-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px}
- .compact-test-controls #adminTestSelect{grid-column:span 2;max-width:none}
- .compact-meta-grid{grid-template-columns:1.05fr 1.25fr .7fr .85fr !important;gap:4px !important}
- .compact-meta-grid label{font-size:9px !important}
- .compact-meta-grid select,.compact-meta-grid input{height:36px;padding:4px 6px !important;font-size:11px !important}
- .compact-meta-actions{grid-template-columns:1.3fr .75fr 1fr 1fr;gap:3px}
- .compact-meta-actions button{font-size:9px !important;min-height:29px;padding:5px 3px !important}
+.compact-test-actions{grid-template-columns:1fr}.compact-test-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px}
+.compact-test-controls #adminTestSelect{grid-column:span 2;max-width:none}
+.compact-meta-extra{grid-template-columns:1fr 1fr!important;gap:4px!important}
+.compact-meta-grid{gap:4px!important}.compact-meta-grid select,.compact-meta-grid input,.compact-meta-extra select,.compact-meta-extra input{height:34px;padding:4px 6px!important;font-size:10px!important}
+.compact-meta-actions{grid-template-columns:1.3fr .75fr 1fr 1fr;gap:3px}.compact-meta-actions button{font-size:9px!important;min-height:29px;padding:5px 3px!important}
+.auto-generator-box{padding:8px!important}.auto-generator-box input,.auto-generator-box select{height:30px!important}
 }
-</style>
-</head>
+</style></head>
 <body class="text-slate-800">
 
     <div id="adminNotification" class="hidden fixed top-20 right-5 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 border-2 border-white animate-bounce">
@@ -371,7 +367,18 @@
                         </div>
                     </div>
 
-                    <div id="activeLockWarning" class="hidden bg-rose-100 border border-rose-300 text-rose-800 p-2 rounded-lg text-xs font-bold flex items-center gap-2">
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mt-3 auto-generator-box">
+<div class="flex items-center justify-between mb-2"><div><b class="text-xs text-emerald-800">🎲 Auto Test Generator</b>
+<div class="text-[9px] text-emerald-700">પ્રશ્ન બેંકમાંથી આપમેળે પ્રશ્નો પસંદ કરો</div></div></div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+<div><label class="text-[9px] font-bold text-slate-600">ટોપિક</label><input id="autoTopic" class="w-full p-1 border rounded text-xs" placeholder="ટોપિક"></div>
+<div><label class="text-[9px] font-bold text-slate-600">પ્રશ્નો</label><input id="autoCount" type="number" min="1" value="20" class="w-full p-1 border rounded text-xs"></div>
+<div><label class="text-[9px] font-bold text-slate-600">ટેસ્ટ પ્રકાર</label><select id="autoTestType" class="w-full p-1 border rounded text-xs">
+<option value="unit">Unit Test</option><option value="chapter">Chapter Test</option><option value="practice">Practice Test</option><option value="weekly">Weekly Test</option></select></div>
+<button type="button" onclick="autoGenerateTest()" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[10px] px-2 py-1 shadow">🎲 ટેસ્ટ બનાવો</button>
+</div></div>
+
+<div id="activeLockWarning" class="hidden bg-rose-100 border border-rose-300 text-rose-800 p-2 rounded-lg text-xs font-bold flex items-center gap-2">
                         <i class="fa-solid fa-lock text-xs"></i>
                         આ ટેસ્ટ એક્ટિવ છે! પ્રશ્નો સુધારવા માટે 'ડુપ્લિકેટ' બટન વાપરો.
                     </div>
@@ -391,7 +398,16 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-4 gap-1 pt-2 border-t border-indigo-200 text-[10px] compact-meta-grid">
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-indigo-200 text-[10px] compact-meta-extra">
+<div><label class="font-bold text-slate-600 block mb-0.5">ટોપિક / પ્રકરણ</label>
+<input id="adminTopic" type="text" placeholder="દા.ત. સંખ્યા જ્ઞાન" class="w-full p-1 border rounded font-bold"></div>
+<div><label class="font-bold text-slate-600 block mb-0.5">ટેસ્ટ પ્રકાર</label>
+<select id="adminTestType" class="w-full p-1 border rounded font-bold">
+<option value="unit">Unit Test</option><option value="chapter">Chapter Test</option>
+<option value="practice">Practice Test</option><option value="weekly">Weekly Test</option><option value="other">અન્ય</option>
+</select></div></div>
+
+<div class="grid grid-cols-4 gap-1 pt-2 border-t border-indigo-200 text-[10px] compact-meta-grid">
                         <div>
                             <label class="block font-bold text-slate-700 mb-0.5">કોર્ષ પસંદ કરો:</label>
                             <select id="adminCourse" onchange="onAdminCourseChange()" class="w-full p-1 border rounded font-bold text-indigo-700 bg-white">
@@ -1003,6 +1019,10 @@
             document.getElementById('adminSubjectSelect').value = meta.subject || 'સામાન્ય';
             document.getElementById('adminTotalMarks').value = meta.totalMarks || 100;
             document.getElementById('adminTimeLimit').value = meta.timeLimit || 60;
+            const topicEl = document.getElementById('adminTopic');
+            if (topicEl) topicEl.value = meta.topic || '';
+            const typeEl = document.getElementById('adminTestType');
+            if (typeEl) typeEl.value = meta.testType || 'unit';
 
             const badge = document.getElementById('testStatusBadge');
             const isActive = meta.status === 'active';
@@ -1061,6 +1081,48 @@
         function getNextTestNumber() {
             const nums = Object.values(currentTests).map(t => Number(t?.meta?.testNumber)).filter(n => Number.isInteger(n) && n > 0);
             return nums.length ? Math.max(...nums) + 1 : Object.keys(currentTests).length + 1;
+        }
+
+        function autoGenerateTest() {
+            const topic = (document.getElementById('autoTopic')?.value || '').trim();
+            const count = Math.max(1, parseInt(document.getElementById('autoCount')?.value || '20', 10));
+            const testType = document.getElementById('autoTestType')?.value || 'unit';
+            const course = document.getElementById('adminCourse')?.value || 'સામાન્ય';
+            const subject = document.getElementById('adminSubjectSelect')?.value || 'સામાન્ય';
+
+            let pool = Object.values(questionBankData || {}).filter(q => {
+                if (q.course && q.course !== course) return false;
+                if (q.subject && q.subject !== subject) return false;
+                if (topic && q.topic && String(q.topic).trim() !== topic) return false;
+                return true;
+            });
+            if (!pool.length) {
+                alert('આ Course/Subject/Topic માટે પ્રશ્ન બેંકમાં પ્રશ્નો મળ્યા નથી.');
+                return;
+            }
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            const selected = pool.slice(0, Math.min(count, pool.length));
+            const title = prompt('નવી Auto Testનું નામ લખો:', `${topic || subject} - ${testType === 'unit' ? 'Unit Test' : 'Auto Test'}`);
+            if (!title) return;
+
+            const newKey = `test_${Date.now()}`;
+            const newTestData = {
+                meta: { title, course, subject, topic, testType, totalMarks: selected.length,
+                        timeLimit: 60, status: 'draft', testNumber: getNextTestNumber(), generated: true },
+                questions: selected.map(q => {
+                    const copy = JSON.parse(JSON.stringify(q));
+                    delete copy.qbKey;
+                    return copy;
+                })
+            };
+            database.ref(`tests/${newKey}`).set(newTestData, () => {
+                activeTestKey = newKey;
+                updateAdminTestDropdown();
+                alert(`${selected.length} પ્રશ્નોથી Auto Test તૈયાર થઈ ગઈ!`);
+            });
         }
 
         function createNewTest() {
@@ -1132,7 +1194,9 @@
                 course: course,
                 subject: subject,
                 totalMarks: totalMarks,
-                timeLimit: timeLimit
+                timeLimit: timeLimit,
+                topic: document.getElementById('adminTopic').value.trim(),
+                testType: document.getElementById('adminTestType').value
             }, () => {
                 alert("ટેસ્ટ સેટિંગ્સ ક્લાઉડમાં સેવ થઈ ગયા છે!");
             });

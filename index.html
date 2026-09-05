@@ -2860,72 +2860,140 @@ function autoMathExplanation(q,u,a){
  const raw=String(q?.question||q?.text||q?.q||'').trim().replace(/^(?:પ્રશ્ન\s*)?[0-9૦-૯]+\s*[.)\-:]\s*/,'');
  const topic=String(q?.topic||q?.chapter||q?.unit||'').toLowerCase();
  const ans=String(a??q?.answer??q?.correctAnswer??'').trim();
- const s=raw.replace(/[૦-૯]/g,d=>"૦૧૨૩૪૫૬૭૮૯".indexOf(d));
+ const guDigits="૦૧૨૩૪૫૬૭૮૯";
+ const s=raw.replace(/[૦-૯]/g,d=>String(guDigits.indexOf(d)));
+ const low=(topic+" "+s).toLowerCase();
  const nums=(s.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
- const has=(...x)=>x.some(v=>topic.includes(v)||s.toLowerCase().includes(v.toLowerCase()));
+ const has=(...x)=>x.some(v=>low.includes(v.toLowerCase()));
  const fmt=n=>Number.isInteger(n)?String(n):String(Number(n.toFixed(6)));
+ const esc=x=>String(x).replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
- // Numeric series / શ્રેણી
- const seriesMatch=s.match(/(?:શ્રેણી|ક્રમ|series)?[^0-9-]*(?:-?\d+(?:\.\d+)?\s*[,،;]\s*){2,}-?\d+(?:\.\d+)?/i);
- if(seriesMatch || has('શ્રેણી','ક્રમ','series')) {
-   const seq = (s.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
+ /* 1. Number series / સંખ્યા શ્રેણી */
+ if(has('શ્રેણી','ક્રમ','series') || /(?:\d+\s*[,،;]\s*){2,}\d+/.test(s)){
+   const seq=(s.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
    if(seq.length>=3){
      const d=seq.slice(1).map((v,i)=>v-seq[i]);
-     const sameD=d.every(x=>Math.abs(x-d[0])<1e-9);
-     if(sameD){
-       const next=seq[seq.length-1]+d[0];
-       return `શ્રેણીમાં દરેક સંખ્યા વચ્ચેનો તફાવત ${fmt(d[0])} છે.<br>${fmt(seq[seq.length-1])} ${d[0]>=0?'+':'−'} ${fmt(Math.abs(d[0]))} = ${fmt(next)}<br><b>અટલે સાચો જવાબ: ${ans||next}</b>`;
+     if(d.every(x=>Math.abs(x-d[0])<1e-9)){
+       const next=seq.at(-1)+d[0];
+       return `શ્રેણીમાં દરેક બે સંખ્યાઓ વચ્ચે ${fmt(Math.abs(d[0]))} નો ${d[0]>=0?'વધારો':'ઘટાડો'} થાય છે.<br>${fmt(seq.at(-1))} ${d[0]>=0?'+':'−'} ${fmt(Math.abs(d[0]))} = ${fmt(next)}<br><b>અટલે સાચો જવાબ: ${esc(ans||next)}</b>`;
      }
      const ratios=seq.slice(1).map((v,i)=>seq[i]!==0?v/seq[i]:NaN);
-     if(ratios.every(x=>Number.isFinite(x)) && ratios.every(x=>Math.abs(x-ratios[0])<1e-9)){
-       const next=seq[seq.length-1]*ratios[0];
-       return `શ્રેણીમાં દરેક સંખ્યા ${fmt(ratios[0])} થી ગુણાય છે.<br>${fmt(seq[seq.length-1])} × ${fmt(ratios[0])} = ${fmt(next)}<br><b>અટલે સાચો જવાબ: ${ans||next}</b>`;
-     }
-     const squares=seq.every(v=>Number.isInteger(Math.sqrt(v)));
-     if(squares){
-       const n=Math.round(Math.sqrt(seq[seq.length-1]))+1, next=n*n;
-       return `આ વર્ગ સંખ્યાઓની શ્રેણી છે: 1², 2², 3², ...<br>આગામી સંખ્યા = ${n}² = <b>${next}</b><br><b>અટલે સાચો જવાબ: ${ans||next}</b>`;
+     if(ratios.every(Number.isFinite) && ratios.every(x=>Math.abs(x-ratios[0])<1e-9)){
+       const next=seq.at(-1)*ratios[0];
+       return `શ્રેણીમાં દરેક સંખ્યા ${fmt(ratios[0])} વડે ગુણાય છે.<br>${fmt(seq.at(-1))} × ${fmt(ratios[0])} = ${fmt(next)}<br><b>અટલે સાચો જવાબ: ${esc(ans||next)}</b>`;
      }
    }
  }
 
- if(has('ગુણાકાર','multiplication','×')&&nums.length>=2){
-   const r=nums[0]*nums[1]; return `${nums[0]} × ${nums[1]} = ${r}<br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
+ /* 2. Prime / composite / factors */
+ if(has('અવિભાજ્ય','prime')){
+   const n=nums.find(x=>x>=1);
+   if(n!==undefined){
+     const factors=[];
+     for(let i=1;i<=n;i++) if(n%i===0) factors.push(i);
+     const prime=factors.length===2;
+     return `${n} ના અવયવો: ${factors.join(', ')}.<br>${prime?`${n} ના માત્ર 2 અવયવ (1 અને ${n}) છે, તેથી તે અવિભાજ્ય સંખ્યા છે.`:`${n} ના 2 કરતાં વધુ અવયવ છે, તેથી તે અવિભાજ્ય નથી.`}<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
+   }
  }
- if(has('સરવાળો','addition')&&nums.length>=2){
-   const r=nums.reduce((x,y)=>x+y,0); return `${nums.join(' + ')} = ${r}<br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
+ if(has('વિભાજ્ય','composite')){
+   const n=nums.find(x=>x>=1);
+   if(n!==undefined){
+     const factors=[]; for(let i=1;i<=n;i++) if(n%i===0) factors.push(i);
+     return `${n} ના અવયવો: ${factors.join(', ')}.<br>2 કરતાં વધુ અવયવ હોવાથી ${n} વિભાજ્ય સંખ્યા છે.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
+   }
  }
- if(has('બાદબાકી','subtraction')&&nums.length>=2){
-   const r=nums[0]-nums[1]; return `${nums[0]} − ${nums[1]} = ${r}<br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
+
+ /* Count primes in a range, e.g. 1 થી 100 */
+ if(has('અવિભાજ્ય') && nums.length>=2){
+   const lo=Math.ceil(nums[0]), hi=Math.floor(nums[1]);
+   if(lo>=1 && hi>lo && hi-lo<=1000){
+     const isPrime=n=>n>=2 && Array.from({length:Math.floor(Math.sqrt(n))-1},(_,i)=>i+2).every(d=>n%d!==0);
+     const primes=[]; for(let n=lo;n<=hi;n++) if(isPrime(n)) primes.push(n);
+     return `${lo} થી ${hi} વચ્ચે કુલ <b>${primes.length}</b> અવિભાજ્ય સંખ્યાઓ છે.<br>અવિભાજ્ય સંખ્યાઓ: ${primes.join(', ')}.<br><b>સાચો જવાબ: ${esc(ans||primes.length)}</b>`;
+   }
  }
- if(has('ભાગાકાર','division','÷')&&nums.length>=2&&nums[1]!==0){
-   const r=nums[0]/nums[1], rem=nums[0]%nums[1]; return `${nums[0]} ÷ ${nums[1]} = ${fmt(r)}${rem?`<br>શેષ = ${rem}`:''}<br><b>અટલે સાચો જવાબ: ${ans||fmt(r)}</b>`;
- }
- if(has('ટકાવારી','percentage','%')&&nums.length>=2){
-   const r=nums[0]*nums[1]/100; return `(${nums[0]} × ${nums[1]}) ÷ 100 = ${fmt(r)}<br><b>અટલે સાચો જવાબ: ${ans||fmt(r)}</b>`;
- }
- if(has('પરિમિતિ','perimeter')&&nums.length>=2){
-   const r=2*(nums[0]+nums[1]); return `2 × (લંબાઈ + પહોળાઈ)<br>= 2 × (${nums[0]} + ${nums[1]}) = ${r}<br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
- }
- if(has('ક્ષેત્રફળ','area')&&nums.length>=2){
-   const r=nums[0]*nums[1]; return `લંબાઈ × પહોળાઈ<br>= ${nums[0]} × ${nums[1]} = ${r}<br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
- }
- const gcd=(x,y)=>y?gcd(y,x%y):x;
+
+ /* 3. LCM / HCF */
+ const gcd=(x,y)=>y?gcd(y,x%y):Math.abs(x);
  if(has('લ.સા.અ','લસા','lcm')&&nums.length>=2){
-   const r=Math.abs(nums[0]*nums[1])/gcd(Math.abs(nums[0]),Math.abs(nums[1]));
-   return `સૌથી નાની સામાન્ય ગુણાકાર સંખ્યા = <b>${r}</b><br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
+   const x=Math.abs(Math.round(nums[0])), y=Math.abs(Math.round(nums[1]));
+   const r=x&&y?x/gcd(x,y)*y:0;
+   return `લ.સા.અ. માટે બંને સંખ્યાના ગુણાંક જોઈએ.<br>${x} અને ${y} માટે સૌથી નાની સામાન્ય ગુણાંક સંખ્યા = <b>${r}</b>.<br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
  }
  if(has('ગુ.સા.અ','ગુસા','hcf')&&nums.length>=2){
-   const r=gcd(Math.abs(nums[0]),Math.abs(nums[1]));
-   return `સામાન્ય અવયવોમાંથી સૌથી મોટો અવયવ = <b>${r}</b><br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
+   const x=Math.abs(Math.round(nums[0])), y=Math.abs(Math.round(nums[1]));
+   const r=gcd(x,y);
+   return `${x} અને ${y} ના સામાન્ય અવયવોમાંથી સૌથી મોટો અવયવ શોધીએ.<br>ગુ.સા.અ. = <b>${r}</b>.<br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
  }
- if(has('અપૂર્ણાંક','fraction')) return `અંશ અને છેદને ધ્યાનમાં રાખીને અપૂર્ણાંકની ગણતરી કરીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
- if(has('દશાંશ','decimal')) return `દશાંશ બિંદુ સરખી જગ્યાએ ગોઠવી ગણતરી કરીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
- if(has('અવયવ','factor')) return `આ સંખ્યાથી સંપૂર્ણ ભાગી શકાય તેવી સંખ્યાઓ શોધીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
- if(nums.length>=2 && /[+\-×x÷*/]/.test(s)){
-   return `આ પ્રશ્નમાં આપેલી સંખ્યાઓ પરથી યોગ્ય ગણિતીય ક્રિયા કરીએ અને પગથિયાં પ્રમાણે જવાબ મેળવીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
+
+ /* 4. Fraction: numerator/denominator and simple operations */
+ const fr=[...s.matchAll(/(\d+)\s*\/\s*(\d+)/g)].map(m=>[Number(m[1]),Number(m[2])]);
+ if(has('અપૂર્ણાંક','fraction')){
+   if(fr.length){
+     const f=fr[0];
+     if(has('અંશ','numerator')) return `અપૂર્ણાંક ${f[0]}/${f[1]} માં ઉપરની સંખ્યા ${f[0]} અંશ છે અને નીચેની સંખ્યા ${f[1]} છે.<br><b>સાચો જવાબ: ${esc(ans||f[0])}</b>`;
+     if(has('છેદ','denominator')) return `અપૂર્ણાંક ${f[0]}/${f[1]} માં નીચેની સંખ્યા ${f[1]} છેદ છે.<br><b>સાચો જવાબ: ${esc(ans||f[1])}</b>`;
+     if(fr.length>=2){
+       const [a1,b1]=fr[0], [a2,b2]=fr[1];
+       if(b1===b2){
+         const minus=has('બાદબાકી','ઓછું','subtract','−');
+         const n=minus?a1-a2:a1+a2;
+         return `છેદ બંને સમાન છે, તેથી અંશમાં ${minus?'બાદબાકી':'સરવાળો'} કરીએ.<br>(${a1}/${b1}) ${minus?'−':'+'} (${a2}/${b2}) = <b>${n}/${b1}</b><br><b>સાચો જવાબ: ${esc(ans||n+'/'+b1)}</b>`;
+       }
+     }
+     return `અપૂર્ણાંકમાં ઉપરનો અંક અંશ અને નીચેનો અંક છેદ કહેવાય છે. પ્રશ્ન મુજબ અંશ-છેદને ધ્યાનમાં રાખીને ગણતરી કરીએ.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
+   }
  }
- return `પ્રશ્નને ધ્યાનથી વાંચી આપેલી માહિતીમાંથી યોગ્ય ગણિતીય રીત પસંદ કરીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
+
+ /* 5. Four operations even when words are absent */
+ if((has('ગુણાકાર','multiplication') || s.includes('×') || s.includes('*'))&&nums.length>=2){
+   const r=nums[0]*nums[1];
+   return `${nums[0]} × ${nums[1]} = ${r}<br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
+ }
+ if((has('ભાગાકાર','division') || s.includes('÷'))&&nums.length>=2&&nums[1]!==0){
+   const r=nums[0]/nums[1], rem=nums[0]%nums[1];
+   return `${nums[0]} ÷ ${nums[1]} = ${fmt(r)}${rem?`<br>શેષ = ${rem}`:''}<br><b>સાચો જવાબ: ${esc(ans||fmt(r))}</b>`;
+ }
+ if((has('સરવાળો','addition') || (s.includes('+')&&nums.length>=2))&&nums.length>=2){
+   const r=nums.reduce((x,y)=>x+y,0);
+   return `${nums.join(' + ')} = ${r}<br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
+ }
+ if(has('બાદબાકી','subtraction')&&nums.length>=2){
+   const r=nums[0]-nums[1];
+   return `${nums[0]} − ${nums[1]} = ${r}<br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
+ }
+
+ /* 6. Percentage */
+ if(has('ટકાવારી','percentage','%')&&nums.length>=2){
+   const r=nums[0]*nums[1]/100;
+   return `${nums[0]}% of ${nums[1]}<br>= (${nums[0]} × ${nums[1]}) ÷ 100<br>= <b>${fmt(r)}</b><br><b>સાચો જવાબ: ${esc(ans||fmt(r))}</b>`;
+ }
+
+ /* 7. Perimeter / area */
+ if(has('પરિમિતિ','perimeter')&&nums.length>=2){
+   const r=2*(nums[0]+nums[1]);
+   return `લંબચોરસની પરિમિતિ = 2 × (લંબાઈ + પહોળાઈ)<br>= 2 × (${nums[0]} + ${nums[1]})<br>= <b>${r}</b><br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
+ }
+ if(has('ક્ષેત્રફળ','area')&&nums.length>=2){
+   const r=nums[0]*nums[1];
+   return `લંબચોરસનું ક્ષેત્રફળ = લંબાઈ × પહોળાઈ<br>= ${nums[0]} × ${nums[1]}<br>= <b>${r}</b><br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
+ }
+
+ /* 8. Decimal */
+ if(has('દશાંશ','decimal')){
+   return `દશાંશ સંખ્યાઓમાં દશાંશ બિંદુ એક જ કૉલમમાં ગોઠવી ગણતરી કરીએ.<br>પછી સામાન્ય ગણિતીય ક્રિયા કરીએ અને જવાબમાં દશાંશ બિંદુ યોગ્ય જગ્યાએ મૂકીએ.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
+ }
+
+ /* 9. Time / money / measurement */
+ if(has('સમય','કલાક','મિનિટ','time')){
+   return `સમયની ગણતરીમાં 60 મિનિટ = 1 કલાક યાદ રાખીએ. આપેલો સમય કલાક અને મિનિટમાં ગોઠવીને પ્રશ્ન મુજબ સરવાળો અથવા બાદબાકી કરીએ.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
+ }
+ if(has('રૂપિયા','પૈસા','કિંમત','money')){
+   return `પૈસાના પ્રશ્નમાં દરેક વસ્તુની કિંમત ઓળખી જરૂરી હોય ત્યાં સરવાળો, બાદબાકી, ગુણાકાર અથવા ભાગાકાર કરીએ.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
+ }
+
+ /* 10. Generic is last — only for truly unsupported patterns */
+ return `પ્રશ્નમાં આપેલી માહિતી ધ્યાનથી વાંચીને યોગ્ય ગણિતીય રીત પસંદ કરીએ.<br>પછી પગથિયાં પ્રમાણે ગણતરી કરીને જવાબ મેળવીએ.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
 }
 window.autoMathExplanation=autoMathExplanation;
 </script>

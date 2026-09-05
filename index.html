@@ -2160,6 +2160,7 @@
                             <span class="text-slate-600">તમારો જવાબ: <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</span></span>
                             <span class="text-emerald-700">સાચો જવાબ: ${q.answer}</span>
                         </div>
+                        ${getAutoMathExplanationHtml(q, userAns, q.answer)}
                     </div>
                 `;
             });
@@ -2349,6 +2350,7 @@
                                 <span class="text-slate-600">વિદ્યાર્થીનો જવાબ: <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</span></span>
                                 <span class="text-emerald-700">સાચો જવાબ: ${q.answer}</span>
                             </div>
+                            ${getAutoMathExplanationHtml(q, userAns, q.answer)}
                         </div>
                     `;
                 });
@@ -2827,43 +2829,75 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()}
 
 <script>
 function autoMathExplanation(q,u,a){
- const raw=String(q?.question||q?.text||q?.q||''), topic=String(q?.topic||q?.chapter||q?.unit||'').toLowerCase(), ans=String(a??q?.answer??q?.correctAnswer??'');
+ const raw=String(q?.question||q?.text||q?.q||'').trim();
+ const topic=String(q?.topic||q?.chapter||q?.unit||'').toLowerCase();
+ const ans=String(a??q?.answer??q?.correctAnswer??'').trim();
  const s=raw.replace(/[૦-૯]/g,d=>"૦૧૨૩૪૫૬૭૮૯".indexOf(d));
  const nums=(s.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
  const has=(...x)=>x.some(v=>topic.includes(v)||s.toLowerCase().includes(v.toLowerCase()));
- if(!nums.length && !topic && !/ગણિત|math|fraction|decimal|lcm|hcf/i.test(raw)) return '';
- const gcd=(x,y)=>y?gcd(y,x%y):x;
- if(has('ગુણાકાર','multiplication','×','x','*')&&nums.length>=2){
-   const r=nums[0]*nums[1]; return `${nums[0]} × ${nums[1]} = ${r}<br>અટલે સાચો જવાબ: <b>${ans||r}</b>`;
+ const fmt=n=>Number.isInteger(n)?String(n):String(Number(n.toFixed(6)));
+
+ // Numeric series / શ્રેણી
+ const seriesMatch=s.match(/(?:શ્રેણી|ક્રમ|series)?[^0-9-]*(?:-?\d+(?:\.\d+)?\s*[,،;]\s*){2,}-?\d+(?:\.\d+)?/i);
+ if(seriesMatch || has('શ્રેણી','ક્રમ','series')) {
+   const seq = (s.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
+   if(seq.length>=3){
+     const d=seq.slice(1).map((v,i)=>v-seq[i]);
+     const sameD=d.every(x=>Math.abs(x-d[0])<1e-9);
+     if(sameD){
+       const next=seq[seq.length-1]+d[0];
+       return `શ્રેણીમાં દરેક સંખ્યા વચ્ચેનો તફાવત ${fmt(d[0])} છે.<br>${fmt(seq[seq.length-1])} ${d[0]>=0?'+':'−'} ${fmt(Math.abs(d[0]))} = ${fmt(next)}<br><b>અટલે સાચો જવાબ: ${ans||next}</b>`;
+     }
+     const ratios=seq.slice(1).map((v,i)=>seq[i]!==0?v/seq[i]:NaN);
+     if(ratios.every(x=>Number.isFinite(x)) && ratios.every(x=>Math.abs(x-ratios[0])<1e-9)){
+       const next=seq[seq.length-1]*ratios[0];
+       return `શ્રેણીમાં દરેક સંખ્યા ${fmt(ratios[0])} થી ગુણાય છે.<br>${fmt(seq[seq.length-1])} × ${fmt(ratios[0])} = ${fmt(next)}<br><b>અટલે સાચો જવાબ: ${ans||next}</b>`;
+     }
+     const squares=seq.every(v=>Number.isInteger(Math.sqrt(v)));
+     if(squares){
+       const n=Math.round(Math.sqrt(seq[seq.length-1]))+1, next=n*n;
+       return `આ વર્ગ સંખ્યાઓની શ્રેણી છે: 1², 2², 3², ...<br>આગામી સંખ્યા = ${n}² = <b>${next}</b><br><b>અટલે સાચો જવાબ: ${ans||next}</b>`;
+     }
+   }
  }
- if(has('સરવાળો','addition','+')&&nums.length>=2){
-   const r=nums.reduce((x,y)=>x+y,0); return `${nums.join(' + ')} = ${r}<br>અટલે સાચો જવાબ: <b>${ans||r}</b>`;
+
+ if(has('ગુણાકાર','multiplication','×')&&nums.length>=2){
+   const r=nums[0]*nums[1]; return `${nums[0]} × ${nums[1]} = ${r}<br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
+ }
+ if(has('સરવાળો','addition')&&nums.length>=2){
+   const r=nums.reduce((x,y)=>x+y,0); return `${nums.join(' + ')} = ${r}<br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
  }
  if(has('બાદબાકી','subtraction')&&nums.length>=2){
-   const r=nums[0]-nums[1]; return `${nums[0]} − ${nums[1]} = ${r}<br>અટલે સાચો જવાબ: <b>${ans||r}</b>`;
+   const r=nums[0]-nums[1]; return `${nums[0]} − ${nums[1]} = ${r}<br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
  }
- if(has('ભાગાકાર','division','÷','/')&&nums.length>=2&&nums[1]!==0){
-   const r=nums[0]/nums[1], rem=nums[0]%nums[1]; return `${nums[0]} ÷ ${nums[1]} = ${r}${rem?`<br>શેષ = ${rem}`:''}<br>અટલે સાચો જવાબ: <b>${ans||r}</b>`;
+ if(has('ભાગાકાર','division','÷')&&nums.length>=2&&nums[1]!==0){
+   const r=nums[0]/nums[1], rem=nums[0]%nums[1]; return `${nums[0]} ÷ ${nums[1]} = ${fmt(r)}${rem?`<br>શેષ = ${rem}`:''}<br><b>અટલે સાચો જવાબ: ${ans||fmt(r)}</b>`;
  }
  if(has('ટકાવારી','percentage','%')&&nums.length>=2){
-   const r=nums[0]*nums[1]/100; return `(${nums[0]} × ${nums[1]}) ÷ 100 = ${r}<br>અટલે સાચો જવાબ: <b>${ans||r}</b>`;
+   const r=nums[0]*nums[1]/100; return `(${nums[0]} × ${nums[1]}) ÷ 100 = ${fmt(r)}<br><b>અટલે સાચો જવાબ: ${ans||fmt(r)}</b>`;
  }
  if(has('પરિમિતિ','perimeter')&&nums.length>=2){
-   const r=2*(nums[0]+nums[1]); return `2 × (લંબાઈ + પહોળાઈ)<br>= 2 × (${nums[0]} + ${nums[1]}) = ${r}<br>અટલે સાચો જવાબ: <b>${ans||r}</b>`;
+   const r=2*(nums[0]+nums[1]); return `2 × (લંબાઈ + પહોળાઈ)<br>= 2 × (${nums[0]} + ${nums[1]}) = ${r}<br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
  }
  if(has('ક્ષેત્રફળ','area')&&nums.length>=2){
-   const r=nums[0]*nums[1]; return `લંબાઈ × પહોળાઈ<br>= ${nums[0]} × ${nums[1]} = ${r}<br>અટલે સાચો જવાબ: <b>${ans||r}</b>`;
+   const r=nums[0]*nums[1]; return `લંબાઈ × પહોળાઈ<br>= ${nums[0]} × ${nums[1]} = ${r}<br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
  }
+ const gcd=(x,y)=>y?gcd(y,x%y):x;
  if(has('લ.સા.અ','લસા','lcm')&&nums.length>=2){
-   const r=Math.abs(nums[0]*nums[1])/gcd(Math.abs(nums[0]),Math.abs(nums[1])); return `સૌથી નાની સામાન્ય ગુણાકાર સંખ્યા = <b>${r}</b><br>અટલે સાચો જવાબ: <b>${ans||r}</b>`;
+   const r=Math.abs(nums[0]*nums[1])/gcd(Math.abs(nums[0]),Math.abs(nums[1]));
+   return `સૌથી નાની સામાન્ય ગુણાકાર સંખ્યા = <b>${r}</b><br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
  }
  if(has('ગુ.સા.અ','ગુસા','hcf')&&nums.length>=2){
-   const r=gcd(Math.abs(nums[0]),Math.abs(nums[1])); return `સામાન્ય અવયવોમાંથી સૌથી મોટો અવયવ = <b>${r}</b><br>અટલે સાચો જવાબ: <b>${ans||r}</b>`;
+   const r=gcd(Math.abs(nums[0]),Math.abs(nums[1]));
+   return `સામાન્ય અવયવોમાંથી સૌથી મોટો અવયવ = <b>${r}</b><br><b>અટલે સાચો જવાબ: ${ans||r}</b>`;
  }
  if(has('અપૂર્ણાંક','fraction')) return `અંશ અને છેદને ધ્યાનમાં રાખીને અપૂર્ણાંકની ગણતરી કરીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
  if(has('દશાંશ','decimal')) return `દશાંશ બિંદુ સરખી જગ્યાએ ગોઠવી ગણતરી કરીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
  if(has('અવયવ','factor')) return `આ સંખ્યાથી સંપૂર્ણ ભાગી શકાય તેવી સંખ્યાઓ શોધીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
- return `પ્રશ્નમાં આપેલી માહિતી પ્રમાણે યોગ્ય ગણિતીય ક્રિયા કરીને જવાબ મેળવીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
+ if(nums.length>=2 && /[+\-×x÷*/]/.test(s)){
+   return `આ પ્રશ્નમાં આપેલી સંખ્યાઓ પરથી યોગ્ય ગણિતીય ક્રિયા કરીએ અને પગથિયાં પ્રમાણે જવાબ મેળવીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
+ }
+ return `પ્રશ્નને ધ્યાનથી વાંચી આપેલી માહિતીમાંથી યોગ્ય ગણિતીય રીત પસંદ કરીએ.<br><b>સાચો જવાબ: ${ans}</b>`;
 }
 window.autoMathExplanation=autoMathExplanation;
 </script>
@@ -2871,5 +2905,13 @@ window.autoMathExplanation=autoMathExplanation;
 .auto-math-explanation{margin-top:10px;padding:10px;border:1px solid #c7d2fe;border-radius:10px;background:#eef2ff;font-size:12px;line-height:1.8}
 .auto-math-explanation-title{font-weight:800;color:#3730a3;margin-bottom:3px}
 </style>
+
+function getAutoMathExplanationHtml(q,userAnswer,correctAnswer){
+    const explanation = autoMathExplanation(q,userAnswer,correctAnswer);
+    if(!explanation) return '';
+    return `<div class="auto-math-explanation"><div class="auto-math-explanation-title">🧮 ગણિતની સમજૂતી</div>${explanation}</div>`;
+}
+window.getAutoMathExplanationHtml=getAutoMathExplanationHtml;
+
 </body>
 </html>

@@ -100,7 +100,6 @@
 .result-q-text{font-size:14px;font-weight:800;color:#172554;line-height:1.55;flex:1}.result-ok,.result-bad{padding:6px 9px;border-radius:9px;font-size:10px;font-weight:800;white-space:nowrap}.result-ok{background:#dcfce7;color:#047857}.result-bad{background:#ffe4e6;color:#be123c}
 .result-options{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:9px;padding:8px;background:#f8fafc;border-radius:10px;font-size:11px;color:#475569}
 .result-answer-row{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;border-top:1px solid #e2e8f0;margin-top:8px;padding-top:8px;font-size:11px;font-weight:700;color:#475569}
-.auto-math-explanation{margin-top:10px;padding:11px;border:1px solid #bfd3ff;border-radius:12px;background:#eef4ff;font-size:12px;line-height:1.9;color:#1e3a8a}.auto-math-explanation-title{font-weight:900;color:#3730a3;margin-bottom:3px}
 @media(max-width:600px){.result-q-text{font-size:13px}.result-options{grid-template-columns:1fr}.result-answer-row{font-size:10px}.result-review-card{padding:10px}}
 </style>
 </head>
@@ -2149,7 +2148,7 @@
     const container = document.getElementById('reviewContainer');
     container.innerHTML = `
         <div class="flex items-center justify-between gap-2 mb-2">
-            <h3 class="text-lg font-bold text-indigo-700">📄 ઉત્તરવહી (સમજૂતી સાથે)</h3>
+            <h3 class="text-lg font-bold text-indigo-700">📄 ઉત્તરવહી (જવાબ સાથે)</h3>
         </div>
     `;
 
@@ -2178,7 +2177,6 @@
                     <span>તમારો જવાબ: <b class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</b></span>
                     <span>સાચો જવાબ: <b class="text-emerald-700">${q.answer || '-'}</b></span>
                 </div>
-                ${getAutoMathExplanationHtml(q, userAns, q.answer)}
             </div>
         `;
     });
@@ -2368,7 +2366,6 @@
                                 <span class="text-slate-600">વિદ્યાર્થીનો જવાબ: <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</span></span>
                                 <span class="text-emerald-700">સાચો જવાબ: ${q.answer}</span>
                             </div>
-                            ${getAutoMathExplanationHtml(q, userAns, q.answer)}
                         </div>
                     `;
                 });
@@ -2769,7 +2766,7 @@ let oldTimer=window.startStudentTimer;window.startStudentTimer=function(d){stude
 let oldRender=window.renderTestBoxes;window.renderTestBoxes=function(){try{oldRender&&oldRender()}catch(e){}dash();stats()};let oldLoad=window.loadAdminTestData;window.loadAdminTestData=function(){let r=oldLoad?.apply(this,arguments);setTimeout(stats,100);return r};function renderLockedAttemptAnswerSheet(sub){
  const box=document.getElementById('lockedAttemptAnswerSheet'); if(!box)return;
  if(!sub||!Array.isArray(sub.questions)){box.innerHTML='<div class="text-xs text-slate-500 mt-2">આ પ્રયાસની ઉત્તરવહી આ ઉપકરણમાં ઉપલબ્ધ નથી.</div>';return;}
- let out='<div class="border-t pt-3 mt-3"><div class="font-bold text-indigo-700 text-sm mb-2">📄 ઉત્તરવહી (સમજૂતી સાથે)</div>';
+ let out='<div class="border-t pt-3 mt-3"><div class="font-bold text-indigo-700 text-sm mb-2">📄 ઉત્તરવહી (જવાબ સાથે)</div>';
  sub.questions.forEach((q,i)=>{
    const ua=sub.answers?sub.answers[i]:''; const ok=ua===q.answer; const opts=q.options||['A','B','C','D'];
    out+=`<div class="result-review-card ${ok?'result-correct':'result-wrong'}"><div class="result-q-head"><div class="result-q-number">${i+1}</div><div class="result-q-text">${formatFractions(q.question||'')}</div><div class="${ok?'result-ok':'result-bad'}">${ok?'✓ સાચો જવાબ':'✕ ખોટો જવાબ'}</div></div><div class="result-options"><div>(A) ${formatFractions(opts[0]||'')}</div><div>(B) ${formatFractions(opts[1]||'')}</div><div>(C) ${formatFractions(opts[2]||'')}</div><div>(D) ${formatFractions(opts[3]||'')}</div></div><div class="result-answer-row"><span>તમારો જવાબ: <b class="${ok?'text-emerald-600':'text-rose-600'}">${ua||'આપેલ નથી'}</b></span><span>સાચો જવાબ: <b class="text-emerald-700">${q.answer||'-'}</b></span></div>${getAutoMathExplanationHtml(q,ua,q.answer)}</div>`;
@@ -2856,160 +2853,12 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()}
 </script>
 
 <script>
-function autoMathExplanation(q,u,a){
- const raw=String(q?.question||q?.text||q?.q||'').trim().replace(/^(?:પ્રશ્ન\s*)?[0-9૦-૯]+\s*[.)\-:]\s*/,'');
- const topic=String(q?.topic||q?.chapter||q?.unit||'').toLowerCase();
- const ans=String(a??q?.answer??q?.correctAnswer??'').trim();
- const guDigits="૦૧૨૩૪૫૬૭૮૯";
- const s=raw.replace(/[૦-૯]/g,d=>String(guDigits.indexOf(d)));
- const low=(topic+" "+s).toLowerCase();
- const nums=(s.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
- const has=(...x)=>x.some(v=>low.includes(v.toLowerCase()));
- const fmt=n=>Number.isInteger(n)?String(n):String(Number(n.toFixed(6)));
- const esc=x=>String(x).replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
- /* 1. Number series / સંખ્યા શ્રેણી */
- if(has('શ્રેણી','ક્રમ','series') || /(?:\d+\s*[,،;]\s*){2,}\d+/.test(s)){
-   const seq=(s.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
-   if(seq.length>=3){
-     const d=seq.slice(1).map((v,i)=>v-seq[i]);
-     if(d.every(x=>Math.abs(x-d[0])<1e-9)){
-       const next=seq.at(-1)+d[0];
-       return `શ્રેણીમાં દરેક બે સંખ્યાઓ વચ્ચે ${fmt(Math.abs(d[0]))} નો ${d[0]>=0?'વધારો':'ઘટાડો'} થાય છે.<br>${fmt(seq.at(-1))} ${d[0]>=0?'+':'−'} ${fmt(Math.abs(d[0]))} = ${fmt(next)}<br><b>અટલે સાચો જવાબ: ${esc(ans||next)}</b>`;
-     }
-     const ratios=seq.slice(1).map((v,i)=>seq[i]!==0?v/seq[i]:NaN);
-     if(ratios.every(Number.isFinite) && ratios.every(x=>Math.abs(x-ratios[0])<1e-9)){
-       const next=seq.at(-1)*ratios[0];
-       return `શ્રેણીમાં દરેક સંખ્યા ${fmt(ratios[0])} વડે ગુણાય છે.<br>${fmt(seq.at(-1))} × ${fmt(ratios[0])} = ${fmt(next)}<br><b>અટલે સાચો જવાબ: ${esc(ans||next)}</b>`;
-     }
-   }
- }
-
- /* 2. Prime / composite / factors */
- if(has('અવિભાજ્ય','prime')){
-   const n=nums.find(x=>x>=1);
-   if(n!==undefined){
-     const factors=[];
-     for(let i=1;i<=n;i++) if(n%i===0) factors.push(i);
-     const prime=factors.length===2;
-     return `${n} ના અવયવો: ${factors.join(', ')}.<br>${prime?`${n} ના માત્ર 2 અવયવ (1 અને ${n}) છે, તેથી તે અવિભાજ્ય સંખ્યા છે.`:`${n} ના 2 કરતાં વધુ અવયવ છે, તેથી તે અવિભાજ્ય નથી.`}<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
-   }
- }
- if(has('વિભાજ્ય','composite')){
-   const n=nums.find(x=>x>=1);
-   if(n!==undefined){
-     const factors=[]; for(let i=1;i<=n;i++) if(n%i===0) factors.push(i);
-     return `${n} ના અવયવો: ${factors.join(', ')}.<br>2 કરતાં વધુ અવયવ હોવાથી ${n} વિભાજ્ય સંખ્યા છે.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
-   }
- }
-
- /* Count primes in a range, e.g. 1 થી 100 */
- if(has('અવિભાજ્ય') && nums.length>=2){
-   const lo=Math.ceil(nums[0]), hi=Math.floor(nums[1]);
-   if(lo>=1 && hi>lo && hi-lo<=1000){
-     const isPrime=n=>n>=2 && Array.from({length:Math.floor(Math.sqrt(n))-1},(_,i)=>i+2).every(d=>n%d!==0);
-     const primes=[]; for(let n=lo;n<=hi;n++) if(isPrime(n)) primes.push(n);
-     return `${lo} થી ${hi} વચ્ચે કુલ <b>${primes.length}</b> અવિભાજ્ય સંખ્યાઓ છે.<br>અવિભાજ્ય સંખ્યાઓ: ${primes.join(', ')}.<br><b>સાચો જવાબ: ${esc(ans||primes.length)}</b>`;
-   }
- }
-
- /* 3. LCM / HCF */
- const gcd=(x,y)=>y?gcd(y,x%y):Math.abs(x);
- if(has('લ.સા.અ','લસા','lcm')&&nums.length>=2){
-   const x=Math.abs(Math.round(nums[0])), y=Math.abs(Math.round(nums[1]));
-   const r=x&&y?x/gcd(x,y)*y:0;
-   return `લ.સા.અ. માટે બંને સંખ્યાના ગુણાંક જોઈએ.<br>${x} અને ${y} માટે સૌથી નાની સામાન્ય ગુણાંક સંખ્યા = <b>${r}</b>.<br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
- }
- if(has('ગુ.સા.અ','ગુસા','hcf')&&nums.length>=2){
-   const x=Math.abs(Math.round(nums[0])), y=Math.abs(Math.round(nums[1]));
-   const r=gcd(x,y);
-   return `${x} અને ${y} ના સામાન્ય અવયવોમાંથી સૌથી મોટો અવયવ શોધીએ.<br>ગુ.સા.અ. = <b>${r}</b>.<br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
- }
-
- /* 4. Fraction: numerator/denominator and simple operations */
- const fr=[...s.matchAll(/(\d+)\s*\/\s*(\d+)/g)].map(m=>[Number(m[1]),Number(m[2])]);
- if(has('અપૂર્ણાંક','fraction')){
-   if(fr.length){
-     const f=fr[0];
-     if(has('અંશ','numerator')) return `અપૂર્ણાંક ${f[0]}/${f[1]} માં ઉપરની સંખ્યા ${f[0]} અંશ છે અને નીચેની સંખ્યા ${f[1]} છે.<br><b>સાચો જવાબ: ${esc(ans||f[0])}</b>`;
-     if(has('છેદ','denominator')) return `અપૂર્ણાંક ${f[0]}/${f[1]} માં નીચેની સંખ્યા ${f[1]} છેદ છે.<br><b>સાચો જવાબ: ${esc(ans||f[1])}</b>`;
-     if(fr.length>=2){
-       const [a1,b1]=fr[0], [a2,b2]=fr[1];
-       if(b1===b2){
-         const minus=has('બાદબાકી','ઓછું','subtract','−');
-         const n=minus?a1-a2:a1+a2;
-         return `છેદ બંને સમાન છે, તેથી અંશમાં ${minus?'બાદબાકી':'સરવાળો'} કરીએ.<br>(${a1}/${b1}) ${minus?'−':'+'} (${a2}/${b2}) = <b>${n}/${b1}</b><br><b>સાચો જવાબ: ${esc(ans||n+'/'+b1)}</b>`;
-       }
-     }
-     return `અપૂર્ણાંકમાં ઉપરનો અંક અંશ અને નીચેનો અંક છેદ કહેવાય છે. પ્રશ્ન મુજબ અંશ-છેદને ધ્યાનમાં રાખીને ગણતરી કરીએ.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
-   }
- }
-
- /* 5. Four operations even when words are absent */
- if((has('ગુણાકાર','multiplication') || s.includes('×') || s.includes('*'))&&nums.length>=2){
-   const r=nums[0]*nums[1];
-   return `${nums[0]} × ${nums[1]} = ${r}<br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
- }
- if((has('ભાગાકાર','division') || s.includes('÷'))&&nums.length>=2&&nums[1]!==0){
-   const r=nums[0]/nums[1], rem=nums[0]%nums[1];
-   return `${nums[0]} ÷ ${nums[1]} = ${fmt(r)}${rem?`<br>શેષ = ${rem}`:''}<br><b>સાચો જવાબ: ${esc(ans||fmt(r))}</b>`;
- }
- if((has('સરવાળો','addition') || (s.includes('+')&&nums.length>=2))&&nums.length>=2){
-   const r=nums.reduce((x,y)=>x+y,0);
-   return `${nums.join(' + ')} = ${r}<br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
- }
- if(has('બાદબાકી','subtraction')&&nums.length>=2){
-   const r=nums[0]-nums[1];
-   return `${nums[0]} − ${nums[1]} = ${r}<br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
- }
-
- /* 6. Percentage */
- if(has('ટકાવારી','percentage','%')&&nums.length>=2){
-   const r=nums[0]*nums[1]/100;
-   return `${nums[0]}% of ${nums[1]}<br>= (${nums[0]} × ${nums[1]}) ÷ 100<br>= <b>${fmt(r)}</b><br><b>સાચો જવાબ: ${esc(ans||fmt(r))}</b>`;
- }
-
- /* 7. Perimeter / area */
- if(has('પરિમિતિ','perimeter')&&nums.length>=2){
-   const r=2*(nums[0]+nums[1]);
-   return `લંબચોરસની પરિમિતિ = 2 × (લંબાઈ + પહોળાઈ)<br>= 2 × (${nums[0]} + ${nums[1]})<br>= <b>${r}</b><br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
- }
- if(has('ક્ષેત્રફળ','area')&&nums.length>=2){
-   const r=nums[0]*nums[1];
-   return `લંબચોરસનું ક્ષેત્રફળ = લંબાઈ × પહોળાઈ<br>= ${nums[0]} × ${nums[1]}<br>= <b>${r}</b><br><b>સાચો જવાબ: ${esc(ans||r)}</b>`;
- }
-
- /* 8. Decimal */
- if(has('દશાંશ','decimal')){
-   return `દશાંશ સંખ્યાઓમાં દશાંશ બિંદુ એક જ કૉલમમાં ગોઠવી ગણતરી કરીએ.<br>પછી સામાન્ય ગણિતીય ક્રિયા કરીએ અને જવાબમાં દશાંશ બિંદુ યોગ્ય જગ્યાએ મૂકીએ.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
- }
-
- /* 9. Time / money / measurement */
- if(has('સમય','કલાક','મિનિટ','time')){
-   return `સમયની ગણતરીમાં 60 મિનિટ = 1 કલાક યાદ રાખીએ. આપેલો સમય કલાક અને મિનિટમાં ગોઠવીને પ્રશ્ન મુજબ સરવાળો અથવા બાદબાકી કરીએ.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
- }
- if(has('રૂપિયા','પૈસા','કિંમત','money')){
-   return `પૈસાના પ્રશ્નમાં દરેક વસ્તુની કિંમત ઓળખી જરૂરી હોય ત્યાં સરવાળો, બાદબાકી, ગુણાકાર અથવા ભાગાકાર કરીએ.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
- }
-
- /* 10. Generic is last — only for truly unsupported patterns */
- return `પ્રશ્નમાં આપેલી માહિતી ધ્યાનથી વાંચીને યોગ્ય ગણિતીય રીત પસંદ કરીએ.<br>પછી પગથિયાં પ્રમાણે ગણતરી કરીને જવાબ મેળવીએ.<br><b>સાચો જવાબ: ${esc(ans)}</b>`;
-}
 window.autoMathExplanation=autoMathExplanation;
 </script>
 <style>
-.auto-math-explanation{margin-top:10px;padding:10px;border:1px solid #c7d2fe;border-radius:10px;background:#eef2ff;font-size:12px;line-height:1.8}
-.auto-math-explanation-title{font-weight:800;color:#3730a3;margin-bottom:3px}
 </style>
 
 
-<script>
-function getAutoMathExplanationHtml(q,userAnswer,correctAnswer){
-    const explanation = autoMathExplanation(q,userAnswer,correctAnswer);
-    if(!explanation) return '';
-    return '<div class="auto-math-explanation"><div class="auto-math-explanation-title">🧮 ગણિતની સમજૂતી</div>'+explanation+'</div>';
-}
-window.getAutoMathExplanationHtml=getAutoMathExplanationHtml;
-</script>
 </body>
 </html>

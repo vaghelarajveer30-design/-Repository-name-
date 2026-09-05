@@ -61,6 +61,38 @@
         .test-number-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 7px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; font-size:10px; font-weight:700; cursor:pointer; }
         .test-number-chip:has(input:checked) { background:#eef2ff; border-color:#6366f1; color:#3730a3; }
     </style>
+
+<style id="compactButtonsFix">
+#adminScreen button{padding:6px 9px !important;font-size:11px !important;line-height:1.15 !important;min-height:30px !important;margin:1px !important;gap:4px !important;}
+#adminScreen .flex.flex-wrap,#adminScreen .flex.gap-2,#adminScreen .flex.gap-1{gap:3px !important;}
+#adminScreen .p-4{padding:10px !important;}#adminScreen .p-3{padding:8px !important;}
+#adminScreen .py-3{padding-top:7px !important;padding-bottom:7px !important;}
+#adminScreen .py-2{padding-top:5px !important;padding-bottom:5px !important;}
+#adminScreen .px-4{padding-left:9px !important;padding-right:9px !important;}
+#adminScreen .px-3{padding-left:8px !important;padding-right:8px !important;}
+@media(max-width:600px){#adminScreen button{padding:5px 7px !important;font-size:10px !important;min-height:28px !important;}}
+</style>
+<style id="compactTestEditorFix">
+.compact-test-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;align-items:center}
+.compact-test-controls{display:flex;flex-wrap:wrap;align-items:center;gap:3px}
+.compact-test-actions button{padding:5px 7px !important;font-size:10px !important;line-height:1.1 !important;min-height:28px !important;white-space:nowrap}
+.compact-test-actions #adminTestSelect{max-width:125px;padding:4px 6px !important;font-size:10px !important}
+.compact-meta-grid{grid-template-columns:1.05fr 1.25fr .75fr .85fr !important;gap:5px !important;padding-top:7px !important}
+.compact-meta-grid label{font-size:10px !important;margin-bottom:2px !important}
+.compact-meta-grid select,.compact-meta-grid input{width:100%;min-width:0;height:38px;padding:5px 7px !important;font-size:12px !important}
+.compact-meta-actions{display:grid;grid-template-columns:1.3fr .75fr 1fr 1fr;gap:4px;margin-top:5px}
+.compact-meta-actions button{width:100%;min-height:30px;padding:5px 6px !important;font-size:10px !important;line-height:1.1 !important;white-space:nowrap}
+@media(max-width:600px){
+ .compact-test-actions{grid-template-columns:1fr;gap:4px}
+ .compact-test-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px}
+ .compact-test-controls #adminTestSelect{grid-column:span 2;max-width:none}
+ .compact-meta-grid{grid-template-columns:1.05fr 1.25fr .7fr .85fr !important;gap:4px !important}
+ .compact-meta-grid label{font-size:9px !important}
+ .compact-meta-grid select,.compact-meta-grid input{height:36px;padding:4px 6px !important;font-size:11px !important}
+ .compact-meta-actions{grid-template-columns:1.3fr .75fr 1fr 1fr;gap:3px}
+ .compact-meta-actions button{font-size:9px !important;min-height:29px;padding:5px 3px !important}
+}
+</style>
 </head>
 <body class="text-slate-800">
 
@@ -313,8 +345,8 @@
 
             <div class="bg-white p-5 rounded-xl shadow border space-y-5">
                 <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 space-y-4">
-                    <div class="flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-2 flex-wrap">
+                    <div class="compact-test-actions">
+                        <div class="compact-test-controls">
                             <label class="font-bold text-xs text-slate-700">ટેસ્ટ પસંદ કરો:</label>
                             <select id="adminTestSelect" onchange="loadAdminTestData()" class="p-1.5 border rounded-lg font-bold text-xs text-indigo-600 bg-white">
                             </select>
@@ -337,9 +369,6 @@
                                 <i class="fa-solid fa-trash-can"></i> ડિલીટ
                             </button>
                         </div>
-                        <button onclick="createNewTest()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow">
-                            <i class="fa-solid fa-plus"></i> નવી ટેસ્ટ બનાવો
-                        </button>
                     </div>
 
                     <div id="activeLockWarning" class="hidden bg-rose-100 border border-rose-300 text-rose-800 p-2 rounded-lg text-xs font-bold flex items-center gap-2">
@@ -362,10 +391,10 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2 pt-2 border-t border-indigo-200 text-xs">
+                    <div class="grid grid-cols-4 gap-1 pt-2 border-t border-indigo-200 text-[10px] compact-meta-grid">
                         <div>
-                            <label class="block font-bold text-slate-700 mb-1">કોર્ષ પસંદ કરો:</label>
-                            <select id="adminCourse" onchange="onAdminCourseChange()" class="w-full p-1.5 border rounded font-bold text-indigo-700 bg-white">
+                            <label class="block font-bold text-slate-700 mb-0.5">કોર્ષ પસંદ કરો:</label>
+                            <select id="adminCourse" onchange="onAdminCourseChange()" class="w-full p-1 border rounded font-bold text-indigo-700 bg-white">
                                 <option value="નવોદય">નવોદય</option>
                                 <option value="Cet">Cet</option>
                                 <option value="Gyan sadhana">Gyan sadhana</option>
@@ -374,23 +403,34 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block font-bold text-slate-700 mb-1">વિષયનું નામ:</label>
-                            <select id="adminSubjectSelect" class="w-full p-1.5 border rounded font-bold text-indigo-700 bg-white">
+                            <label class="block font-bold text-slate-700 mb-0.5">વિષયનું નામ:</label>
+                            <select id="adminSubjectSelect" class="w-full p-1 border rounded font-bold text-indigo-700 bg-white">
                                 <option value="સામાન્ય">સામાન્ય</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block font-bold text-slate-700 mb-1">કુલ ગુણ:</label>
-                            <input type="number" id="adminTotalMarks" placeholder="100" class="w-full p-1.5 border rounded">
+                            <label class="block font-bold text-slate-700 mb-0.5">કુલ ગુણ:</label>
+                            <input type="number" id="adminTotalMarks" placeholder="100" class="w-full p-1 border rounded text-xs">
                         </div>
                         <div>
-                            <label class="block font-bold text-slate-700 mb-1">સમય (મિનિટમાં):</label>
-                            <input type="number" id="adminTimeLimit" placeholder="60" class="w-full p-1.5 border rounded">
+                            <label class="block font-bold text-slate-700 mb-0.5">સમય (મિનિટમાં):</label>
+                            <input type="number" id="adminTimeLimit" placeholder="60" class="w-full p-1 border rounded text-xs">
                         </div>
                     </div>
-                    <button id="btnSaveMeta" onclick="saveTestMetaSettings()" class="bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow">
-                        ક્લાઉડમાં સેટિંગ્સ સેવ કરો
-                    </button>
+                    <div class="compact-meta-actions">
+                        <button id="btnSaveMeta" onclick="saveTestMetaSettings()" class="bg-indigo-700 text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow">
+                            ☁️ ક્લાઉડમાં સેવ
+                        </button>
+                        <button type="button" onclick="resetCurrentTestEditor(); return false;" class="bg-slate-100 text-slate-800 border border-slate-300 px-2 py-1 rounded-lg text-[10px] font-bold shadow">
+                            🔄 રીસેટ
+                        </button>
+                        <button type="button" onclick="createNewTest(); return false;" class="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow">
+                            ➕ નવી ટેસ્ટ
+                        </button>
+                        <button type="button" onclick="openTestListFromEditor()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow">
+                            📋 ટેસ્ટ યાદી
+                        </button>
+                    </div>
                 </div>
 
                 <div id="questionBuilderArea" class="space-y-4">
@@ -937,6 +977,18 @@
             }
             loadAdminTestData();
             renderTestBoxes();
+        }
+
+        function resetCurrentTestEditor() {
+            if (!activeTestKey || !currentTests[activeTestKey]) return;
+            const select = document.getElementById('adminTestSelect');
+            if (select) select.value = activeTestKey;
+            loadAdminTestData();
+        }
+
+        function openTestListFromEditor() {
+            const box = document.getElementById('testBoxesContainer');
+            if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function loadAdminTestData() {
@@ -2575,47 +2627,79 @@
             const questions = Array.isArray(test.questions) ? test.questions : Object.values(test.questions);
 
             let html = `
-                <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:20px;">
-                    <h2 style="font-size:22px;margin:0;color:#1e1b4b;">નિર્મળા નવોદય સ્ટડી ઝોન</h2>
-                    <h3 style="font-size:16px;margin:5px 0;color:#4338ca;">${meta.title || activeTestKey}</h3>
-                    <div style="font-size:12px;display:flex;justify-content:space-between;margin-top:10px;">
-                        <span>કોર્ષ: ${meta.course || 'સામાન્ય'}</span>
-                        <span>વિષય: ${meta.subject || 'સામાન્ય'}</span>
-                        <span>કુલ ગુણ: ${meta.totalMarks || 100}</span>
-                        <span>સમય: ${meta.timeLimit || 60} મિનિટ</span>
+                <div style="font-family:'Hind Vadodara',Arial,sans-serif;color:#111827;background:#ffffff;width:760px;padding:24px;box-sizing:border-box;">
+                    <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:20px;">
+                        <h2 style="font-size:22px;margin:0;color:#1e1b4b;">નિર્મળા નવોદય સ્ટડી ઝોન</h2>
+                        <h3 style="font-size:16px;margin:5px 0;color:#4338ca;">${meta.title || activeTestKey}</h3>
+                        <div style="font-size:12px;display:flex;justify-content:space-between;margin-top:10px;">
+                            <span>કોર્ષ: ${meta.course || 'સામાન્ય'}</span>
+                            <span>વિષય: ${meta.subject || 'સામાન્ય'}</span>
+                            <span>કુલ ગુણ: ${meta.totalMarks || 100}</span>
+                            <span>સમય: ${meta.timeLimit || 60} મિનિટ</span>
+                        </div>
                     </div>
-                </div>
-                <div style="space-y-4;">
+                    <div>
             `;
 
             questions.forEach((q, idx) => {
-                const opts = q.options || ['A', 'B', 'C', 'D'];
+                const opts = Array.isArray(q.options) ? q.options : ['A', 'B', 'C', 'D'];
                 html += `
                     <div style="margin-bottom:15px;page-break-inside:avoid;">
-                        <p style="font-weight:bold;font-size:13px;margin-bottom:5px;">પ્રશ્ન ${idx + 1}. ${q.question}</p>
-                        ${q.image ? `<img src="${q.image}" style="max-height:150px;display:block;margin:5px 0;">` : ''}
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:12px;margin-left:15px;">
-                            <div>(A) ${opts[0]}</div>
-                            <div>(B) ${opts[1]}</div>
-                            <div>(C) ${opts[2]}</div>
-                            <div>(D) ${opts[3]}</div>
+                        <p style="font-weight:bold;font-size:13px;margin:0 0 5px 0;">પ્રશ્ન ${idx + 1}. ${q.question || ''}</p>
+                        ${q.image ? `<img src="${q.image}" style="max-height:150px;max-width:100%;display:block;margin:5px 0;">` : ''}
+                        <div style="font-size:12px;margin-left:15px;line-height:1.7;">
+                            <div>(A) ${opts[0] || ''}</div>
+                            <div>(B) ${opts[1] || ''}</div>
+                            <div>(C) ${opts[2] || ''}</div>
+                            <div>(D) ${opts[3] || ''}</div>
                         </div>
                     </div>
                 `;
             });
 
-            html += `</div>`;
+            html += `</div></div>`;
+
+            // IMPORTANT: pdfExportContainer originally has class="hidden".
+            // html2canvas cannot capture display:none, which caused blank PDFs.
+            const oldClassName = container.className;
+            const oldStyle = container.getAttribute('style');
+
+            container.classList.remove('hidden');
+            container.style.cssText =
+                'display:block;position:absolute;left:-10000px;top:0;width:760px;' +
+                'min-height:100px;background:#fff;color:#111827;padding:0;margin:0;' +
+                'font-family:"Hind Vadodara",Arial,sans-serif;';
             container.innerHTML = html;
 
-            const opt = {
-                margin: 0.5,
-                filename: `${meta.title || 'Test'}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
+            // Give the browser a frame to lay out the visible PDF content.
+            requestAnimationFrame(() => {
+                const opt = {
+                    margin: 0.5,
+                    filename: `${meta.title || 'Test'}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false
+                    },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
 
-            html2pdf().set(opt).from(container).save();
+                html2pdf().set(opt).from(container).save().then(() => {
+                    if (oldStyle === null) container.removeAttribute('style');
+                    else container.setAttribute('style', oldStyle);
+                    container.className = oldClassName;
+                    container.innerHTML = '';
+                }).catch(err => {
+                    if (oldStyle === null) container.removeAttribute('style');
+                    else container.setAttribute('style', oldStyle);
+                    container.className = oldClassName;
+                    container.innerHTML = '';
+                    console.error(err);
+                    alert("PDF બનાવવામાં સમસ્યા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.");
+                });
+            });
         }
     </script>
 <style id="enhancedV2Styles">.ev2{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;box-shadow:0 4px 14px rgba(15,23,42,.06)}.ev2stat{padding:10px;border-radius:12px;background:#eef2ff;border:1px solid #c7d2fe}.ev2stat b{font-size:21px;color:#3730a3}.ev2grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}@media(max-width:700px){.ev2grid{grid-template-columns:repeat(2,1fr)}}.ev2bar{height:8px;background:#e2e8f0;border-radius:9px;overflow:hidden}.ev2bar span{display:block;height:100%;background:#4f46e5}.ev2modal{position:fixed;inset:0;background:#0f172acc;z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}.ev2modal>div{background:white;border-radius:18px;max-width:900px;width:100%;max-height:92vh;overflow:auto;padding:16px}.ev2table{width:100%;border-collapse:collapse;font-size:11px}.ev2table th,.ev2table td{border:1px solid #e2e8f0;padding:7px}.ev2table th{background:#eef2ff;color:#3730a3}</style>
@@ -2624,7 +2708,7 @@
 const E={esc:v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])),arr:v=>Array.isArray(v)?v:(v?Object.values(v):[]),shuffle:a=>{a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a},key:(n,t)=>'ev2resume_'+encodeURIComponent(String(n).toLowerCase())+'_'+encodeURIComponent(t),grade:p=>p>=90?'A+':p>=80?'A':p>=70?'B+':p>=60?'B':p>=50?'C':p>=40?'D':'E'};
 window.EV2=E;
 function stats(){let d=document.getElementById('ev2dash');if(!d)return;let ts=Object.keys(currentTests||{}),act=ts.filter(k=>currentTests[k]?.meta?.status==='active').length,st=[...new Set(allSubmissionsGlobal.map(x=>x.studentName).filter(Boolean))],avg=allSubmissionsGlobal.length?Math.round(allSubmissionsGlobal.reduce((a,x)=>a+Number(x.percentage||0),0)/allSubmissionsGlobal.length):0;document.getElementById('ev2stats').innerHTML=[['કુલ ટેસ્ટ',ts.length],['એક્ટિવ',act],['વિદ્યાર્થી',st.length],['સરેરાશ',avg+'%']].map(x=>`<div class="ev2stat"><span class="text-[10px] font-bold text-slate-500">${x[0]}</span><br><b>${x[1]}</b></div>`).join('');}
-function dash(){let a=document.getElementById('adminScreen');if(!a||document.getElementById('ev2dash'))return;let d=document.createElement('div');d.id='ev2dash';d.className='ev2 space-y-3';d.innerHTML=`<div class="flex justify-between items-center flex-wrap gap-2"><div><b class="text-sm text-indigo-700">📊 Smart Dashboard</b><div class="text-[10px] text-slate-500">Rank • Analytics • Progress • CSV/JSON • Smart Test Settings</div></div><div class="flex gap-1 flex-wrap"><button onclick="EV2.analytics()" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">📈 Analytics</button><button onclick="EV2.csv()" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">📥 CSV</button><button onclick="EV2.json()" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold">💾 JSON</button><button onclick="EV2.settings()" class="bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">⚙️ Settings</button></div></div><div id="ev2stats" class="ev2grid"></div>`;a.insertBefore(d,a.children[1]||a.firstChild);stats();}
+function dash(){return;}
 E.settings=function(){let m=currentTests[activeTestKey]?.meta||{},d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>⚙️ ટેસ્ટ સેટિંગ્સ</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="grid sm:grid-cols-2 gap-3 text-xs mt-3"><label>Random પ્રશ્નો<input id="eQ" type="number" min="0" value="${m.randomQuestionCount||0}" class="w-full border rounded p-2"></label><label>Max Attempts<input id="eA" type="number" min="1" value="${m.maxAttempts||2}" class="w-full border rounded p-2"></label><label>Start<input id="eS" type="datetime-local" value="${m.startAt?new Date(m.startAt).toISOString().slice(0,16):''}" class="w-full border rounded p-2"></label><label>End<input id="eE" type="datetime-local" value="${m.endAt?new Date(m.endAt).toISOString().slice(0,16):''}" class="w-full border rounded p-2"></label><label><input id="eRQ" type="checkbox" ${m.randomizeQuestions?'checked':''}> પ્રશ્નો random</label><label><input id="eRO" type="checkbox" ${m.randomizeOptions?'checked':''}> વિકલ્પો random</label><label><input id="eR" type="checkbox" ${m.allowResume!==false?'checked':''}> Auto-save/Resume</label><label><input id="eC" type="checkbox" ${m.cloudAttemptLimit!==false?'checked':''}> Cloud attempt tracking</label></div><div class="text-right mt-4"><button onclick="EV2.saveSettings(this)" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">સેવ</button></div></div>`;document.body.appendChild(d)};
 E.saveSettings=function(b){let m={...(currentTests[activeTestKey]?.meta||{})};m.randomQuestionCount=+document.getElementById('eQ').value||0;m.maxAttempts=Math.max(1,+document.getElementById('eA').value||2);m.startAt=document.getElementById('eS').value?new Date(document.getElementById('eS').value).getTime():null;m.endAt=document.getElementById('eE').value?new Date(document.getElementById('eE').value).getTime():null;m.randomizeQuestions=document.getElementById('eRQ').checked;m.randomizeOptions=document.getElementById('eRO').checked;m.allowResume=document.getElementById('eR').checked;m.cloudAttemptLimit=document.getElementById('eC').checked;database.ref('tests/'+activeTestKey+'/meta').update(m).then(()=>{alert('સેટિંગ્સ સેવ થઈ ગઈ.');b.closest('.ev2modal').remove()})};
 E.analytics=function(){let k=activeTestKey,s=allSubmissionsGlobal.filter(x=>x.testKey===k),avg=s.length?Math.round(s.reduce((a,x)=>a+Number(x.percentage||0),0)/s.length):0,rank=s.slice().sort((a,b)=>b.percentage-a.percentage||b.correctCount-a.correctCount).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.studentName)}</td><td>${x.correctCount}/${x.totalQuestions}</td><td>${x.percentage}%</td><td>${E.grade(x.percentage)}</td></tr>`).join('');let q={};s.forEach(x=>E.arr(x.questions).forEach((z,i)=>{let id=z.question||i;q[id]??={q:id,t:0,c:0};q[id].t++;if(x.answers?.[i]===z.answer)q[id].c++}));let hard=Object.values(q).sort((a,b)=>a.c/a.t-b.c/b.t).slice(0,10).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.q)}</td><td>${Math.round(x.c/x.t*100)}%</td></tr>`).join('');let d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>📈 ${E.esc(currentTests[k]?.meta?.title||k)} Analytics</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="ev2grid my-3"><div class="ev2stat">Submissions<br><b>${s.length}</b></div><div class="ev2stat">Average<br><b>${avg}%</b></div><div class="ev2stat">Highest<br><b>${s.length?Math.max(...s.map(x=>+x.percentage||0)):'-'}%</b></div><div class="ev2stat">Topper<br><b class="text-sm">${s[0]?E.esc(s.slice().sort((a,b)=>b.percentage-a.percentage)[0].studentName):'-'}</b></div></div><h4 class="font-bold text-xs mb-1">🏆 Rank</h4><table class="ev2table"><tr><th>Rank</th><th>વિદ્યાર્થી</th><th>ગુણ</th><th>%</th><th>Grade</th></tr>${rank||'<tr><td colspan=5>ડેટા નથી</td></tr>'}</table><h4 class="font-bold text-xs mt-4 mb-1">⚠️ મુશ્કેલ પ્રશ્નો</h4><table class="ev2table"><tr><th>#</th><th>પ્રશ્ન</th><th>સાચા</th></tr>${hard||'<tr><td colspan=3>ડેટા નથી</td></tr>'}</table></div>`;document.body.appendChild(d)};

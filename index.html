@@ -2135,36 +2135,43 @@
         }
 
         function renderReviewQuestions(sub) {
-            const container = document.getElementById('reviewContainer');
-            container.innerHTML = '';
+    const container = document.getElementById('reviewContainer');
+    container.innerHTML = `
+        <div class="flex items-center justify-between gap-2 mb-2">
+            <h3 class="text-lg font-bold text-indigo-700">📄 ઉત્તરવહી (સમજૂતી સાથે)</h3>
+        </div>
+    `;
 
-            sub.questions.forEach((q, idx) => {
-                const userAns = sub.answers[idx];
-                const isCorrect = userAns === q.answer;
-                const opts = q.options || ['A', 'B', 'C', 'D'];
+    (sub.questions || []).forEach((q, idx) => {
+        const userAns = sub.answers ? sub.answers[idx] : undefined;
+        const isCorrect = userAns === q.answer;
+        const opts = q.options || ['A','B','C','D'];
 
-                container.innerHTML += `
-                    <div class="p-4 rounded-2xl border shadow-sm space-y-2 text-xs ${isCorrect ? 'correct-card' : 'wrong-card'}">
-                        <div class="flex justify-between items-start font-bold">
-                            <span>પ્રશ્ન ${idx + 1}. ${formatFractions(q.question)}</span>
-                            <span class="${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">
-                                ${isCorrect ? '<i class="fa-solid fa-circle-check"></i> સાચો' : '<i class="fa-solid fa-circle-xmark"></i> ખોટો'}
-                            </span>
-                        </div>
-                        ${q.image ? `<img src="${q.image}" class="max-h-36 rounded border my-1">` : ''}
-                        <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600 pt-1">
-                            <div>(A) ${formatFractions(opts[0])}</div><div>(B) ${formatFractions(opts[1])}</div>
-                            <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
-                        </div>
-                        <div class="pt-2 border-t flex justify-between font-bold text-[11px]">
-                            <span class="text-slate-600">તમારો જવાબ: <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</span></span>
-                            <span class="text-emerald-700">સાચો જવાબ: ${q.answer}</span>
-                        </div>
-                        ${getAutoMathExplanationHtml(q, userAns, q.answer)}
+        container.innerHTML += `
+            <div class="result-review-card ${isCorrect ? 'result-correct' : 'result-wrong'}">
+                <div class="result-q-head">
+                    <div class="result-q-number">${idx + 1}</div>
+                    <div class="result-q-text">${formatFractions(q.question)}</div>
+                    <div class="${isCorrect ? 'result-ok' : 'result-bad'}">
+                        ${isCorrect ? '✓ સાચો જવાબ' : '✕ ખોટો જવાબ'}
                     </div>
-                `;
-            });
-        }
+                </div>
+                ${q.image ? `<img src="${q.image}" class="max-h-40 rounded-xl border my-2">` : ''}
+                <div class="result-options">
+                    <div>(A) ${formatFractions(opts[0] || '')}</div>
+                    <div>(B) ${formatFractions(opts[1] || '')}</div>
+                    <div>(C) ${formatFractions(opts[2] || '')}</div>
+                    <div>(D) ${formatFractions(opts[3] || '')}</div>
+                </div>
+                <div class="result-answer-row">
+                    <span>તમારો જવાબ: <b class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</b></span>
+                    <span>સાચો જવાબ: <b class="text-emerald-700">${q.answer || '-'}</b></span>
+                </div>
+                ${getAutoMathExplanationHtml(q, userAns, q.answer)}
+            </div>
+        `;
+    });
+}
 
         function escapeHtmlForResult(str) {
             return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -2223,7 +2230,19 @@
             try {
                 const html = '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
                     escapeHtmlForResult(fileName) +
-                    '</title><style>body{margin:0;background:#222;text-align:center;font-family:Arial,sans-serif}img{max-width:100%;height:auto;display:block;margin:auto}p{color:#fff;font-size:14px;padding:10px}</style></head><body>' +
+                    '</title><style>body{margin:0;background:#222;text-align:center;font-family:Arial,sans-serif}img{max-width:100%;height:auto;display:block;margin:auto}p{color:#fff;font-size:14px;padding:10px}</style>
+<style>
+.result-review-card{background:#fff;border:1px solid #dbe4f0;border-radius:16px;padding:12px;margin-bottom:12px;box-shadow:0 3px 12px rgba(15,23,42,.06)}
+.result-correct{border-left:4px solid #10b981}.result-wrong{border-left:4px solid #ef4444}
+.result-q-head{display:flex;align-items:flex-start;gap:9px}.result-q-number{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e11d48;color:#fff;font-weight:800;flex:0 0 auto}.result-correct .result-q-number{background:#059669}
+.result-q-text{font-size:14px;font-weight:800;color:#172554;line-height:1.55;flex:1}.result-ok,.result-bad{padding:6px 9px;border-radius:9px;font-size:10px;font-weight:800;white-space:nowrap}.result-ok{background:#dcfce7;color:#047857}.result-bad{background:#ffe4e6;color:#be123c}
+.result-options{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:9px;padding:8px;background:#f8fafc;border-radius:10px;font-size:11px;color:#475569}
+.result-answer-row{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;border-top:1px solid #e2e8f0;margin-top:8px;padding-top:8px;font-size:11px;font-weight:700;color:#475569}
+.auto-math-explanation{margin-top:10px;padding:11px;border:1px solid #bfd3ff;border-radius:12px;background:#eef4ff;font-size:12px;line-height:1.9;color:#1e3a8a}
+.auto-math-explanation-title{font-weight:900;color:#3730a3;margin-bottom:3px}
+@media(max-width:600px){.result-q-text{font-size:13px}.result-options{grid-template-columns:1fr}.result-answer-row{font-size:10px}.result-review-card{padding:10px}}
+</style>
+</head><body>' +
                     '<img src="' + dataUrl + '" alt="Result"><p>ઇમેજ પર લાંબું દબાવીને <b>Save image</b> અથવા <b>Copy image</b> પસંદ કરો.</p></body></html>';
                 const w = window.open();
                 if (w) {
@@ -2829,7 +2848,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()}
 
 <script>
 function autoMathExplanation(q,u,a){
- const raw=String(q?.question||q?.text||q?.q||'').trim();
+ const raw=String(q?.question||q?.text||q?.q||'').trim().replace(/^(?:પ્રશ્ન\s*)?[0-9૦-૯]+\s*[.)\-:]\s*/,'');
  const topic=String(q?.topic||q?.chapter||q?.unit||'').toLowerCase();
  const ans=String(a??q?.answer??q?.correctAnswer??'').trim();
  const s=raw.replace(/[૦-૯]/g,d=>"૦૧૨૩૪૫૬૭૮૯".indexOf(d));
@@ -2906,12 +2925,14 @@ window.autoMathExplanation=autoMathExplanation;
 .auto-math-explanation-title{font-weight:800;color:#3730a3;margin-bottom:3px}
 </style>
 
+
+<script>
 function getAutoMathExplanationHtml(q,userAnswer,correctAnswer){
     const explanation = autoMathExplanation(q,userAnswer,correctAnswer);
     if(!explanation) return '';
-    return `<div class="auto-math-explanation"><div class="auto-math-explanation-title">🧮 ગણિતની સમજૂતી</div>${explanation}</div>`;
+    return '<div class="auto-math-explanation"><div class="auto-math-explanation-title">🧮 ગણિતની સમજૂતી</div>'+explanation+'</div>';
 }
 window.getAutoMathExplanationHtml=getAutoMathExplanationHtml;
-
+</script>
 </body>
 </html>

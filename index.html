@@ -1662,20 +1662,106 @@
             uploadedImageBase64 = '';
         }
 
-        function saveQuestionToCurrentTest(qObj) {
-            if (!currentTests[activeTestKey]) return;
-            let questions = currentTests[activeTestKey].questions ? (Array.isArray(currentTests[activeTestKey].questions) ? [...currentTests[activeTestKey].questions] : Object.values(currentTests[activeTestKey].questions)) : [];
-            questions.push(qObj);
-            database.ref(`tests/${activeTestKey}/questions`).set(questions);
-            database.ref('question_bank').push(qObj);
+        // ==================== QUESTION BANK SAFE SAVE ====================
+        // One central save path for all Online Test question types.
+        // Saves to Question Bank first, then adds the same question to the current test.
+        // Firebase errors are shown instead of silently failing.
+        async function saveQuestionToCurrentTest(qObj) {
+            try {
+                if (!currentTests[activeTestKey]) {
+                    alert('કૃપા કરીને પહેલા ટેસ્ટ પસંદ/બનાવો.');
+                    return false;
+                }
+                if (!qObj || !qObj.question) {
+                    alert('પ્રશ્નનું લખાણ ખાલી છે.');
+                    return false;
+                }
+
+                const bankRef = database.ref('question_bank').push();
+                const bankQuestion = {
+                    ...qObj,
+                    type: qObj.type || 'mcq',
+                    course: qObj.course || 'સામાન્ય',
+                    subject: qObj.subject || 'સામાન્ય',
+                    createdAt: qObj.createdAt || Date.now()
+                };
+
+                // Use the generated key so the Question Bank item always has a stable ID.
+                await bankRef.set(bankQuestion);
+
+                let questions = currentTests[activeTestKey].questions
+                    ? (Array.isArray(currentTests[activeTestKey].questions)
+                        ? [...currentTests[activeTestKey].questions]
+                        : Object.values(currentTests[activeTestKey].questions))
+                    : [];
+                questions.push(bankQuestion);
+
+                await database.ref(`tests/${activeTestKey}/questions`).set(questions);
+
+                // Keep local state immediately in sync.
+                currentTests[activeTestKey].questions = questions;
+                if (typeof loadAdminTestData === 'function') loadAdminTestData();
+                if (typeof renderAdminQuestionsList === 'function') renderAdminQuestionsList();
+                if (typeof renderQbQuestionsList === 'function') renderQbQuestionsList();
+
+                alert('✅ પ્રશ્ન Question Bank અને ટેસ્ટ બંનેમાં સફળતાપૂર્વક સેવ થયો.');
+                return true;
+            } catch (e) {
+                console.error('Question Bank save error:', e);
+                alert('❌ પ્રશ્ન સેવ થયો નથી. Internet/Firebase Database Rules ચકાસો.\n\nError: ' + (e?.message || e));
+                return false;
+            }
         }
 
-        function saveMultipleQuestionsToCurrentTest(qArray) {
-            if (!currentTests[activeTestKey]) return;
-            let questions = currentTests[activeTestKey].questions ? (Array.isArray(currentTests[activeTestKey].questions) ? [...currentTests[activeTestKey].questions] : Object.values(currentTests[activeTestKey].questions)) : [];
-            questions.push(...qArray);
-            database.ref(`tests/${activeTestKey}/questions`).set(questions);
-            qArray.forEach(q => database.ref('question_bank').push(q));
+        async function saveMultipleQuestionsToCurrentTest(qArray) {
+            try {
+                if (!currentTests[activeTestKey]) {
+                    alert('કૃપા કરીને પહેલા ટેસ્ટ પસંદ/બનાવો.');
+                    return false;
+                }
+                if (!Array.isArray(qArray) || !qArray.length) {
+                    alert('સેવ કરવા માટે કોઈ પ્રશ્ન નથી.');
+                    return false;
+                }
+
+                const questions = currentTests[activeTestKey].questions
+                    ? (Array.isArray(currentTests[activeTestKey].questions)
+                        ? [...currentTests[activeTestKey].questions]
+                        : Object.values(currentTests[activeTestKey].questions))
+                    : [];
+
+                const bankUpdates = {};
+                const prepared = qArray.map(q => ({
+                    ...q,
+                    type: q.type || 'mcq',
+                    course: q.course || 'સામાન્ય',
+                    subject: q.subject || 'સામાન્ય',
+                    createdAt: q.createdAt || Date.now()
+                }));
+
+                // Generate all Question Bank keys first, then write atomically.
+                prepared.forEach(q => {
+                    const key = database.ref('question_bank').push().key;
+                    bankUpdates[`question_bank/${key}`] = q;
+                    questions.push(q);
+                });
+
+                // One atomic Firebase update: no half-saved batch.
+                bankUpdates[`tests/${activeTestKey}/questions`] = questions;
+                await database.ref().update(bankUpdates);
+
+                currentTests[activeTestKey].questions = questions;
+                if (typeof loadAdminTestData === 'function') loadAdminTestData();
+                if (typeof renderAdminQuestionsList === 'function') renderAdminQuestionsList();
+                if (typeof renderQbQuestionsList === 'function') renderQbQuestionsList();
+
+                alert(`✅ ${prepared.length} પ્રશ્નો Question Bank અને ટેસ્ટ બંનેમાં સફળતાપૂર્વક સેવ થયા.`);
+                return true;
+            } catch (e) {
+                console.error('Question Bank batch save error:', e);
+                alert('❌ પ્રશ્નો સેવ થયા નથી. Internet/Firebase Database Rules ચકાસો.\n\nError: ' + (e?.message || e));
+                return false;
+            }
         }
 
         function renderAdminQuestionsList() {

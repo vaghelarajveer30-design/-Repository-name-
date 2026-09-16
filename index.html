@@ -1414,26 +1414,41 @@
             return out;
         }
 
-        function saveBulkTestMCQ() {
-            if (currentTests[activeTestKey]?.meta?.status === 'active') {
-                alert("આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!");
-                return;
-            }
+        async function saveBulkTestMCQ() {
+            if (!activeTestKey) { alert('કૃપા કરીને પહેલા ટેસ્ટ બનાવો/પસંદ કરો.'); return; }
             const qs=window._bulkTestMCQ||[];
             if(!qs.length){alert('પહેલા બધા પ્રશ્નો ગોઠવો.');return;}
-            const missing=qs.filter((q,i)=>!document.querySelector(`input[name="bulkTestAns${i}"]:checked`));
+            const missing=qs.filter((q,i)=>!document.querySelector(`input[name=\"bulkTestAns${i}\"]:checked`));
             if(missing.length){alert(`હજી ${missing.length} પ્રશ્નોના સાચા જવાબ પસંદ કરવાના બાકી છે.`);return;}
-            const course=document.getElementById('adminCourse').value;
-            const subject=document.getElementById('adminSubjectSelect').value;
-            let questions=currentTests[activeTestKey].questions ? (Array.isArray(currentTests[activeTestKey].questions)?[...currentTests[activeTestKey].questions]:Object.values(currentTests[activeTestKey].questions)) : [];
-            qs.forEach((q,i)=>questions.push({type:'mcq',course,subject,question:q.question,options:q.options,answer:document.querySelector(`input[name="bulkTestAns${i}"]:checked`).value}));
-            database.ref(`tests/${activeTestKey}/questions`).set(questions,()=>{
-                alert(`✅ ${qs.length} પ્રશ્નો સાચા જવાબ સાથે ટેસ્ટમાં ઉમેરાઈ ગયા.`);
+            try {
+                const snap=await database.ref(`tests/${activeTestKey}`).once('value');
+                const testData=snap.val();
+                if(!testData){alert('❌ ટેસ્ટ Firebaseમાં મળી નથી.');return;}
+                if(testData.meta?.status==='active'){alert('આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!');return;}
+                const course=document.getElementById('adminCourse')?.value||testData.meta?.course||'સામાન્ય';
+                const subject=document.getElementById('adminSubjectSelect')?.value||testData.meta?.subject||'સામાન્ય';
+                const questions=testData.questions?(Array.isArray(testData.questions)?[...testData.questions]:Object.values(testData.questions)):[];
+                const updates={};
+                qs.forEach((q,i)=>{
+                    const item={type:'mcq',course,subject,question:q.question,options:q.options,answer:document.querySelector(`input[name=\"bulkTestAns${i}\"]:checked`).value,createdAt:Date.now()};
+                    questions.push(item);
+                    const key=database.ref('question_bank').push().key;
+                    updates[`question_bank/${key}`]=item;
+                });
+                updates[`tests/${activeTestKey}/questions`]=questions;
+                await database.ref().update(updates);
+                currentTests[activeTestKey]={...testData,questions};
+                alert(`✅ ${qs.length} પ્રશ્નો ટેસ્ટ અને Question Bank બંનેમાં સેવ થઈ ગયા.`);
                 document.getElementById('m1RawText').value='';
                 document.getElementById('bulkTestMCQPreview').innerHTML='';
                 window._bulkTestMCQ=[];
                 if(typeof loadAdminTestData==='function') loadAdminTestData();
-            });
+                if(typeof renderAdminQuestionsList==='function') renderAdminQuestionsList();
+                if(typeof renderQbQuestionsList==='function') renderQbQuestionsList();
+            } catch(e) {
+                console.error('Bulk test MCQ save error:',e);
+                alert('❌ પ્રશ્નો સેવ થયા નથી. Internet/Firebase Database Rules ચકાસો.\n\nError: '+(e?.message||e));
+            }
         }
 
         function addSingleMCQ() {
@@ -1668,38 +1683,49 @@
         // Firebase errors are shown instead of silently failing.
         async function saveQuestionToCurrentTest(qObj) {
             try {
-                if (!currentTests[activeTestKey]) {
-                    alert('કૃપા કરીને પહેલા ટેસ્ટ પસંદ/બનાવો.');
-                    return false;
-                }
                 if (!qObj || !qObj.question) {
                     alert('પ્રશ્નનું લખાણ ખાલી છે.');
                     return false;
                 }
+                if (!activeTestKey) {
+                    alert('કૃપા કરીને પહેલા ટેસ્ટ પસંદ/બનાવો.');
+                    return false;
+                }
 
-                const bankRef = database.ref('question_bank').push();
                 const bankQuestion = {
                     ...qObj,
                     type: qObj.type || 'mcq',
-                    course: qObj.course || 'સામાન્ય',
-                    subject: qObj.subject || 'સામાન્ય',
+                    course: qObj.course || document.getElementById('adminCourse')?.value || 'સામાન્ય',
+                    subject: qObj.subject || document.getElementById('adminSubjectSelect')?.value || 'સામાન્ય',
                     createdAt: qObj.createdAt || Date.now()
                 };
 
-                // Use the generated key so the Question Bank item always has a stable ID.
-                await bankRef.set(bankQuestion);
+                // Read the test directly from Firebase. This avoids the race where
+                // currentTests has not yet received the newly-created test.
+                const testSnap = await database.ref(`tests/${activeTestKey}`).once('value');
+                const testData = testSnap.val();
+                if (!testData) {
+                    alert('❌ ટેસ્ટ Firebaseમાં મળી નથી. પહેલા ટેસ્ટ સેવ થવા દો અને ફરી પ્રયાસ કરો.');
+                    return false;
+                }
+                if (testData.meta?.status === 'active') {
+                    alert('આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!');
+                    return false;
+                }
 
-                let questions = currentTests[activeTestKey].questions
-                    ? (Array.isArray(currentTests[activeTestKey].questions)
-                        ? [...currentTests[activeTestKey].questions]
-                        : Object.values(currentTests[activeTestKey].questions))
+                const bankRef = database.ref('question_bank').push();
+                const questions = testData.questions
+                    ? (Array.isArray(testData.questions) ? [...testData.questions] : Object.values(testData.questions))
                     : [];
                 questions.push(bankQuestion);
 
-                await database.ref(`tests/${activeTestKey}/questions`).set(questions);
+                // Save both records in ONE atomic Firebase update.
+                const updates = {};
+                updates[`question_bank/${bankRef.key}`] = bankQuestion;
+                updates[`tests/${activeTestKey}/questions`] = questions;
+                await database.ref().update(updates);
 
-                // Keep local state immediately in sync.
-                currentTests[activeTestKey].questions = questions;
+                currentTests[activeTestKey] = {...testData, questions};
                 if (typeof loadAdminTestData === 'function') loadAdminTestData();
                 if (typeof renderAdminQuestionsList === 'function') renderAdminQuestionsList();
                 if (typeof renderQbQuestionsList === 'function') renderQbQuestionsList();

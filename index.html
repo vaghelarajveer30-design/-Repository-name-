@@ -1479,8 +1479,9 @@
                 answer: correct
             };
 
-            saveQuestionToCurrentTest(qObj);
-            document.getElementById('m1RawText').value = '';
+            saveQuestionToCurrentTest(qObj).then(ok => {
+                if (ok) document.getElementById('m1RawText').value = '';
+            });
         }
 
         // Bulk passage builder: many passages, each containing any number of MCQs.
@@ -1741,7 +1742,7 @@
 
         async function saveMultipleQuestionsToCurrentTest(qArray) {
             try {
-                if (!currentTests[activeTestKey]) {
+                if (!activeTestKey) {
                     alert('કૃપા કરીને પહેલા ટેસ્ટ પસંદ/બનાવો.');
                     return false;
                 }
@@ -1750,42 +1751,44 @@
                     return false;
                 }
 
-                const questions = currentTests[activeTestKey].questions
-                    ? (Array.isArray(currentTests[activeTestKey].questions)
-                        ? [...currentTests[activeTestKey].questions]
-                        : Object.values(currentTests[activeTestKey].questions))
+                // Always read the selected test directly from Firebase. This fixes
+                // the newly-created-test race where currentTests is still stale.
+                const snap=await database.ref(`tests/${activeTestKey}`).once('value');
+                const testData=snap.val();
+                if(!testData){
+                    alert('❌ પસંદ કરેલી ટેસ્ટ Firebaseમાં મળી નથી.');
+                    return false;
+                }
+                if(testData.meta?.status==='active'){
+                    alert('આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં પ્રશ્નો ઉમેરી શકાશે નહીં!');
+                    return false;
+                }
+
+                const questions=testData.questions
+                    ? (Array.isArray(testData.questions)?[...testData.questions]:Object.values(testData.questions))
                     : [];
+                const updates={};
+                const course=document.getElementById('adminCourse')?.value||testData.meta?.course||'સામાન્ય';
+                const subject=document.getElementById('adminSubjectSelect')?.value||testData.meta?.subject||'સામાન્ય';
 
-                const bankUpdates = {};
-                const prepared = qArray.map(q => ({
-                    ...q,
-                    type: q.type || 'mcq',
-                    course: q.course || 'સામાન્ય',
-                    subject: q.subject || 'સામાન્ય',
-                    createdAt: q.createdAt || Date.now()
-                }));
-
-                // Generate all Question Bank keys first, then write atomically.
-                prepared.forEach(q => {
-                    const key = database.ref('question_bank').push().key;
-                    bankUpdates[`question_bank/${key}`] = q;
-                    questions.push(q);
+                qArray.forEach(q=>{
+                    const item={...q,type:q.type||'mcq',course:q.course||course,subject:q.subject||subject,createdAt:q.createdAt||Date.now()};
+                    questions.push(item);
+                    const key=database.ref('question_bank').push().key;
+                    updates[`question_bank/${key}`]=item;
                 });
+                updates[`tests/${activeTestKey}/questions`]=questions;
 
-                // One atomic Firebase update: no half-saved batch.
-                bankUpdates[`tests/${activeTestKey}/questions`] = questions;
-                await database.ref().update(bankUpdates);
-
-                currentTests[activeTestKey].questions = questions;
-                if (typeof loadAdminTestData === 'function') loadAdminTestData();
-                if (typeof renderAdminQuestionsList === 'function') renderAdminQuestionsList();
-                if (typeof renderQbQuestionsList === 'function') renderQbQuestionsList();
-
-                alert(`✅ ${prepared.length} પ્રશ્નો Question Bank અને ટેસ્ટ બંનેમાં સફળતાપૂર્વક સેવ થયા.`);
+                await database.ref().update(updates);
+                currentTests[activeTestKey]={...testData,questions};
+                if(typeof loadAdminTestData==='function') loadAdminTestData();
+                if(typeof renderAdminQuestionsList==='function') renderAdminQuestionsList();
+                if(typeof renderQbQuestionsList==='function') renderQbQuestionsList();
+                alert(`✅ ${qArray.length} પ્રશ્નો Question Bank અને ટેસ્ટ બંનેમાં સેવ થયા.`);
                 return true;
-            } catch (e) {
-                console.error('Question Bank batch save error:', e);
-                alert('❌ પ્રશ્નો સેવ થયા નથી. Internet/Firebase Database Rules ચકાસો.\n\nError: ' + (e?.message || e));
+            } catch(e){
+                console.error('Question Bank batch save error:',e);
+                alert('❌ પ્રશ્નો સેવ થયા નથી. Internet/Firebase Database Rules ચકાસો.\n\nError: '+(e?.message||e));
                 return false;
             }
         }
@@ -3022,7 +3025,7 @@ window.autoMathExplanation=autoMathExplanation;
     }
 
     function saveStudentResume(){
-        const d = window.currentStudentQuizData;
+        const d = currentStudentQuizData;
         if (!d || d.meta?.allowResume === false) return;
         try {
             localStorage.setItem(resumeKey(d.studentName,d.testKey), JSON.stringify({
@@ -3050,7 +3053,7 @@ window.autoMathExplanation=autoMathExplanation;
     }
 
     // Start/restart quiz: question randomization is allowed, option randomization is NEVER used.
-    function startFixed(ev){
+    async function startFixed(ev){
         if (ev) ev.preventDefault();
         const nameEl=document.getElementById('studentName');
         const stdEl=document.getElementById('studentStd');
@@ -3059,8 +3062,21 @@ window.autoMathExplanation=autoMathExplanation;
         if(!name){ alert('કૃપા કરીને વિદ્યાર્થીનું નામ લખો.'); return false; }
 
         const u=new URLSearchParams(location.search);
-        const k=u.get('t')||u.get('test')||window.activeTestKey;
-        const test=window.currentTests?.[k];
+        const k=u.get('t')||u.get('test')||activeTestKey;
+        let test=currentTests?.[k];
+        // The shared student link can open before the Firebase /tests listener finishes.
+        // Read the exact test directly from Firebase in that case.
+        if(!test){
+            try {
+                const snap=await database.ref(`tests/${k}`).once('value');
+                test=snap.val();
+                if(test) currentTests[k]=test;
+            } catch(e){
+                console.error('Student test load error:',e);
+                alert('❌ ટેસ્ટ લોડ થઈ નથી. Internet/Firebase Database Rules ચકાસો.');
+                return false;
+            }
+        }
         if(!test || !test.questions){ alert('આ ટેસ્ટમાં પ્રશ્નો નથી.'); return false; }
 
         const m=test.meta||{};
@@ -3106,7 +3122,7 @@ window.autoMathExplanation=autoMathExplanation;
             Object.keys(old.answers).forEach(i=>{answers[i]=normalizeLetter(old.answers[i]);});
         }
 
-        window.currentStudentQuizData={
+        currentStudentQuizData={
             testKey:k,
             studentName:name,
             std:std,
@@ -3126,7 +3142,7 @@ window.autoMathExplanation=autoMathExplanation;
         if(typeof window.renderStudentQuizQuestions==='function') window.renderStudentQuizQuestions();
         else if(typeof renderStudentQuizQuestions==='function') renderStudentQuizQuestions();
 
-        const elapsed=Math.floor((now-window.currentStudentQuizData.startedAt)/1000);
+        const elapsed=Math.floor((now-currentStudentQuizData.startedAt)/1000);
         const duration=Math.max(1,(Number(m.timeLimit||60)*60)-Math.max(0,elapsed));
         if(typeof window.startStudentTimer==='function') window.startStudentTimer(duration);
         saveStudentResume();
@@ -3134,7 +3150,7 @@ window.autoMathExplanation=autoMathExplanation;
     }
 
     function answerFixed(i,letter){
-        const d=window.currentStudentQuizData;
+        const d=currentStudentQuizData;
         if(!d || !d.questions?.[i]) return;
         const a=normalizeLetter(letter);
         if(!a) return;
@@ -3146,9 +3162,9 @@ window.autoMathExplanation=autoMathExplanation;
     }
 
     function submitFixed(){
-        const d=window.currentStudentQuizData;
+        const d=currentStudentQuizData;
         if(!d) return;
-        if(window.studentTimerInterval) clearInterval(window.studentTimerInterval);
+        if(studentTimerInterval) clearInterval(studentTimerInterval);
 
         const questions=fixedQuestions(d.questions);
         const answers=Object.assign({},d.answers||{});
@@ -3177,7 +3193,7 @@ window.autoMathExplanation=autoMathExplanation;
         };
 
         // Firebase gets EVERY student's submission independently.
-        window.database.ref('submissions').push(submissionObj).catch(e=>console.error('Submission save error:',e));
+        database.ref('submissions').push(submissionObj).catch(e=>console.error('Submission save error:',e));
 
         // Attempts are per STUDENT + TEST, not per device.
         const attempts=getAttempts(d.studentName,d.testKey);
@@ -3190,7 +3206,7 @@ window.autoMathExplanation=autoMathExplanation;
         clearStudentResume(d.studentName,d.testKey);
 
         // Keep the latest result in the same global result flow.
-        window.lastResultSubmission=submissionObj;
+        lastResultSubmission=submissionObj;
         if(typeof window.showResultsScreen==='function') window.showResultsScreen(submissionObj);
         else alert(`ટેસ્ટ પૂર્ણ. ગુણ: ${correct}/${total}`);
     }
@@ -3199,10 +3215,20 @@ window.autoMathExplanation=autoMathExplanation;
         if(confirm('શું તમે ખરેખર ટેસ્ટ સબમિટ કરવા માગો છો?')) submitFixed();
     }
 
-    function updateRegistrationFixed(){
+    async function updateRegistrationFixed(){
         const u=new URLSearchParams(location.search);
-        const k=u.get('t')||u.get('test')||window.activeTestKey;
-        const test=window.currentTests?.[k];
+        const k=u.get('t')||u.get('test')||activeTestKey;
+        let test=currentTests?.[k];
+        if(!test){
+            try {
+                const snap=await database.ref(`tests/${k}`).once('value');
+                test=snap.val();
+                if(test) currentTests[k]=test;
+            } catch(e){
+                console.error('Registration test load error:',e);
+                return;
+            }
+        }
         if(!test) return;
         const m=test.meta||{};
         const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val;};
@@ -3253,8 +3279,8 @@ window.autoMathExplanation=autoMathExplanation;
         window.EV2.saveSettings=function(b){
             const e=document.getElementById('eRO');
             if(e) e.checked=false;
-            if(window.currentTests?.[window.activeTestKey]?.meta){
-                window.currentTests[window.activeTestKey].meta.randomizeOptions=false;
+            if(currentTests?.[activeTestKey]?.meta){
+                currentTests[activeTestKey].meta.randomizeOptions=false;
             }
             if(typeof oldSave==='function') return oldSave(b);
         };

@@ -173,7 +173,7 @@
             </div>
 
             <div id="studentAttemptNotice" class="mb-4 bg-indigo-50 border border-indigo-200 rounded-lg p-2 text-xs text-indigo-800 text-center font-bold">
-                <i class="fa-solid fa-mobile-screen-button"></i> નોંધ: આ લિંક પરથી મહત્તમ ૨ વખત ટેસ્ટ આપી શકાશે. (આપેલ ટેસ્ટ: <span id="dispDeviceAttempts" class="text-rose-600">0</span>/2)
+                <i class="fa-solid fa-mobile-screen-button"></i> નોંધ: દરેક વિદ્યાર્થી આ મોબાઈલમાંથી મહત્તમ ૨ વખત ટેસ્ટ આપી શકે છે. (આ વિદ્યાર્થીના પ્રયાસ: <span id="dispDeviceAttempts" class="text-rose-600">0</span>/2)
             </div>
 
             <div id="maxAttemptsReachedBox" class="hidden bg-rose-50 border border-rose-300 p-4 rounded-xl text-center space-y-2 mb-4">
@@ -2750,8 +2750,8 @@ const E={esc:v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>'
 window.EV2=E;
 function stats(){let d=document.getElementById('ev2dash');if(!d)return;let ts=Object.keys(currentTests||{}),act=ts.filter(k=>currentTests[k]?.meta?.status==='active').length,st=[...new Set(allSubmissionsGlobal.map(x=>x.studentName).filter(Boolean))],avg=allSubmissionsGlobal.length?Math.round(allSubmissionsGlobal.reduce((a,x)=>a+Number(x.percentage||0),0)/allSubmissionsGlobal.length):0;document.getElementById('ev2stats').innerHTML=[['કુલ ટેસ્ટ',ts.length],['એક્ટિવ',act],['વિદ્યાર્થી',st.length],['સરેરાશ',avg+'%']].map(x=>`<div class="ev2stat"><span class="text-[10px] font-bold text-slate-500">${x[0]}</span><br><b>${x[1]}</b></div>`).join('');}
 function dash(){return;}
-E.settings=function(){let m=currentTests[activeTestKey]?.meta||{},d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>⚙️ ટેસ્ટ સેટિંગ્સ</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="grid sm:grid-cols-2 gap-3 text-xs mt-3"><label>Random પ્રશ્નો<input id="eQ" type="number" min="0" value="${m.randomQuestionCount||0}" class="w-full border rounded p-2"></label><label>Max Attempts<input id="eA" type="number" min="1" value="${m.maxAttempts||2}" class="w-full border rounded p-2"></label><label>Start<input id="eS" type="datetime-local" value="${m.startAt?new Date(m.startAt).toISOString().slice(0,16):''}" class="w-full border rounded p-2"></label><label>End<input id="eE" type="datetime-local" value="${m.endAt?new Date(m.endAt).toISOString().slice(0,16):''}" class="w-full border rounded p-2"></label><label><input id="eRQ" type="checkbox" ${m.randomizeQuestions?'checked':''}> પ્રશ્નો random</label><label><input id="eRO" type="checkbox" ${m.randomizeOptions?'checked':''}> વિકલ્પો random</label><label><input id="eR" type="checkbox" ${m.allowResume!==false?'checked':''}> Auto-save/Resume</label><label><input id="eC" type="checkbox" ${m.cloudAttemptLimit!==false?'checked':''}> Cloud attempt tracking</label></div><div class="text-right mt-4"><button onclick="EV2.saveSettings(this)" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">સેવ</button></div></div>`;document.body.appendChild(d)};
-E.saveSettings=function(b){let m={...(currentTests[activeTestKey]?.meta||{})};m.randomQuestionCount=+document.getElementById('eQ').value||0;m.maxAttempts=Math.max(1,+document.getElementById('eA').value||2);m.startAt=document.getElementById('eS').value?new Date(document.getElementById('eS').value).getTime():null;m.endAt=document.getElementById('eE').value?new Date(document.getElementById('eE').value).getTime():null;m.randomizeQuestions=document.getElementById('eRQ').checked;m.randomizeOptions=document.getElementById('eRO').checked;m.allowResume=document.getElementById('eR').checked;m.cloudAttemptLimit=document.getElementById('eC').checked;database.ref('tests/'+activeTestKey+'/meta').update(m).then(()=>{alert('સેટિંગ્સ સેવ થઈ ગઈ.');b.closest('.ev2modal').remove()})};
+E.settings=function(){let m=currentTests[activeTestKey]?.meta||{},d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>⚙️ ટેસ્ટ સેટિંગ્સ</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="grid sm:grid-cols-2 gap-3 text-xs mt-3"><label>Random પ્રશ્નો<input id="eQ" type="number" min="0" value="${m.randomQuestionCount||0}" class="w-full border rounded p-2"></label><label>Max Attempts<input id="eA" type="number" min="1" value="${m.maxAttempts||2}" class="w-full border rounded p-2"></label><label>Start<input id="eS" type="datetime-local" value="${m.startAt?new Date(m.startAt).toISOString().slice(0,16):''}" class="w-full border rounded p-2"></label><label>End<input id="eE" type="datetime-local" value="${m.endAt?new Date(m.endAt).toISOString().slice(0,16):''}" class="w-full border rounded p-2"></label><label><input id="eRQ" type="checkbox" ${m.randomizeQuestions?'checked':''}> પ્રશ્નો random</label><label><input id="eRO" type="checkbox" disabled> વિકલ્પો random (સુરક્ષિત રીતે બંધ)</label><label><input id="eR" type="checkbox" ${m.allowResume!==false?'checked':''}> Auto-save/Resume</label><label><input id="eC" type="checkbox" ${m.cloudAttemptLimit!==false?'checked':''}> Cloud attempt tracking</label></div><div class="text-right mt-4"><button onclick="EV2.saveSettings(this)" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">સેવ</button></div></div>`;document.body.appendChild(d)};
+E.saveSettings=function(b){let m={...(currentTests[activeTestKey]?.meta||{})};m.randomQuestionCount=+document.getElementById('eQ').value||0;m.maxAttempts=Math.max(1,+document.getElementById('eA').value||2);m.startAt=document.getElementById('eS').value?new Date(document.getElementById('eS').value).getTime():null;m.endAt=document.getElementById('eE').value?new Date(document.getElementById('eE').value).getTime():null;m.randomizeQuestions=document.getElementById('eRQ').checked;m.randomizeOptions=false;m.allowResume=document.getElementById('eR').checked;m.cloudAttemptLimit=document.getElementById('eC').checked;database.ref('tests/'+activeTestKey+'/meta').update(m).then(()=>{alert('સેટિંગ્સ સેવ થઈ ગઈ.');b.closest('.ev2modal').remove()})};
 E.analytics=function(){let k=activeTestKey,s=allSubmissionsGlobal.filter(x=>x.testKey===k),avg=s.length?Math.round(s.reduce((a,x)=>a+Number(x.percentage||0),0)/s.length):0,rank=s.slice().sort((a,b)=>b.percentage-a.percentage||b.correctCount-a.correctCount).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.studentName)}</td><td>${x.correctCount}/${x.totalQuestions}</td><td>${x.percentage}%</td><td>${E.grade(x.percentage)}</td></tr>`).join('');let q={};s.forEach(x=>E.arr(x.questions).forEach((z,i)=>{let id=z.question||i;q[id]??={q:id,t:0,c:0};q[id].t++;if(x.answers?.[i]===z.answer)q[id].c++}));let hard=Object.values(q).sort((a,b)=>a.c/a.t-b.c/b.t).slice(0,10).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.q)}</td><td>${Math.round(x.c/x.t*100)}%</td></tr>`).join('');let d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>📈 ${E.esc(currentTests[k]?.meta?.title||k)} Analytics</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="ev2grid my-3"><div class="ev2stat">Submissions<br><b>${s.length}</b></div><div class="ev2stat">Average<br><b>${avg}%</b></div><div class="ev2stat">Highest<br><b>${s.length?Math.max(...s.map(x=>+x.percentage||0)):'-'}%</b></div><div class="ev2stat">Topper<br><b class="text-sm">${s[0]?E.esc(s.slice().sort((a,b)=>b.percentage-a.percentage)[0].studentName):'-'}</b></div></div><h4 class="font-bold text-xs mb-1">🏆 Rank</h4><table class="ev2table"><tr><th>Rank</th><th>વિદ્યાર્થી</th><th>ગુણ</th><th>%</th><th>Grade</th></tr>${rank||'<tr><td colspan=5>ડેટા નથી</td></tr>'}</table><h4 class="font-bold text-xs mt-4 mb-1">⚠️ મુશ્કેલ પ્રશ્નો</h4><table class="ev2table"><tr><th>#</th><th>પ્રશ્ન</th><th>સાચા</th></tr>${hard||'<tr><td colspan=3>ડેટા નથી</td></tr>'}</table></div>`;document.body.appendChild(d)};
 E.csv=function(){let r=[['તારીખ','ટેસ્ટ','કોર્ષ','વિષય','વિદ્યાર્થી','ધોરણ','સાચા','કુલ','ટકાવારી','Grade']];allSubmissionsGlobal.forEach(x=>r.push([x.timestamp?new Date(x.timestamp).toLocaleString('gu-IN'):'',x.testTitle||'',x.course||'',x.subject||'',x.studentName||'',x.std||'',x.correctCount||0,x.totalQuestions||0,x.percentage||0,E.grade(+x.percentage||0)]));let c='\ufeff'+r.map(a=>a.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv;charset=utf-8'}));a.download='nirmala_results.csv';a.click()};
 E.json=function(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({version:2,exportedAt:Date.now(),tests:currentTests,submissions:allSubmissionsGlobal,question_bank:questionBankData,customLogo:customLogoBase64},null,2)],{type:'application/json'}));a.download='nirmala_backup.json';a.click()};
@@ -2862,3 +2862,290 @@ window.autoMathExplanation=autoMathExplanation;
 
 </body>
 </html>
+
+<!-- FINAL MCQ ANSWER + PER-STUDENT ATTEMPT FIX -->
+<script>
+(function(){
+    // This final layer intentionally keeps A/B/C/D positions fixed.
+    // It also stores attempts/resume data per TEST + STUDENT, so two different
+    // students can use the same phone and both submissions remain in Firebase.
+
+    function qArr(v){
+        if (Array.isArray(v)) return v.slice();
+        return v ? Object.values(v) : [];
+    }
+
+    function normalizeLetter(v){
+        if (v === undefined || v === null) return '';
+        let a = String(v).trim().toUpperCase();
+        if (/^[1-4]$/.test(a)) return 'ABCD'[Number(a)-1];
+        if (/^[ABCD]$/.test(a)) return a;
+        return '';
+    }
+
+    function studentKey(name, testKey){
+        const n = String(name || '').trim().toLowerCase().replace(/\s+/g,' ');
+        return 'attempts_' + encodeURIComponent(testKey) + '_' + encodeURIComponent(n);
+    }
+
+    function resumeKey(name, testKey){
+        return 'ev2resume_' + encodeURIComponent(String(name || '').trim().toLowerCase()) + '_' + encodeURIComponent(testKey);
+    }
+
+    function getAttempts(name, testKey){
+        try { return JSON.parse(localStorage.getItem(studentKey(name,testKey)) || '[]'); }
+        catch(e){ return []; }
+    }
+
+    function saveAttempts(name, testKey, attempts){
+        localStorage.setItem(studentKey(name,testKey), JSON.stringify(attempts));
+    }
+
+    function clearStudentResume(name, testKey){
+        try { localStorage.removeItem(resumeKey(name,testKey)); } catch(e) {}
+        // Also remove the legacy resume key used by the previous build.
+        try {
+            if (window.EV2 && EV2.key) localStorage.removeItem(EV2.key(name,testKey));
+        } catch(e) {}
+    }
+
+    function saveStudentResume(){
+        const d = window.currentStudentQuizData;
+        if (!d || d.meta?.allowResume === false) return;
+        try {
+            localStorage.setItem(resumeKey(d.studentName,d.testKey), JSON.stringify({
+                startedAt: d.startedAt,
+                questions: d.questions,
+                answers: d.answers
+            }));
+        } catch(e) {}
+    }
+
+    function loadStudentResume(name,testKey){
+        try { return JSON.parse(localStorage.getItem(resumeKey(name,testKey)) || 'null'); }
+        catch(e){ return null; }
+    }
+
+    function fixedQuestions(rawQuestions){
+        return qArr(rawQuestions).map(q => {
+            const x = Object.assign({}, q);
+            x.options = Array.isArray(q.options) ? q.options.slice(0,4) : ['A','B','C','D'];
+            while(x.options.length < 4) x.options.push('');
+            // Correct answer is always tied to its fixed A/B/C/D position.
+            x.answer = normalizeLetter(q.answer);
+            return x;
+        });
+    }
+
+    // Start/restart quiz: question randomization is allowed, option randomization is NEVER used.
+    function startFixed(ev){
+        if (ev) ev.preventDefault();
+        const nameEl=document.getElementById('studentName');
+        const stdEl=document.getElementById('studentStd');
+        const name=(nameEl?.value||'').trim();
+        const std=stdEl?.value||'';
+        if(!name){ alert('કૃપા કરીને વિદ્યાર્થીનું નામ લખો.'); return false; }
+
+        const u=new URLSearchParams(location.search);
+        const k=u.get('t')||u.get('test')||window.activeTestKey;
+        const test=window.currentTests?.[k];
+        if(!test || !test.questions){ alert('આ ટેસ્ટમાં પ્રશ્નો નથી.'); return false; }
+
+        const m=test.meta||{};
+        const now=Date.now();
+        if(m.status==='draft'){ alert('આ ટેસ્ટ Draftમાં છે.'); return false; }
+        if(m.startAt && now<m.startAt){ alert('ટેસ્ટ હજુ શરૂ થઈ નથી.'); return false; }
+        if(m.endAt && now>m.endAt){ alert('ટેસ્ટનો સમયગાળો પૂર્ણ થયો છે.'); return false; }
+
+        const max=Math.max(1,Number(m.maxAttempts||2));
+        const attempts=getAttempts(name,k);
+        if(attempts.length>=max){
+            updateRegistrationFixed();
+            return false;
+        }
+
+        let qs=fixedQuestions(test.questions);
+        if(!qs.length){ alert('આ ટેસ્ટમાં પ્રશ્નો નથી.'); return false; }
+
+        // Resume only this student's unfinished test.
+        let old=loadStudentResume(name,k);
+        if(old?.questions?.length && m.allowResume!==false){
+            if(confirm('આ વિદ્યાર્થીની અધૂરી ટેસ્ટ મળી છે. Resume કરવી છે?')){
+                qs=fixedQuestions(old.questions);
+            }else{
+                try{localStorage.removeItem(resumeKey(name,k));}catch(e){}
+                old=null;
+            }
+        }
+
+        // Randomize whole questions only. NEVER shuffle q.options.
+        if(!old){
+            const n=Number(m.randomQuestionCount||0);
+            if(window.EV2?.shuffle){
+                if(n>0 && n<qs.length) qs=window.EV2.shuffle(qs).slice(0,n);
+                else if(m.randomizeQuestions) qs=window.EV2.shuffle(qs);
+            }else if(m.randomizeQuestions){
+                for(let i=qs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qs[i],qs[j]]=[qs[j],qs[i]];}
+            }
+        }
+
+        const answers={};
+        if(old?.answers){
+            Object.keys(old.answers).forEach(i=>{answers[i]=normalizeLetter(old.answers[i]);});
+        }
+
+        window.currentStudentQuizData={
+            testKey:k,
+            studentName:name,
+            std:std,
+            meta:Object.assign({},m,{randomizeOptions:false}),
+            questions:qs,
+            answers:answers,
+            startedAt:old?.startedAt||now
+        };
+
+        document.getElementById('studentRegScreen')?.classList.add('hidden');
+        document.getElementById('quizScreen')?.classList.remove('hidden');
+        document.getElementById('quizHeaderTimerBox')?.classList.remove('hidden');
+        const title=document.getElementById('quizTitleDisplay');
+        if(title) title.textContent=m.title||'ઓનલાઇન ટેસ્ટ';
+
+        if(typeof window.nav==='function') window.nav();
+        if(typeof window.renderStudentQuizQuestions==='function') window.renderStudentQuizQuestions();
+        else if(typeof renderStudentQuizQuestions==='function') renderStudentQuizQuestions();
+
+        const elapsed=Math.floor((now-window.currentStudentQuizData.startedAt)/1000);
+        const duration=Math.max(1,(Number(m.timeLimit||60)*60)-Math.max(0,elapsed));
+        if(typeof window.startStudentTimer==='function') window.startStudentTimer(duration);
+        saveStudentResume();
+        return false;
+    }
+
+    function answerFixed(i,letter){
+        const d=window.currentStudentQuizData;
+        if(!d || !d.questions?.[i]) return;
+        const a=normalizeLetter(letter);
+        if(!a) return;
+        d.answers[i]=a;
+        saveStudentResume();
+        ['A','B','C','D'].forEach(x=>document.getElementById(`opt_${i}_${x}`)?.classList.remove('selected-ans'));
+        document.getElementById(`opt_${i}_${a}`)?.classList.add('selected-ans');
+        if(typeof window.updateNav==='function') window.updateNav();
+    }
+
+    function submitFixed(){
+        const d=window.currentStudentQuizData;
+        if(!d) return;
+        if(window.studentTimerInterval) clearInterval(window.studentTimerInterval);
+
+        const questions=fixedQuestions(d.questions);
+        const answers=Object.assign({},d.answers||{});
+        let correct=0;
+        questions.forEach((q,i)=>{
+            if(normalizeLetter(answers[i])===normalizeLetter(q.answer)) correct++;
+        });
+
+        const total=questions.length;
+        const percentage=total?Math.round(correct/total*100):0;
+        const submissionObj={
+            testKey:d.testKey,
+            testTitle:d.meta?.title||'ટેસ્ટ',
+            studentName:d.studentName,
+            std:d.std,
+            correctCount:correct,
+            totalQuestions:total,
+            percentage:percentage,
+            timestamp:Date.now(),
+            answers:answers,
+            questions:questions,
+            course:d.meta?.course||'',
+            subject:d.meta?.subject||'',
+            durationSeconds:Math.max(0,Math.floor((Date.now()-(d.startedAt||Date.now()))/1000)),
+            grade:typeof window.EV2?.grade==='function'?window.EV2.grade(percentage):''
+        };
+
+        // Firebase gets EVERY student's submission independently.
+        window.database.ref('submissions').push(submissionObj).catch(e=>console.error('Submission save error:',e));
+
+        // Attempts are per STUDENT + TEST, not per device.
+        const attempts=getAttempts(d.studentName,d.testKey);
+        attempts.push({
+            score:correct,total:total,percentage:percentage,date:new Date().toISOString(),
+            studentName:d.studentName,std:d.std,testTitle:submissionObj.testTitle,
+            answers:answers,questions:questions,course:submissionObj.course,subject:submissionObj.subject
+        });
+        saveAttempts(d.studentName,d.testKey,attempts);
+        clearStudentResume(d.studentName,d.testKey);
+
+        // Keep the latest result in the same global result flow.
+        window.lastResultSubmission=submissionObj;
+        if(typeof window.showResultsScreen==='function') window.showResultsScreen(submissionObj);
+        else alert(`ટેસ્ટ પૂર્ણ. ગુણ: ${correct}/${total}`);
+    }
+
+    function confirmFixed(){
+        if(confirm('શું તમે ખરેખર ટેસ્ટ સબમિટ કરવા માગો છો?')) submitFixed();
+    }
+
+    function updateRegistrationFixed(){
+        const u=new URLSearchParams(location.search);
+        const k=u.get('t')||u.get('test')||window.activeTestKey;
+        const test=window.currentTests?.[k];
+        if(!test) return;
+        const m=test.meta||{};
+        const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val;};
+        set('studentTestTitle',m.title||k);
+        set('dispCourse',m.course||'સામાન્ય');
+        set('dispSubject',m.subject||'સામાન્ય');
+        set('dispTotalMarks',m.totalMarks||100);
+        set('dispTimeLimit',(m.timeLimit||60)+' મિનિટ');
+
+        // IMPORTANT: do not count the whole device. Count the typed student's attempts.
+        const name=(document.getElementById('studentName')?.value||'').trim();
+        const attempts=name?getAttempts(name,k):[];
+        const max=Math.max(1,Number(m.maxAttempts||2));
+        set('dispDeviceAttempts',attempts.length);
+
+        const form=document.getElementById('studentRegForm');
+        const box=document.getElementById('maxAttemptsReachedBox');
+        const sheet=document.getElementById('lockedAttemptAnswerSheet');
+        if(attempts.length>=max){
+            form?.classList.add('hidden'); box?.classList.remove('hidden');
+            const last=attempts[attempts.length-1];
+            set('lastAttemptScoreText',`મેળવેલ માર્ક્સ: ${last.score} / ${last.total} (${last.percentage}%)`);
+            if(typeof window.renderLockedAttemptAnswerSheet==='function') window.renderLockedAttemptAnswerSheet(last);
+        }else{
+            form?.classList.remove('hidden'); box?.classList.add('hidden');
+            if(sheet) sheet.innerHTML='';
+        }
+    }
+
+    // Expose final versions used by inline HTML handlers.
+    window.startStudentQuiz=startFixed;
+    window.selectStudentAnswer=answerFixed;
+    window.submitStudentQuiz=submitFixed;
+    window.confirmSubmitQuiz=confirmFixed;
+    window.updateStudentRegistrationCard=updateRegistrationFixed;
+
+    // Re-check attempt count as soon as the student types a name.
+    document.addEventListener('input',function(e){
+        if(e.target?.id==='studentName') updateRegistrationFixed();
+    });
+    document.addEventListener('change',function(e){
+        if(e.target?.id==='studentStd') updateRegistrationFixed();
+    });
+
+    // Prevent the old EV2 settings from ever enabling option shuffling.
+    if(window.EV2){
+        const oldSave=window.EV2.saveSettings;
+        window.EV2.saveSettings=function(b){
+            const e=document.getElementById('eRO');
+            if(e) e.checked=false;
+            if(window.currentTests?.[window.activeTestKey]?.meta){
+                window.currentTests[window.activeTestKey].meta.randomizeOptions=false;
+            }
+            if(typeof oldSave==='function') return oldSave(b);
+        };
+    }
+})();
+</script>

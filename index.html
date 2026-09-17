@@ -3078,11 +3078,6 @@ window.autoMathExplanation=autoMathExplanation;
             }
         }
 
-        const answers={};
-        if(old?.answers){
-            Object.keys(old.answers).forEach(i=>{answers[i]=normalizeLetter(old.answers[i]);});
-        }
-
         currentStudentQuizData={
             testKey:k,
             studentName:name,
@@ -3238,6 +3233,10 @@ window.autoMathExplanation=autoMathExplanation;
     if(window.EV2){
         const oldSave=window.EV2.saveSettings;
         window.EV2.saveSettings=function(b){
+            const e=document.getElementById('eRO');
+            if(e) e.checked=false;
+            if(currentTests?.[activeTestKey]?.meta){
+            }
             if(typeof oldSave==='function') return oldSave(b);
         };
     }

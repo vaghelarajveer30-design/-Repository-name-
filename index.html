@@ -2327,19 +2327,7 @@
                 const html = '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
                     escapeHtmlForResult(fileName) +
                     '</title><style>body{margin:0;background:#222;text-align:center;font-family:Arial,sans-serif}img{max-width:100%;height:auto;display:block;margin:auto}p{color:#fff;font-size:14px;padding:10px}</style></head><body>' +
-                    '<img src="' + dataUrl + '" alt="Result"><p>ઇમેજ પર લાંબું દબાવીને <b>Save image</b> અથવા <b>Copy image</b> પસંદ કરો.</p>
-<script>
-/* FINAL SAFETY LOCK — MCQ ORDER/OPTIONS RANDOMIZATION IS PERMANENTLY OFF */
-(function(){
-  try{
-    if(window.EV2){
-      EV2.shuffle=function(a){ return Array.isArray(a) ? a.slice() : []; };
-    }
-  }catch(e){}
-})();
-</script>
-
-</body></html>';
+                    '<img src="' + dataUrl + '" alt="Result"><p>ઇમેજ પર લાંબું દબાવીને <b>Save image</b> અથવા <b>Copy image</b> પસંદ કરો.</p></body></html>';
                 const w = window.open();
                 if (w) {
                     w.document.open();

@@ -3002,7 +3002,6 @@ window.autoMathExplanation=autoMathExplanation;
         try {
             localStorage.setItem(resumeKey(d.studentName,d.testKey), JSON.stringify({
                 startedAt: d.startedAt,
-                questions: d.questions,
                 answers: d.answers
             }));
         } catch(e) {}
@@ -3024,7 +3023,7 @@ window.autoMathExplanation=autoMathExplanation;
         });
     }
 
-    // Start/restart quiz: question randomization is allowed, option randomization is NEVER used.
+    // Start/restart quiz: questions and A/B/C/D options always use the exact Firebase order.
     async function startFixed(ev){
         if (ev) ev.preventDefault();
         const nameEl=document.getElementById('studentName');
@@ -3069,14 +3068,15 @@ window.autoMathExplanation=autoMathExplanation;
 
         // Resume only this student's unfinished test.
         let old=loadStudentResume(name,k);
-        if(old?.questions?.length && m.allowResume!==false){
-            if(confirm('આ વિદ્યાર્થીની અધૂરી ટેસ્ટ મળી છે. Resume કરવી છે?')){
-                qs=fixedQuestions(old.questions);
-            }else{
-                try{localStorage.removeItem(resumeKey(name,k));}catch(e){}
-                old=null;
-            }
-        }
+         // IMPORTANT: Never restore a previously saved question list or indexed answers.
+         // Older app versions could have stored randomized questions in localStorage.
+         // Always use the current Firebase test order and start this test with clean answers.
+         if(old){
+             try{localStorage.removeItem(resumeKey(name,k));}catch(e){}
+             old=null;
+         }
+
+         const answers={};
 
         currentStudentQuizData={
             testKey:k,
@@ -3233,10 +3233,6 @@ window.autoMathExplanation=autoMathExplanation;
     if(window.EV2){
         const oldSave=window.EV2.saveSettings;
         window.EV2.saveSettings=function(b){
-            const e=document.getElementById('eRO');
-            if(e) e.checked=false;
-            if(currentTests?.[activeTestKey]?.meta){
-            }
             if(typeof oldSave==='function') return oldSave(b);
         };
     }

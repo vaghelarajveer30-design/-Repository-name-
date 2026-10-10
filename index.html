@@ -1386,10 +1386,22 @@
             box.scrollIntoView({behavior:'smooth',block:'start'});
         }
 
+        // Normalize MCQ text so options can be written vertically OR horizontally.
+        // Example: (A) Mumbai (B) New Delhi (C) Ahmedabad (D) Kolkata
+        // Answer keys may include the option text: જવાબ: (B) નવી દિલ્હી
+        function normalizeBulkMCQLayout(text) {
+            return String(text || '').replace(/\r/g, '').split('\n').map(line => {
+                const trimmed=line.trim();
+                // Never split an answer-key line such as "જવાબ: (B) નવી દિલ્હી".
+                if (/^(?:જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]/i.test(trimmed)) return trimmed;
+                return trimmed.replace(/[ \t]+(?=\(?[ABCD]\)?\s*[).:\-]\s*)/gi, '\n');
+            }).join('\n').split('\n').map(line => line.trim()).filter(Boolean).join('\n');
+        }
+
         function parseBulkTestMCQ(text) {
             const guDigits='૦૧૨૩૪૫૬૭૮૯';
             const normalizeDigits = x => String(x||'').replace(/[૦-૯]/g,d=>String(guDigits.indexOf(d)));
-            const lines = String(text||'').replace(/\r/g,'').split('\n').map(x=>x.trim()).filter(Boolean);
+            const lines = normalizeBulkMCQLayout(text).split('\n').map(x=>x.trim()).filter(Boolean);
             const out=[]; let cur=null; let currentOpt=-1;
             const isQStart = line => {
                 const m=line.match(/^(?:પ્રશ્ન\s*)?([0-9૦-૯]+)\s*[\).:\-]\s*(.+)$/i);
@@ -1528,12 +1540,14 @@
         }
 
         function parseBulkPassages(text) {
-            const lines=String(text||'').replace(/\r/g,'').split('\n');
+            // Support vertical and horizontal MCQ options inside passage questions.
+            const normalizedText=normalizeBulkMCQLayout(text);
+            const lines=normalizedText.split('\n');
             const isPassageStart=line=>line.trim().match(/^(?:ફકરો|પેસેજ|passage|paragraph)\s*(?:નં\.?|નંબર\.?|no\.?)?\s*[0-9૦-૯]+\s*[:.)-]\s*(.*)$/i);
             const normalizeDigits=x=>String(x||'').replace(/[૦-૯]/g,d=>'૦૧૨૩૪૫૬૭૮૯'.indexOf(d));
             const qStart=line=>line.trim().match(/^(?:પ્રશ્ન\s*)?([0-9૦-૯]+)\s*[.)\-:]\s*(.+)$/i);
             const opt=line=>line.trim().match(/^\(?([ABCD])\)?\s*[.)\-:]\s*(.*)$/i);
-            const ans=line=>line.trim().match(/^(?:સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]?\s*([ABCD]|[1-4])\s*$/i);
+            const ans=line=>line.trim().match(/^(?:જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]?\s*\(?([ABCD]|[1-4])\)?(?:\s*[).:\-]?\s*(.*))?$/i);
             const blocks=[]; let current=null, q=null, optIndex=-1;
             const finishQ=()=>{ if(!q||!q.question) return; if(q.options.length===4 && q.options.every(Boolean)){ blocks[blocks.length-1].questions.push(q); } q=null; optIndex=-1; };
             const finishBlock=()=>{ if(!current) return; finishQ(); if(current.passage.trim()) blocks.push(current); current=null; };
@@ -1553,7 +1567,17 @@
                     if(curBlock.passage && !curBlock.questions.length && passageLines.length){ curBlock.passage=passageLines.join(' ').trim(); }
                     q={question:qm[2].trim(),options:[],answer:''}; optIndex=-1; continue;
                 }
-                const am=ans(line); if(am&&q){ let a=am[1].toUpperCase(); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1]; q.answer=a; continue; }
+                const am=ans(line); if(am&&q){
+                    let a=am[1].toUpperCase(); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1];
+                    const answerText=(am[2]||'').trim().replace(/[.!।]+$/,'').trim();
+                    if(answerText){
+                        const norm=v=>String(v||'').toLocaleLowerCase('gu').replace(/[()\s.,:;।!?\-]/g,'');
+                        const supplied=norm(answerText);
+                        const matched=q.options.findIndex(opt=>{const candidate=norm(opt);return candidate && (candidate===supplied || candidate.includes(supplied) || supplied.includes(candidate));});
+                        if(matched>=0) a='ABCD'[matched];
+                    }
+                    q.answer=a; continue;
+                }
                 const om=opt(line); if(om&&q){ const idx='ABCD'.indexOf(om[1].toUpperCase()); q.options[idx]=om[2].trim(); optIndex=idx; continue; }
                 if(q){ if(optIndex>=0) q.options[optIndex]=(q.options[optIndex]+' '+line).trim(); else q.question=(q.question+' '+line).trim(); }
                 else { if(line) passageLines.push(line); }

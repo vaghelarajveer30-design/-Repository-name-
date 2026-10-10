@@ -1396,14 +1396,29 @@
                 return m ? {n:normalizeDigits(m[1]), text:m[2].trim()} : null;
             };
             const isOpt = line => line.match(/^\(?([ABCD])\)?\s*[\).:\-]\s*(.*)$/i);
-            const answerLine = line => line.match(/^(?:સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]?\s*([ABCD]|[1-4])\s*$/i);
+            // Recognize answer keys such as: જવાબ: (B) નવી દિલ્હી, સાચો જવાબ: B, Answer: C) Ahmedabad
+            const answerLine = line => line.match(/^(?:જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]?\s*\(?([ABCD]|[1-4])\)?(?:\s*[).:\-]?\s*(.*))?$/i);
             const finish=()=>{ if(!cur)return; const opts=[cur.options[0],cur.options[1],cur.options[2],cur.options[3]]; if(cur.question && opts.every(Boolean)) out.push({question:cur.question,options:opts,answer:cur.answer||''}); cur=null; currentOpt=-1; };
             for(const line of lines){
                 const qs=isQStart(line);
                 if(qs){ finish(); cur={question:qs.text,options:[],answer:''}; currentOpt=-1; continue; }
                 if(!cur){ cur={question:line,options:[],answer:''}; currentOpt=-1; continue; }
                 const am=answerLine(line);
-                if(am){ let a=am[1].toUpperCase(); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1]; cur.answer=a; continue; }
+                if(am){
+                    let a=am[1].toUpperCase(); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1];
+                    // If the answer line includes the option text, verify it matches the selected option when possible.
+                    const answerText=(am[2]||'').trim().replace(/[.!।]+$/,'').trim();
+                    if(answerText){
+                        const normalized = v => String(v||'').toLocaleLowerCase('gu').replace(/[()\s.,:;।!?-]/g,'');
+                        const expected=normalized(cur.options['ABCD'.indexOf(a)]);
+                        const supplied=normalized(answerText);
+                        if(expected && supplied && !expected.includes(supplied) && !supplied.includes(expected)) {
+                            const matched=cur.options.findIndex(opt=>normalized(opt)===supplied || normalized(opt).includes(supplied) || supplied.includes(normalized(opt)));
+                            if(matched>=0) a='ABCD'[matched];
+                        }
+                    }
+                    cur.answer=a; continue;
+                }
                 const om=isOpt(line);
                 if(om){ const idx='ABCD'.indexOf(om[1].toUpperCase()); cur.options[idx]=om[2].trim(); currentOpt=idx; continue; }
                 // Continue multi-line question/option text instead of losing it.

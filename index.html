@@ -787,7 +787,7 @@
 
     <script>
         const courseSubjectsMap = {
-            'નવોદય': ['માનસિક યોગ્યતા કસોટી', 'ગણિત', 'ભાષા (ગુજરાતી)', 'સામાન્ય'],
+            'નવોદય': ['માનસિક યોગ્યતા કસોટી', 'ગણિત', 'ભાષા (ગુજરાતી)', 'પર્યાવરણ', 'સામાન્ય'],
             'Cet': ['ગણિત', 'વિજ્ઞાન', 'સામાજિક વિજ્ઞાન', 'અંગ્રેજી', 'ગુજરાતી', 'તાર્કિક ક્ષમતા'],
             'Gyan sadhana': ['ગણિત', 'વિજ્ઞાન', 'સામાજિક વિજ્ઞાન', 'અંગ્રેજી', 'ગુજરાતી', 'તાર્કિક ક્ષમતા'],
             'English': ['Grammar', 'Vocabulary', 'Comprehension', 'સામાન્ય'],
@@ -1359,11 +1359,23 @@
                 alert("MCQ મળ્યા નથી. દરેક પ્રશ્નમાં પ્રશ્ન + A/B/C/D ચાર વિકલ્પ હોવા જરૂરી છે.");
                 return;
             }
+            const defaultSubject=document.getElementById('adminSubjectSelect')?.value||'સામાન્ય';
+            qs.forEach(q=>{if(!q.subject)q.subject=defaultSubject;});
             window._bulkTestMCQ = qs;
             const box = document.getElementById('bulkTestMCQPreview');
             box.innerHTML = `
                 <div class="p-2 rounded-lg border bg-emerald-50 border-emerald-200 mb-2 text-[11px] font-bold text-emerald-800">
-                    ✅ ${qs.length} પ્રશ્નો ગોઠવાયા છે. હવે દરેક પ્રશ્નનો સાચો જવાબ પસંદ કરો.
+                    ✅ ${qs.length} પ્રશ્નો ગોઠવાયા છે. એક જ વિષય બધા પ્રશ્નોમાં લાગુ કરો અથવા મિક્સ ટેસ્ટ માટે વિષયવાર જૂથ પસંદ કરો.
+                </div>
+                <div class="sticky top-0 z-10 p-3 mb-3 rounded-xl border-2 border-indigo-200 bg-indigo-50 shadow-sm">
+                    <label for="bulkAllSubjectSelect" class="block font-bold text-indigo-800 mb-2">📚 બધા પ્રશ્નોનો વિષય એકસાથે પસંદ કરો</label>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <select id="bulkAllSubjectSelect" class="flex-1 min-w-[150px] border rounded-lg p-2 font-bold bg-white text-indigo-700">
+                            ${(courseSubjectsMap[document.getElementById('adminCourse')?.value||'સામાન્ય']||['ગણિત','ગુજરાતી','પર્યાવરણ','સામાન્ય']).map(sub=>`<option value="${escapeHtmlForResult(sub)}" ${((document.getElementById('adminSubjectSelect')?.value||'સામાન્ય')===sub)?'selected':''}>${escapeHtmlForResult(sub)}</option>`).join('')}
+                        </select>
+                        <button type="button" onclick="applyBulkSubjectToAll()" class="bg-indigo-700 text-white font-bold px-3 py-2 rounded-lg">બધા પ્રશ્નોમાં લાગુ કરો</button>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-2">ઉદાહરણ: બધા પ્રશ્નો ગણિતના હોય તો ગણિત પસંદ કરો. મિક્સ ટેસ્ટમાં જરૂર હોય ત્યારે નીચે કોઈ ચોક્કસ પ્રશ્નનો વિષય અલગથી બદલી શકો છો.</p>
                 </div>
                 ${qs.map((q,i)=>`
                     <div class="p-2.5 mb-2 rounded-xl border ${q.answer?'border-emerald-200 bg-white':'border-amber-300 bg-amber-50'} shadow-sm">
@@ -1373,6 +1385,12 @@
                             <div>(B) ${escapeHtmlForResult(q.options[1])}</div>
                             <div>(C) ${escapeHtmlForResult(q.options[2])}</div>
                             <div>(D) ${escapeHtmlForResult(q.options[3])}</div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap text-[11px] mb-2">
+                            <b>આ પ્રશ્નનો વિષય:</b>
+                            <select class="border rounded p-1 font-bold text-indigo-700 bg-white" onchange="window._bulkTestMCQ[${i}].subject=this.value">
+                                ${(courseSubjectsMap[document.getElementById('adminCourse')?.value||'સામાન્ય']||['ગણિત','ગુજરાતી','પર્યાવરણ','સામાન્ય']).map(sub=>`<option value="${escapeHtmlForResult(sub)}" ${(q.subject||document.getElementById('adminSubjectSelect')?.value||'સામાન્ય')===sub?'selected':''}>${escapeHtmlForResult(sub)}</option>`).join('')}
+                            </select>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap text-[11px]">
                             <b>સાચો જવાબ:</b>
@@ -1386,6 +1404,29 @@
             box.scrollIntoView({behavior:'smooth',block:'start'});
         }
 
+        // Apply one selected subject to every question in the current bulk MCQ batch.
+        function applyBulkSubjectToAll() {
+            const qs = window._bulkTestMCQ || [];
+            const select = document.getElementById('bulkAllSubjectSelect');
+            if (!qs.length || !select) { alert('પહેલા બધા પ્રશ્નો ગોઠવો.'); return; }
+            const subject = select.value;
+            qs.forEach((q, i) => {
+                q.subject = subject;
+                const rowSelect = document.querySelector(`#bulkTestMCQPreview select[onchange="window._bulkTestMCQ[${i}].subject=this.value"]`);
+                if (rowSelect) rowSelect.value = subject;
+            });
+            const notice = document.getElementById('bulkSubjectAppliedNotice');
+            if (notice) notice.textContent = `✅ ${qs.length} પ્રશ્નોમાં “${subject}” વિષય લાગુ થયો.`;
+            else {
+                const box = document.getElementById('bulkTestMCQPreview');
+                const n = document.createElement('div');
+                n.id = 'bulkSubjectAppliedNotice';
+                n.className = 'p-2 mb-2 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-sm';
+                n.textContent = `✅ ${qs.length} પ્રશ્નોમાં “${subject}” વિષય લાગુ થયો.`;
+                box.insertBefore(n, box.children[1] || null);
+            }
+        }
+
         // Normalize MCQ text so options can be written vertically OR horizontally.
         // Example: (A) Mumbai (B) New Delhi (C) Ahmedabad (D) Kolkata
         // Answer keys may include the option text: જવાબ: (B) નવી દિલ્હી
@@ -1393,7 +1434,7 @@
             return String(text || '').replace(/\r/g, '').split('\n').map(line => {
                 const trimmed=line.trim();
                 // Never split an answer-key line such as "જવાબ: (B) નવી દિલ્હી".
-                if (/^(?:જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]/i.test(trimmed)) return trimmed;
+                if (/^(?:જવાબ\s*કી|જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer\s*key|answer|ans)\s*[:=\-]/i.test(trimmed)) return trimmed;
                 return trimmed.replace(/[ \t]+(?=\(?[ABCD]\)?\s*[).:\-]\s*)/gi, '\n');
             }).join('\n').split('\n').map(line => line.trim()).filter(Boolean).join('\n');
         }
@@ -1404,12 +1445,13 @@
             const lines = normalizeBulkMCQLayout(text).split('\n').map(x=>x.trim()).filter(Boolean);
             const out=[]; let cur=null; let currentOpt=-1;
             const isQStart = line => {
-                const m=line.match(/^(?:પ્રશ્ન\s*)?([0-9૦-૯]+)\s*[\).:\-]\s*(.+)$/i);
-                return m ? {n:normalizeDigits(m[1]), text:m[2].trim()} : null;
+                // Accept 1., 1), (1), (૧), પ્રશ્ન ૧., પ્રશ્ન (1), and Gujarati numerals.
+                const m=line.match(/^(?:પ્રશ્ન\s*)?(?:\(([0-9૦-૯]+)\)|([0-9૦-૯]+)\s*[).:\-])\s*(.+)$/i);
+                return m ? {n:normalizeDigits(m[1]||m[2]), text:m[3].trim()} : null;
             };
             const isOpt = line => line.match(/^\(?([ABCD])\)?\s*[\).:\-]\s*(.*)$/i);
             // Recognize answer keys such as: જવાબ: (B) નવી દિલ્હી, સાચો જવાબ: B, Answer: C) Ahmedabad
-            const answerLine = line => line.match(/^(?:જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]?\s*\(?([ABCD]|[1-4])\)?(?:\s*[).:\-]?\s*(.*))?$/i);
+            const answerLine = line => line.match(/^(?:જવાબ\s*કી|જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer\s*key|answer|ans)\s*[:=\-]?\s*\(?([ABCD]|[1-4]|[૦-૪])\)?(?:\s*[).:\-]?\s*(.*))?$/i);
             const finish=()=>{ if(!cur)return; const opts=[cur.options[0],cur.options[1],cur.options[2],cur.options[3]]; if(cur.question && opts.every(Boolean)) out.push({question:cur.question,options:opts,answer:cur.answer||''}); cur=null; currentOpt=-1; };
             for(const line of lines){
                 const qs=isQStart(line);
@@ -1417,7 +1459,7 @@
                 if(!cur){ cur={question:line,options:[],answer:''}; currentOpt=-1; continue; }
                 const am=answerLine(line);
                 if(am){
-                    let a=am[1].toUpperCase(); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1];
+                    let a=am[1].toUpperCase(); if(/^[૦-૪]$/.test(a)) a=String('૦૧૨૩૪'.indexOf(a)); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1];
                     // If the answer line includes the option text, verify it matches the selected option when possible.
                     const answerText=(am[2]||'').trim().replace(/[.!।]+$/,'').trim();
                     if(answerText){
@@ -1455,12 +1497,14 @@
                 const course=document.getElementById('adminCourse')?.value||testData.meta?.course||'સામાન્ય';
                 const subject=document.getElementById('adminSubjectSelect')?.value||testData.meta?.subject||'સામાન્ય';
                 const questions=testData.questions?(Array.isArray(testData.questions)?[...testData.questions]:Object.values(testData.questions)):[];
-                const items=qs.map((q,i)=>({type:'mcq',course,subject,question:q.question,options:q.options,answer:document.querySelector(`input[name="bulkTestAns${i}"]:checked`).value,createdAt:Date.now()}));
+                const items=qs.map((q,i)=>({type:'mcq',course,subject:q.subject||subject,question:q.question,options:q.options,answer:document.querySelector(`input[name="bulkTestAns${i}"]:checked`).value,createdAt:Date.now()}));
                 questions.push(...items);
                 await database.ref(`tests/${activeTestKey}/questions`).set(questions);
                 for(const item of items){ const key=database.ref('question_bank').push().key; await database.ref(`question_bank/${key}`).set(item); }
+                const itemSubjects=[...new Set(items.map(x=>x.subject))];
+                if(itemSubjects.length>1){await database.ref(`tests/${activeTestKey}/meta/subject`).set('મિશ્ર ટેસ્ટ');testData.meta={...(testData.meta||{}),subject:'મિશ્ર ટેસ્ટ'};}
                 currentTests[activeTestKey]={...testData,questions};
-                alert(`✅ ${items.length} પ્રશ્નો ટેસ્ટ અને Question Bank બંનેમાં સેવ થઈ ગયા.`);
+                alert(`✅ ${items.length} પ્રશ્નો ટેસ્ટ અને Question Bank બંનેમાં સેવ થઈ ગયા. વિષય: ${itemSubjects.join(', ')}`);
                 document.getElementById('m1RawText').value=''; document.getElementById('bulkTestMCQPreview').innerHTML=''; window._bulkTestMCQ=[];
                 if(typeof loadAdminTestData==='function') loadAdminTestData();
                 if(typeof renderAdminQuestionsList==='function') renderAdminQuestionsList();
@@ -1547,7 +1591,7 @@
             const normalizeDigits=x=>String(x||'').replace(/[૦-૯]/g,d=>'૦૧૨૩૪૫૬૭૮૯'.indexOf(d));
             const qStart=line=>line.trim().match(/^(?:પ્રશ્ન\s*)?([0-9૦-૯]+)\s*[.)\-:]\s*(.+)$/i);
             const opt=line=>line.trim().match(/^\(?([ABCD])\)?\s*[.)\-:]\s*(.*)$/i);
-            const ans=line=>line.trim().match(/^(?:જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer|ans)\s*[:=\-]?\s*\(?([ABCD]|[1-4])\)?(?:\s*[).:\-]?\s*(.*))?$/i);
+            const ans=line=>line.trim().match(/^(?:જવાબ\s*કી|જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer\s*key|answer|ans)\s*[:=\-]?\s*\(?([ABCD]|[1-4]|[૦-૪])\)?(?:\s*[).:\-]?\s*(.*))?$/i);
             const blocks=[]; let current=null, q=null, optIndex=-1;
             const finishQ=()=>{ if(!q||!q.question) return; if(q.options.length===4 && q.options.every(Boolean)){ blocks[blocks.length-1].questions.push(q); } q=null; optIndex=-1; };
             const finishBlock=()=>{ if(!current) return; finishQ(); if(current.passage.trim()) blocks.push(current); current=null; };
@@ -1568,7 +1612,7 @@
                     q={question:qm[2].trim(),options:[],answer:''}; optIndex=-1; continue;
                 }
                 const am=ans(line); if(am&&q){
-                    let a=am[1].toUpperCase(); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1];
+                    let a=am[1].toUpperCase(); if(/^[૦-૪]$/.test(a)) a=String('૦૧૨૩૪'.indexOf(a)); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1];
                     const answerText=(am[2]||'').trim().replace(/[.!।]+$/,'').trim();
                     if(answerText){
                         const norm=v=>String(v||'').toLocaleLowerCase('gu').replace(/[()\s.,:;।!?\-]/g,'');
@@ -2064,14 +2108,28 @@
                 const snap = await database.ref('cloudBackups/latest').once('value');
                 const backup = snap.val();
                 if (!backup) { alert('કોઈ ક્લાઉડ બેકઅપ મળ્યો નથી.'); return; }
-                await Promise.all([
-                    database.ref('tests').set(backup.tests || {}),
-                    database.ref('submissions').set(backup.submissions || {}),
-                    database.ref('question_bank').set(backup.question_bank || {}),
-                    backup.customLogo ? database.ref('customLogo').set(backup.customLogo) : database.ref('customLogo').remove(),
-                    backup.adminPassword ? database.ref('adminPassword').set(backup.adminPassword) : Promise.resolve()
+                // Non-destructive restore: preserve current records and add only missing backup records.
+                const [liveTests, liveSubs, liveQb, liveLogo, livePass] = await Promise.all([
+                    database.ref('tests').once('value'), database.ref('submissions').once('value'),
+                    database.ref('question_bank').once('value'), database.ref('customLogo').once('value'),
+                    database.ref('adminPassword').once('value')
                 ]);
-                alert('ક્લાઉડ બેકઅપ સફળતાપૂર્વક રિસ્ટોર થઈ ગયો છે!');
+                const mergeMissing = (live, saved) => {
+                    const out = Object.assign({}, live || {});
+                    Object.keys(saved || {}).forEach(k => {
+                        if (!(k in out)) out[k] = saved[k];
+                        else if (out[k] && saved[k] && typeof out[k] === 'object' && typeof saved[k] === 'object' && !Array.isArray(out[k]) && !Array.isArray(saved[k])) out[k] = mergeMissing(out[k], saved[k]);
+                    });
+                    return out;
+                };
+                await Promise.all([
+                    database.ref('tests').set(mergeMissing(liveTests.val(), backup.tests)),
+                    database.ref('submissions').set(mergeMissing(liveSubs.val(), backup.submissions)),
+                    database.ref('question_bank').set(mergeMissing(liveQb.val(), backup.question_bank)),
+                    (!liveLogo.val() && backup.customLogo) ? database.ref('customLogo').set(backup.customLogo) : Promise.resolve(),
+                    (!livePass.val() && backup.adminPassword) ? database.ref('adminPassword').set(backup.adminPassword) : Promise.resolve()
+                ]);
+                alert('ક્લાઉડ બેકઅપ રિસ્ટોર થયો. હાલના ટેસ્ટ/પરિણામો જાળવીને માત્ર ગુમ થયેલા રેકોર્ડ ઉમેર્યા છે.');
             } catch (e) { console.error(e); alert('રિસ્ટોર કરવામાં સમસ્યા આવી. Firebase Database Rules/Internet ચકાસો.'); }
         }
 
@@ -2987,6 +3045,143 @@ window.autoMathExplanation=autoMathExplanation;
 
 
 </body>
+
+<!-- NIRMALA STUDY ZONE: local test cache and offline result queue -->
+<script>
+(function(){
+  'use strict';
+  const TEST_KEY='nsz_cached_tests_v1', QUEUE_KEY='nsz_pending_submissions_v1';
+  function parse(s,f){try{return s?JSON.parse(s):f}catch(e){return f}}
+  function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.warn('Local storage unavailable/full',e)}}
+  function showStatus(msg,online){let el=document.getElementById('nszOfflineStatus');if(!el){el=document.createElement('div');el.id='nszOfflineStatus';el.style.cssText='position:fixed;left:8px;bottom:8px;z-index:99999;padding:6px 10px;border-radius:10px;font:700 11px sans-serif;box-shadow:0 2px 8px #0002;max-width:90vw';document.body.appendChild(el)}el.textContent=msg;el.style.background=online?'#dcfce7':'#fef3c7';el.style.color=online?'#166534':'#92400e';el.style.display='block';clearTimeout(el._hide);if(online)el._hide=setTimeout(()=>el.style.display='none',3500)}
+  async function flush(){if(!navigator.onLine||typeof database==='undefined'||!database.ref)return;let q=parse(localStorage.getItem(QUEUE_KEY),[]);if(!q.length)return;const remain=[];for(const item of q){try{const x={...item};delete x._localQueueId;const key=x._firebaseQueueKey;delete x._firebaseQueueKey;if(key)await database.ref('submissions/'+key).set(x);else await database.ref('submissions').push(x)}catch(e){remain.push(item)}}store(QUEUE_KEY,remain);if(remain.length)showStatus('કેટલાક પરિણામો સિંક થવાના બાકી છે.',false);else showStatus('બાકી પરિણામો Firebaseમાં સિંક થયા.',true)}
+  window.saveSubmissionWithOfflineQueue=function(sub){const q=parse(localStorage.getItem(QUEUE_KEY),[]);let key='';try{if(typeof database!=='undefined'&&database.ref)key=database.ref('submissions').push().key||''}catch(e){}q.push({...sub,_localQueueId:'local_'+Date.now()+'_'+Math.random().toString(36).slice(2),_firebaseQueueKey:key});store(QUEUE_KEY,q);if(navigator.onLine)flush();else showStatus('ઓફલાઇન: પરિણામ ફોનમાં સાચવ્યું છે; ઇન્ટરનેટ મળતાં સિંક થશે.',false)};
+  window.flushNirmalaPendingSubmissions=flush;
+  function restoreTests(){const c=parse(localStorage.getItem(TEST_KEY),null);if(c&&typeof c==='object'&&typeof currentTests!=='undefined'&&Object.keys(currentTests).length===0){currentTests=c;try{window.updateAdminTestDropdown?.();window.renderTestBoxes?.();window.updateStudentRegistrationCard?.()}catch(e){}showStatus('પહેલેથી કેશ કરેલી ટેસ્ટ ઉપલબ્ધ છે; પરિણામ સિંક કરવા ઇન્ટરનેટ જરૂરી છે.',false)}}
+  function setup(){if(!navigator.onLine)showStatus('ઓફલાઇન મોડ: અગાઉ લોડ કરેલી ટેસ્ટ જ ઉપલબ્ધ હોઈ શકે છે.',false);restoreTests();try{if(typeof database!=='undefined'&&database.ref)database.ref('tests').on('value',snap=>{store(TEST_KEY,snap.val()||{});if(navigator.onLine)showStatus('Firebase સાથે જોડાણ ઉપલબ્ધ છે.',true)},()=>restoreTests())}catch(e){restoreTests()} }
+  window.addEventListener('online',()=>{showStatus('ઇન્ટરનેટ પાછું મળ્યું; બાકી પરિણામો સિંક થઈ રહ્યાં છે.',true);flush()});
+  window.addEventListener('offline',()=>showStatus('ઓફલાઇન મોડ: પરિણામો સ્થાનિક રીતે કતારમાં રાખવામાં આવશે.',false));
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+})();
+</script>
+
+
+<script>
+(function(){
+  function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  const randomSubjects={
+    'નવોદય':['ગણિત','ભાષા (ગુજરાતી)','ગુજરાતી','પર્યાવરણ','માનસિક યોગ્યતા કસોટી','સામાન્ય'],
+    'Cet':['ગણિત','વિજ્ઞાન','સામાજિક વિજ્ઞાન','અંગ્રેજી','ગુજરાતી','તાર્કિક ક્ષમતા','પર્યાવરણ'],
+    'Gyan sadhana':['ગણિત','વિજ્ઞાન','સામાજિક વિજ્ઞાન','અંગ્રેજી','ગુજરાતી','તાર્કિક ક્ષમતા','પર્યાવરણ'],
+    'English':['Grammar','Vocabulary','Comprehension','સામાન્ય'],
+    'સામાન્ય':['સામાન્ય']
+  };
+  function openRandomPicker(){
+    if(!activeTestKey){alert('પહેલા શિક્ષક પેનલમાં ડ્રાફ્ટ ટેસ્ટ બનાવો અથવા પસંદ કરો.');return}
+    const test=currentTests?.[activeTestKey];
+    if(!test){alert('પસંદ કરેલી ટેસ્ટ મળી નથી.');return}
+    if(test.meta?.status==='active'){alert('એક્ટિવ ટેસ્ટમાં પ્રશ્નો ઉમેરી શકાતા નથી. પહેલા ડ્રાફ્ટ ટેસ્ટ પસંદ કરો.');return}
+    let modal=document.getElementById('nszRandomPickerModal');
+    if(!modal){
+      modal=document.createElement('div');modal.id='nszRandomPickerModal';modal.className='fixed inset-0 z-[90] bg-slate-950/70 flex items-center justify-center p-3';
+      modal.innerHTML=`<div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] overflow-y-auto p-4"><div class="flex justify-between items-center mb-3"><h3 class="font-extrabold text-lg text-indigo-800">🎲 વિષય પ્રમાણે રેન્ડમ પ્રશ્નો</h3><button id="nszRandomClose" class="text-2xl px-2">×</button></div><p class="text-xs text-slate-600 mb-3">એક અથવા વધુ વિષય પસંદ કરો. મિક્સ ટેસ્ટ બનાવવા માટે ગણિત, ગુજરાતી/ફકરા અને પર્યાવરણ એકસાથે પસંદ કરી શકો છો. ફકરો પસંદ થાય તો તે ફકરાના બધા ઉપલબ્ધ પ્રશ્નો એકસાથે ઉમેરાશે.</p><label class="block text-xs font-bold mb-1">કોર્ષ</label><select id="nszRandomCourse" class="w-full border rounded-lg p-2 mb-3 font-bold"><option>નવોદય</option><option>Cet</option><option>Gyan sadhana</option><option>English</option><option>સામાન્ય</option></select><div class="text-xs font-bold mb-1">વિષય પસંદ કરો (એકથી વધુ ચાલશે)</div><div id="nszRandomSubjects" class="grid grid-cols-2 gap-2 border rounded-lg p-3 mb-3"></div><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-bold mb-1">રેન્ડમ MCQ પ્રશ્નોની સંખ્યા</label><input id="nszRandomMcqCount" type="number" min="0" max="500" value="20" class="w-full border rounded-lg p-2"></div><div><label class="block text-xs font-bold mb-1">રેન્ડમ ફકરાઓની સંખ્યા</label><input id="nszRandomPassageCount" type="number" min="0" max="100" value="0" class="w-full border rounded-lg p-2"></div></div><p class="text-[11px] text-amber-700 bg-amber-50 rounded-lg p-2 mt-3">નોંધ: ફકરાની ગણતરી પ્રશ્નોની નહીં, આખા ફકરાના જૂથોની છે. પ્રશ્ન બેંકમાં ફકરા સાથે જેટલા પ્રશ્નો સેવ છે તે બધા ઉમેરાશે.</p><div class="flex gap-2 justify-end mt-4"><button id="nszRandomCancel" class="px-4 py-2 rounded-lg border font-bold">રદ કરો</button><button id="nszRandomGo" class="px-4 py-2 rounded-lg bg-indigo-700 text-white font-bold">પસંદગી પ્રમાણે ઉમેરો</button></div><div id="nszRandomStatus" class="text-xs mt-2"></div></div>`;
+      document.body.appendChild(modal);
+      document.getElementById('nszRandomClose').onclick=()=>modal.remove();document.getElementById('nszRandomCancel').onclick=()=>modal.remove();
+      document.getElementById('nszRandomCourse').onchange=renderSubjects;
+      document.getElementById('nszRandomGo').onclick=addRandomQuestionsFromBank;
+    }
+    document.getElementById('nszRandomCourse').value=document.getElementById('adminCourse')?.value||test.meta?.course||'નવોદય';
+    renderSubjects();modal.classList.remove('hidden');
+  }
+  function renderSubjects(){
+    const course=document.getElementById('nszRandomCourse').value, box=document.getElementById('nszRandomSubjects');
+    const all=Object.values(questionBankData||{});
+    const available=new Set(all.filter(q=>!q.course||q.course===course).map(q=>q.subject||'સામાન્ય'));
+    const listed=randomSubjects[course]||['સામાન્ય'];
+    const subjects=[...new Set([...listed,...available])];
+    box.innerHTML=subjects.map((sub,i)=>`<label class="flex gap-2 items-center text-xs p-1 rounded hover:bg-indigo-50"><input type="checkbox" class="nsz-random-sub" value="${safe(sub)}" ${i===0?'':' '}> <span>${safe(sub)}</span></label>`).join('');
+    // Default to the selected subject from the active draft, but allow multi-subject selection.
+    const preferred=document.getElementById('adminSubjectSelect')?.value||currentTests?.[activeTestKey]?.meta?.subject;
+    const preferredBox=[...box.querySelectorAll('.nsz-random-sub')].find(x=>x.value===preferred||((preferred==='ગુજરાતી'||preferred==='ભાષા (ગુજરાતી)')&&['ગુજરાતી','ભાષા (ગુજરાતી)'].includes(x.value)));
+    if(preferredBox)preferredBox.checked=true;else {const first=box.querySelector('.nsz-random-sub');if(first)first.checked=true;}
+  }
+  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+  async function addRandomQuestionsFromBank(){
+    const status=document.getElementById('nszRandomStatus');
+    const course=document.getElementById('nszRandomCourse').value;
+    const subjects=[...document.querySelectorAll('.nsz-random-sub:checked')].map(x=>x.value);
+    const mcqCount=Number(document.getElementById('nszRandomMcqCount').value);
+    const passageCount=Number(document.getElementById('nszRandomPassageCount').value);
+    if(!subjects.length){status.textContent='ઓછામાં ઓછો એક વિષય પસંદ કરો.';return}
+    if(!Number.isInteger(mcqCount)||mcqCount<0||!Number.isInteger(passageCount)||passageCount<0||mcqCount+passageCount<1){status.textContent='MCQ અથવા ફકરાની યોગ્ય સંખ્યા દાખલ કરો.';return}
+    const test=currentTests?.[activeTestKey];if(!test||test.meta?.status==='active'){status.textContent='ડ્રાફ્ટ ટેસ્ટ ઉપલબ્ધ નથી.';return}
+    const bank=Object.values(questionBankData||{}).filter(q=>q&&q.question&&Array.isArray(q.options)&&q.options.length>=4&&(!q.course||q.course===course));
+    const chosen=new Set(subjects);
+    const matchesSubject=q=>chosen.has(q.subject||'સામાન્ય')||((chosen.has('ગુજરાતી')||chosen.has('ભાષા (ગુજરાતી)')||chosen.has('ગુજરાતી ફકરા'))&&['ગુજરાતી','ભાષા (ગુજરાતી)','ગુજરાતી ફકરા'].includes(q.subject||''));
+    const mcqs=shuffle(bank.filter(q=>(q.type||'mcq')!=='passage'&&matchesSubject(q)).slice());
+    const passageQuestions=bank.filter(q=>q.type==='passage'&&q.passage&&matchesSubject(q));
+    const groupsMap=new Map();
+    passageQuestions.forEach(q=>{const sub=q.subject||'સામાન્ય';const k=sub+'\u0000'+q.passage;if(!groupsMap.has(k))groupsMap.set(k,{subject:sub,passage:q.passage,questions:[]});groupsMap.get(k).questions.push(q)});
+    const passageGroups=shuffle([...groupsMap.values()].map(g=>({...g,questions:g.questions.sort((a,b)=>(Number(a.questionNumber)||0)-(Number(b.questionNumber)||0))})).filter(g=>g.questions.length));
+    const pickedMcq=mcqs.slice(0,mcqCount);
+    const pickedGroups=passageGroups.slice(0,passageCount);
+    if(pickedMcq.length<mcqCount||pickedGroups.length<passageCount){status.textContent=`ઉપલબ્ધતા: ${mcqs.length} MCQ અને ${passageGroups.length} ફકરા. ઉપલબ્ધ પ્રશ્નો/ફકરા જ ઉમેરાશે.`;}
+    if(!pickedMcq.length&&!pickedGroups.length){status.textContent='પસંદ કરેલા વિષયમાં પ્રશ્ન બેંકમાં પ્રશ્નો મળ્યા નથી. પહેલાં તે વિષયના પ્રશ્નો/ફકરા સેવ કરો.';return}
+    const picked=[...pickedMcq.map(q=>({...q,options:q.options.slice(0,4),course:q.course||course,subject:q.subject||'સામાન્ય',createdAt:Date.now()}))];
+    pickedGroups.forEach(g=>g.questions.forEach(q=>picked.push({...q,type:'passage',passage:g.passage,options:q.options.slice(0,4),course:q.course||course,subject:q.subject||g.subject,createdAt:Date.now()})));
+    try{
+      status.textContent='પ્રશ્નો ઉમેરાઈ રહ્યા છે…';
+      const snap=await database.ref('tests/'+activeTestKey).once('value');const live=snap.val();
+      if(!live||live.meta?.status==='active'){status.textContent='ટેસ્ટ મળી નથી અથવા એક્ટિવ થઈ ગઈ છે.';return}
+      const qs=Array.isArray(live.questions)?[...live.questions]:(live.questions?Object.values(live.questions):[]);
+      qs.push(...picked);
+      const updates={};updates['tests/'+activeTestKey+'/questions']=qs;
+      if(subjects.length>1)updates['tests/'+activeTestKey+'/meta/subject']='મિશ્ર ટેસ્ટ';
+      await database.ref().update(updates);
+      currentTests[activeTestKey]={...live,meta:{...(live.meta||{}),...(subjects.length>1?{subject:'મિશ્ર ટેસ્ટ'}:{})},questions:qs};
+      if(typeof loadAdminTestData==='function')loadAdminTestData();
+      if(typeof renderAdminQuestionsList==='function')renderAdminQuestionsList();
+      if(typeof renderQbQuestionsList==='function')renderQbQuestionsList();
+      const message=`સફળતા: ${pickedMcq.length} MCQ અને ${pickedGroups.length} આખા ફકરા (${pickedGroups.reduce((n,g)=>n+g.questions.length,0)} પ્રશ્નો) ઉમેરાયા. દરેક પ્રશ્ન પોતાનો વિષય લઈને સેવ થયો.`;
+      status.textContent=message;alert(message);document.getElementById('nszRandomPickerModal')?.remove();
+    }catch(e){console.error(e);status.textContent='પ્રશ્નો ઉમેરાઈ શક્યા નથી. ઇન્ટરનેટ અને Firebase Rules તપાસો.'}
+  }
+  function exportAnswerKeyPDF(){
+    const test=currentTests?.[activeTestKey];if(!test||!test.questions){alert('પહેલા ટેસ્ટ પસંદ કરો.');return}
+    if(typeof html2pdf!=='function'){alert('PDF લાઇબ્રેરી લોડ થઈ નથી. ઇન્ટરનેટ સાથે ફરી પ્રયાસ કરો.');return}
+    const qs=Array.isArray(test.questions)?test.questions:Object.values(test.questions);const meta=test.meta||{};
+    // Show the full correct option text in addition to its A/B/C/D label.
+    const answerDetails=(q)=>{
+      const opts=Array.isArray(q.options)?q.options:[];
+      const raw=(q.answer??q.correctAnswer??q.correct_answer??'').toString().trim();
+      if(!raw)return {label:'જવાબ સેટ નથી',letter:''};
+      const letters=['A','B','C','D'];
+      const normalized=raw.toUpperCase().replace(/[().ઃ:]/g,'').trim();
+      let idx=-1, letter='';
+      const m=normalized.match(/^([ABCD])(?:\s|$)/);
+      if(m){letter=m[1];idx=letters.indexOf(letter)}
+      else if(/^[1-4]$/.test(normalized)){idx=Number(normalized)-1;letter=letters[idx]}
+      else if(/^[૧-૪]$/.test(normalized)){idx=['૧','૨','૩','૪'].indexOf(normalized);letter=letters[idx]}
+      else {
+        const exact=opts.findIndex(o=>String(o??'').trim().toLowerCase()===raw.toLowerCase());
+        if(exact>=0){idx=exact;letter=letters[idx]}
+      }
+      if(idx>=0&&opts[idx]!==undefined&&String(opts[idx]).trim())return {label:`(${letter}) ${String(opts[idx])}`,letter};
+      return {label:raw,letter};
+    };
+    const wrap=document.createElement('div');wrap.style.cssText='font-family:Arial,sans-serif;background:#fff;color:#111;padding:24px;width:760px;box-sizing:border-box;line-height:1.5';
+    wrap.innerHTML=`<h2 style="text-align:center;color:#312e81;margin-bottom:4px">નિર્મળા નવોદય સ્ટડી ઝોન</h2><h3 style="text-align:center;margin-top:0">${safe(meta.title||'જવાબ કી')}</h3><p><b>કોર્ષ:</b> ${safe(meta.course||'સામાન્ય')} &nbsp; | &nbsp; <b>વિષય:</b> ${safe(meta.subject||'સામાન્ય')}</p><hr>`+qs.map((q,i)=>{const a=answerDetails(q);return `<div style="padding:10px 0;border-bottom:1px solid #ddd;page-break-inside:avoid;break-inside:avoid"><div style="font-weight:bold;margin-bottom:5px">પ્રશ્ન ${i+1}. ${safe(q.question||'')}</div>${q.passage?`<div style="margin:3px 0 6px;padding:7px;background:#f8fafc;border-left:3px solid #94a3b8"><b>ફકરો:</b> ${safe(q.passage)}</div>`:''}<div style="color:#047857;font-weight:bold">સાચો જવાબ: ${safe(a.label)}</div></div>`}).join('');
+    document.body.appendChild(wrap);html2pdf().set({margin:.45,filename:`${(meta.title||'Test').replace(/[\\/:*?"<>|]/g,'_')}_Answer_Key.pdf`,image:{type:'jpeg',quality:.95},html2canvas:{scale:2,backgroundColor:'#fff',useCORS:true},jsPDF:{unit:'in',format:'letter',orientation:'portrait'}}).from(wrap).save().finally(()=>wrap.remove());
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    const qbFooter=document.querySelector('#qBankModal .bg-slate-100.border-t');
+    if(qbFooter&&!document.getElementById('nszRandomBankBtn')){const b=document.createElement('button');b.id='nszRandomBankBtn';b.type='button';b.className='bg-amber-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow';b.textContent='🎲 વિષય પસંદ કરીને રેન્ડમ ઉમેરો';b.onclick=openRandomPicker;qbFooter.insertBefore(b,qbFooter.lastElementChild)}
+    const pdfBtn=[...document.querySelectorAll('#adminScreen button')].find(b=>b.textContent.includes('PDF ડાઉનલોડ'));
+    if(pdfBtn&&!document.getElementById('nszAnswerKeyPdfBtn')){const b=document.createElement('button');b.id='nszAnswerKeyPdfBtn';b.type='button';b.className='bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded border text-xs font-bold shadow';b.textContent='જવાબ કી PDF';b.onclick=exportAnswerKeyPDF;pdfBtn.insertAdjacentElement('afterend',b)}
+  });
+})();
+</script>
+
 </html>
 
 <!-- FINAL MCQ ANSWER + PER-STUDENT ATTEMPT FIX -->
@@ -3188,7 +3383,7 @@ window.autoMathExplanation=autoMathExplanation;
         };
 
         // Firebase gets EVERY student's submission independently.
-        database.ref('submissions').push(submissionObj).catch(e=>console.error('Submission save error:',e));
+        if (typeof window.saveSubmissionWithOfflineQueue==='function') window.saveSubmissionWithOfflineQueue(submissionObj); else database.ref('submissions').push(submissionObj).catch(e=>console.error('Submission save error:',e));
 
         // Attempts are per STUDENT + TEST, not per device.
         const attempts=getAttempts(d.studentName,d.testKey);

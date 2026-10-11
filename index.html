@@ -2840,91 +2840,67 @@
             };
         }
 
-        function exportTestToPDF() {
-            const test = currentTests[activeTestKey];
-            if (!test || !test.questions) {
-                alert("આ ટેસ્ટમાં કોઈ પ્રશ્નો નથી!");
-                return;
-            }
-
-            const container = document.getElementById('pdfExportContainer');
+        async function exportTestToPDF() {
+            const test = currentTests && currentTests[activeTestKey];
+            if (!test || !test.questions) { alert("આ ટેસ્ટમાં કોઈ પ્રશ્નો નથી!"); return; }
+            const questions = Array.isArray(test.questions) ? test.questions : Object.values(test.questions || {});
+            if (!questions.length) { alert("આ ટેસ્ટમાં કોઈ પ્રશ્નો નથી!"); return; }
+            const pdfLibraryReady = typeof window.html2canvas === 'function' && !!(window.jspdf && window.jspdf.jsPDF);
             const meta = test.meta || {};
-            const questions = Array.isArray(test.questions) ? test.questions : Object.values(test.questions);
-
-            let html = `
-                <div style="font-family:'Hind Vadodara',Arial,sans-serif;color:#111827;background:#ffffff;width:760px;padding:24px;box-sizing:border-box;">
-                    <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:20px;">
-                        <h2 style="font-size:22px;margin:0;color:#1e1b4b;">નિર્મળા નવોદય સ્ટડી ઝોન</h2>
-                        <h3 style="font-size:16px;margin:5px 0;color:#4338ca;">${meta.title || activeTestKey}</h3>
-                        <div style="font-size:12px;display:flex;justify-content:space-between;margin-top:10px;">
-                            <span>કોર્ષ: ${meta.course || 'સામાન્ય'}</span>
-                            <span>વિષય: ${meta.subject || 'સામાન્ય'}</span>
-                            <span>કુલ ગુણ: ${meta.totalMarks || 100}</span>
-                            <span>સમય: ${meta.timeLimit || 60} મિનિટ</span>
-                        </div>
-                    </div>
-                    <div>
-            `;
-
-            questions.forEach((q, idx) => {
-                const opts = Array.isArray(q.options) ? q.options : ['A', 'B', 'C', 'D'];
-                html += `
-                    <div style="margin-bottom:15px;page-break-inside:avoid;">
-                        <p style="font-weight:bold;font-size:13px;margin:0 0 5px 0;">પ્રશ્ન ${idx + 1}. ${q.question || ''}</p>
-                        ${q.image ? `<img src="${q.image}" style="max-height:150px;max-width:100%;display:block;margin:5px 0;">` : ''}
-                        <div style="font-size:12px;margin-left:15px;line-height:1.7;">
-                            <div>(A) ${opts[0] || ''}</div>
-                            <div>(B) ${opts[1] || ''}</div>
-                            <div>(C) ${opts[2] || ''}</div>
-                            <div>(D) ${opts[3] || ''}</div>
-                        </div>
-                    </div>
-                `;
+            const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            const safeName = String(meta.title || 'Test').replace(/[\\/:*?"<>|]/g, '_');
+            const root = document.createElement('div');
+            root.id = 'pdfExportLiveRoot';
+            root.style.cssText = 'position:fixed;inset:0;z-index:2147483647;overflow:auto;background:#fff;padding:12px;box-sizing:border-box;display:block;visibility:visible;opacity:1;';
+            const page = document.createElement('div');
+            page.style.cssText = 'width:760px;max-width:100%;margin:0 auto;padding:24px;background:#fff;color:#111;font-family:Arial,sans-serif;font-size:14px;line-height:1.5;box-sizing:border-box;';
+            let html = `<div style="text-align:center;border-bottom:2px solid #333;padding-bottom:12px;margin-bottom:18px"><div style="font-size:24px;font-weight:bold">નિર્મળા નવોદય સ્ટડી ઝોન</div><div style="font-size:18px;font-weight:bold;margin:6px">${esc(meta.title || activeTestKey)}</div><div>કોર્ષ: ${esc(meta.course || 'સામાન્ય')}　 વિષય: ${esc(meta.subject || 'સામાન્ય')}</div><div>કુલ ગુણ: ${esc(meta.totalMarks || 100)}　 સમય: ${esc(meta.timeLimit || 60)} મિનિટ</div></div>`;
+            questions.forEach((q,i)=>{
+                const opts = Array.isArray(q.options) ? q.options : (q.options ? Object.values(q.options) : ['', '', '', '']);
+                html += `<div style="margin:0 0 16px;padding:0 0 12px;border-bottom:1px solid #ddd;break-inside:avoid"><div style="font-weight:bold;margin-bottom:6px">પ્રશ્ન ${i+1}. ${esc(q.question || q.text || '')}</div>${q.passage ? `<div style="white-space:pre-wrap;margin:6px 0;padding:8px;background:#f8fafc">${esc(q.passage)}</div>` : ''}${q.image ? `<div style="margin:6px 0"><img src="${esc(q.image)}" style="max-width:100%;max-height:220px;object-fit:contain"></div>` : ''}<div style="padding-left:14px">(A) ${esc(opts[0]||'')}<br>(B) ${esc(opts[1]||'')}<br>(C) ${esc(opts[2]||'')}<br>(D) ${esc(opts[3]||'')}</div></div>`;
             });
-
-            html += `</div></div>`;
-
-            // IMPORTANT: pdfExportContainer originally has class="hidden".
-            // html2canvas cannot capture display:none, which caused blank PDFs.
-            const oldClassName = container.className;
-            const oldStyle = container.getAttribute('style');
-
-            container.classList.remove('hidden');
-            container.style.cssText =
-                'display:block;position:absolute;left:-10000px;top:0;width:760px;' +
-                'min-height:100px;background:#fff;color:#111827;padding:0;margin:0;' +
-                'font-family:"Hind Vadodara",Arial,sans-serif;';
-            container.innerHTML = html;
-
-            // Give the browser a frame to lay out the visible PDF content.
-            requestAnimationFrame(() => {
-                const opt = {
-                    margin: 0.5,
-                    filename: `${meta.title || 'Test'}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: {
-                        scale: 2,
-                        useCORS: true,
-                        backgroundColor: '#ffffff',
-                        logging: false
-                    },
-                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-                };
-
-                html2pdf().set(opt).from(container).save().then(() => {
-                    if (oldStyle === null) container.removeAttribute('style');
-                    else container.setAttribute('style', oldStyle);
-                    container.className = oldClassName;
-                    container.innerHTML = '';
-                }).catch(err => {
-                    if (oldStyle === null) container.removeAttribute('style');
-                    else container.setAttribute('style', oldStyle);
-                    container.className = oldClassName;
-                    container.innerHTML = '';
-                    console.error(err);
-                    alert("PDF બનાવવામાં સમસ્યા આવી. કૃપા કરીને ફરી પ્રયાસ કરો.");
-                });
-            });
+            page.innerHTML = html;
+            root.appendChild(page);
+            const note = document.createElement('div'); note.textContent = 'PDF તૈયાર થઈ રહ્યો છે…'; note.style.cssText='position:sticky;top:0;background:#fff3cd;padding:8px;text-align:center;font-weight:bold'; root.insertBefore(note,page);
+            document.body.appendChild(root);
+            try {
+                if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,2000))]);
+                const imgs = [...page.querySelectorAll('img')];
+                await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(r=>{img.onload=r;img.onerror=r;setTimeout(r,2500)})));
+                await new Promise(r=>setTimeout(r,500));
+                if (!page.innerText || page.innerText.trim().length < 20) throw new Error('Question content is empty');
+                // If the CDN PDF libraries are blocked, fall back to the browser/Android print-to-PDF flow.
+                if (!pdfLibraryReady) {
+                    const printStyle = document.createElement('style');
+                    printStyle.id = 'nszPdfPrintFallbackStyle';
+                    printStyle.textContent = `@media print { body * { visibility:hidden !important; } #pdfExportLiveRoot, #pdfExportLiveRoot * { visibility:visible !important; } #pdfExportLiveRoot { position:absolute !important; left:0 !important; top:0 !important; width:100% !important; height:auto !important; overflow:visible !important; z-index:2147483647 !important; padding:0 !important; background:#fff !important; } #pdfExportLiveRoot > div { width:100% !important; max-width:none !important; padding:10mm !important; } #pdfExportLiveRoot > div:first-child { display:none !important; } }`;
+                    document.head.appendChild(printStyle);
+                    alert('PDF લાઇબ્રેરી ઇન્ટરનેટ પરથી લોડ થઈ નથી. હવે Print વિન્ડો ખૂલશે; તેમાં Save as PDF પસંદ કરો.');
+                    setTimeout(() => { try { window.print(); } catch(e) { alert('આ APKમાં Print સુવિધા ઉપલબ્ધ નથી. Chromeમાં ખોલીને ફરી પ્રયાસ કરો.'); } }, 300);
+                    return;
+                }
+                const canvas = await window.html2canvas(page,{scale:1.5,backgroundColor:'#ffffff',useCORS:true,allowTaint:false,logging:false,scrollX:0,scrollY:0,width:page.scrollWidth,height:page.scrollHeight});
+                if (!canvas || canvas.width < 100 || canvas.height < 100) throw new Error('Canvas is blank');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+                const margin=8, pageW=210, pageH=297, usableW=pageW-margin*2, usableH=pageH-margin*2;
+                const imgData=canvas.toDataURL('image/jpeg',0.92);
+                const imgW=usableW, imgH=canvas.height*imgW/canvas.width;
+                let remaining=imgH, y=margin, sourceY=0;
+                while(remaining>0){
+                    if(sourceY>0) pdf.addPage();
+                    const sliceH=Math.min(usableH,remaining);
+                    const slice=document.createElement('canvas'); slice.width=canvas.width; slice.height=Math.max(1,Math.floor(sliceH*canvas.width/imgW));
+                    const ctx=slice.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,slice.width,slice.height);
+                    ctx.drawImage(canvas,0,Math.floor(sourceY*canvas.width/imgW),canvas.width,slice.height,0,0,slice.width,slice.height);
+                    pdf.addImage(slice.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,usableW,slice.height*usableW/slice.width,undefined,'FAST');
+                    sourceY += slice.height*imgW/canvas.width; remaining=imgH-sourceY;
+                }
+                pdf.save(safeName+'.pdf');
+            } catch(err) {
+                console.error('PDF export failed:',err);
+                alert('PDF બનાવવામાં ભૂલ આવી. કૃપા કરીને ફરી પ્રયાસ કરો.');
+            } finally { if (pdfLibraryReady) root.remove(); }
         }
     </script>
 <style id="enhancedV2Styles">.ev2{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;box-shadow:0 4px 14px rgba(15,23,42,.06)}.ev2stat{padding:10px;border-radius:12px;background:#eef2ff;border:1px solid #c7d2fe}.ev2stat b{font-size:21px;color:#3730a3}.ev2grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}@media(max-width:700px){.ev2grid{grid-template-columns:repeat(2,1fr)}}.ev2bar{height:8px;background:#e2e8f0;border-radius:9px;overflow:hidden}.ev2bar span{display:block;height:100%;background:#4f46e5}.ev2modal{position:fixed;inset:0;background:#0f172acc;z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}.ev2modal>div{background:white;border-radius:18px;max-width:900px;width:100%;max-height:92vh;overflow:auto;padding:16px}.ev2table{width:100%;border-collapse:collapse;font-size:11px}.ev2table th,.ev2table td{border:1px solid #e2e8f0;padding:7px}.ev2table th{background:#eef2ff;color:#3730a3}</style>

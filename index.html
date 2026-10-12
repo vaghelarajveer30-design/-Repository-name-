@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="gu">
 <head>
-    <meta charset"UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>નિર્મળા નવોદય સ્ટડી ઝોન - ઓનલાઇન ટેસ્ટ</title>
 
@@ -138,7 +138,7 @@
                     class="px-2.5 py-2 rounded-lg bg-indigo-800 border border-indigo-300 text-white flex items-center justify-center gap-1.5 shadow hover:bg-indigo-600 active:scale-95 text-xs font-bold whitespace-nowrap">
                     <i class="fa-solid fa-rotate-right"></i><span>રીફ્રેશ</span>
                 </button>
-                <button type="button" onclick="promptTeacherLogin()" title="Admin Login" class="focus:outline-none">
+                <button onclick="promptTeacherLogin()" title="Admin Login" class="focus:outline-none">
                     <img src="https://i.ibb.co/L5Q852p/profile.jpg" alt="Admin Icon" class="w-8 h-8 rounded-full object-cover border-2 border-amber-300 shadow hover:opacity-80 transition">
                 </button>
             </div>
@@ -2859,9 +2859,23 @@
             const page = document.createElement('div');
             page.style.cssText = 'width:760px;max-width:100%;margin:0 auto;padding:24px;background:#fff;color:#111;font-family:Arial,sans-serif;font-size:14px;line-height:1.5;box-sizing:border-box;';
             let html = `<div style="text-align:center;border-bottom:2px solid #333;padding-bottom:12px;margin-bottom:18px"><div style="font-size:24px;font-weight:bold">નિર્મળા નવોદય સ્ટડી ઝોન</div><div style="font-size:18px;font-weight:bold;margin:6px">${esc(meta.title || activeTestKey)}</div><div>કોર્ષ: ${esc(meta.course || 'સામાન્ય')}　 વિષય: ${esc(meta.subject || 'સામાન્ય')}</div><div>કુલ ગુણ: ${esc(meta.totalMarks || 100)}　 સમય: ${esc(meta.timeLimit || 60)} મિનિટ</div></div>`;
+            // Passage tests: print each full passage once, then all linked MCQs below it.
+            const renderedPassages = new Set();
             questions.forEach((q,i)=>{
                 const opts = Array.isArray(q.options) ? q.options : (q.options ? Object.values(q.options) : ['', '', '', '']);
-                html += `<div style="margin:0 0 16px;padding:0 0 12px;border-bottom:1px solid #ddd;break-inside:avoid"><div style="font-weight:bold;margin-bottom:6px">પ્રશ્ન ${i+1}. ${esc(q.question || q.text || '')}</div>${q.passage ? `<div style="white-space:pre-wrap;margin:6px 0;padding:8px;background:#f8fafc">${esc(q.passage)}</div>` : ''}${q.image ? `<div style="margin:6px 0"><img src="${esc(q.image)}" style="max-width:100%;max-height:220px;object-fit:contain"></div>` : ''}<div style="padding-left:14px">(A) ${esc(opts[0]||'')}<br>(B) ${esc(opts[1]||'')}<br>(C) ${esc(opts[2]||'')}<br>(D) ${esc(opts[3]||'')}</div></div>`;
+                const passage = String(q.passage || '').trim();
+                if (passage && !renderedPassages.has(passage)) {
+                    renderedPassages.add(passage);
+                    const related = questions.map((item,index)=>({item,index})).filter(x=>String(x.item.passage||'').trim()===passage);
+                    html += `<section style="margin:0 0 18px;padding:12px;border:1px solid #c7d2fe;border-radius:8px;break-inside:auto"><div style="font-size:17px;font-weight:bold;color:#312e81;margin-bottom:8px">ફકરો</div><div style="white-space:pre-wrap;line-height:1.8;margin:0 0 14px;padding:10px;background:#f8fafc;border-radius:6px">${esc(passage)}</div>`;
+                    related.forEach(({item,index})=>{
+                        const o = Array.isArray(item.options) ? item.options : (item.options ? Object.values(item.options) : ['', '', '', '']);
+                        html += `<div style="margin:0 0 12px;padding:0 0 10px;border-bottom:1px solid #ddd;break-inside:avoid"><div style="font-weight:bold;margin-bottom:6px">પ્રશ્ન ${index+1}. ${esc(item.question || item.text || '')}</div>${item.image ? `<div style="margin:6px 0"><img src="${esc(item.image)}" style="max-width:100%;max-height:220px;object-fit:contain"></div>` : ''}<div style="padding-left:14px;line-height:1.7">(A) ${esc(o[0]||'')}<br>(B) ${esc(o[1]||'')}<br>(C) ${esc(o[2]||'')}<br>(D) ${esc(o[3]||'')}</div></div>`;
+                    });
+                    html += `</section>`;
+                } else if (!passage) {
+                    html += `<div style="margin:0 0 16px;padding:0 0 12px;border-bottom:1px solid #ddd;break-inside:avoid"><div style="font-weight:bold;margin-bottom:6px">પ્રશ્ન ${i+1}. ${esc(q.question || q.text || '')}</div>${q.image ? `<div style="margin:6px 0"><img src="${esc(q.image)}" style="max-width:100%;max-height:220px;object-fit:contain"></div>` : ''}<div style="padding-left:14px;line-height:1.7">(A) ${esc(opts[0]||'')}<br>(B) ${esc(opts[1]||'')}<br>(C) ${esc(opts[2]||'')}<br>(D) ${esc(opts[3]||'')}</div></div>`;
+                }
             });
             page.innerHTML = html;
             root.appendChild(page);
@@ -3150,7 +3164,7 @@ window.autoMathExplanation=autoMathExplanation;
       return {label:raw,letter};
     };
     const wrap=document.createElement('div');wrap.style.cssText='font-family:Arial,sans-serif;background:#fff;color:#111;padding:24px;width:760px;box-sizing:border-box;line-height:1.5';
-    wrap.innerHTML=`<h2 style="text-align:center;color:#312e81;margin-bottom:4px">નિર્મળા નવોદય સ્ટડી ઝોન</h2><h3 style="text-align:center;margin-top:0">${safe(meta.title||'જવાબ કી')}</h3><p><b>કોર્ષ:</b> ${safe(meta.course||'સામાન્ય')} &nbsp; | &nbsp; <b>વિષય:</b> ${safe(meta.subject||'સામાન્ય')}</p><hr>`+qs.map((q,i)=>{const a=answerDetails(q);return `<div style="padding:10px 0;border-bottom:1px solid #ddd;page-break-inside:avoid;break-inside:avoid"><div style="font-weight:bold;margin-bottom:5px">પ્રશ્ન ${i+1}. ${safe(q.question||'')}</div>${q.passage?`<div style="margin:3px 0 6px;padding:7px;background:#f8fafc;border-left:3px solid #94a3b8"><b>ફકરો:</b> ${safe(q.passage)}</div>`:''}<div style="color:#047857;font-weight:bold">સાચો જવાબ: ${safe(a.label)}</div></div>`}).join('');
+    wrap.innerHTML=`<h2 style="text-align:center;color:#312e81;margin-bottom:4px">નિર્મળા નવોદય સ્ટડી ઝોન</h2><h3 style="text-align:center;margin-top:0">${safe(meta.title||'જવાબ કી')}</h3><p><b>કોર્ષ:</b> ${safe(meta.course||'સામાન્ય')} &nbsp; | &nbsp; <b>વિષય:</b> ${safe(meta.subject||'સામાન્ય')}</p><hr>`+qs.map((q,i)=>{const a=answerDetails(q);const opts=Array.isArray(q.options)?q.options:(q.options&&typeof q.options==='object'?Object.values(q.options):[]);let correctIndex=-1;if(a.letter)correctIndex=['A','B','C','D'].indexOf(a.letter);if(correctIndex<0){const raw=String(q.answer??q.correctAnswer??q.correct_answer??'').trim();correctIndex=opts.findIndex(o=>String(o??'').trim().toLowerCase()===raw.toLowerCase());}const letters=['A','B','C','D'];return `<div style="padding:10px 0;border-bottom:1px solid #ddd;page-break-inside:avoid;break-inside:avoid"><div style="font-weight:bold;margin-bottom:5px">પ્રશ્ન ${i+1}. ${safe(q.question||'')}</div>${q.passage?`<div style="margin:3px 0 6px;padding:7px;background:#f8fafc;border-left:3px solid #94a3b8"><b>ફકરો:</b> ${safe(q.passage)}</div>`:''}<div style="margin:4px 0 5px">${opts.slice(0,4).map((o,j)=>`<div style="padding:3px 6px;margin:2px 0;border-radius:4px;${j===correctIndex?'background:#dcfce7;color:#047857;font-weight:bold;border:1px solid #86efac;':''}">(${letters[j]}) ${safe(o??'')}${j===correctIndex?' ✓':''}</div>`).join('')}</div><div style="color:#047857;font-weight:bold">સાચો જવાબ: ${safe(a.label)}</div></div>`}).join('');
     document.body.appendChild(wrap);html2pdf().set({margin:.45,filename:`${(meta.title||'Test').replace(/[\\/:*?"<>|]/g,'_')}_Answer_Key.pdf`,image:{type:'jpeg',quality:.95},html2canvas:{scale:2,backgroundColor:'#fff',useCORS:true},jsPDF:{unit:'in',format:'letter',orientation:'portrait'}}).from(wrap).save().finally(()=>wrap.remove());
   }
   document.addEventListener('DOMContentLoaded',()=>{

@@ -134,6 +134,7 @@
             </div>
 
             <div class="flex items-center gap-2">
+
                 <button type="button" onclick="window.location.reload()" title="પેજ રીફ્રેશ કરો" aria-label="પેજ રીફ્રેશ કરો"
                     class="px-2.5 py-2 rounded-lg bg-indigo-800 border border-indigo-300 text-white flex items-center justify-center gap-1.5 shadow hover:bg-indigo-600 active:scale-95 text-xs font-bold whitespace-nowrap">
                     <i class="fa-solid fa-rotate-right"></i><span>રીફ્રેશ</span>
@@ -687,16 +688,37 @@
 
                 <div class="p-3 overflow-y-auto flex-1 space-y-2" id="qbQuestionsListContainer"></div>
 
-                <div class="p-3 bg-slate-100 border-t flex justify-between items-center gap-2">
-                    <button onclick="deleteSelectedQbQuestions()" class="bg-rose-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow hover:bg-rose-700">
-                        પસંદ કરેલા પ્રશ્નો ડિલીટ કરો
-                    </button>
-                    <button onclick="addSelectedQbQuestionsToTest()" class="bg-indigo-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs shadow hover:bg-indigo-700">
-                        પસંદ કરેલા વર્તમાન ટેસ્ટમાં ઉમેરો
-                    </button>
+                <div class="p-3 bg-slate-100 border-t flex justify-between items-center gap-2 flex-wrap">
+                    <button onclick="deleteSelectedQbQuestions()" class="bg-rose-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow hover:bg-rose-700">પસંદ કરેલા પ્રશ્નો ડિલીટ કરો</button>
+                    <button onclick="openCustomPaperBuilder()" class="bg-amber-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow">🖨️ પસંદ કરેલા પ્રશ્નોથી પ્રશ્નપત્ર બનાવો</button>
+                    <button onclick="addSelectedQbQuestionsToTest()" class="bg-indigo-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs shadow hover:bg-indigo-700">પસંદ કરેલા વર્તમાન ટેસ્ટમાં ઉમેરો</button>
                 </div>
             </div>
         </div>
+
+
+<div id="customPaperBuilderModal" class="hidden fixed inset-0 bg-slate-900/70 z-[100] flex items-center justify-center p-3">
+ <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] overflow-y-auto p-4 space-y-3">
+  <div class="flex items-center justify-between border-b pb-2"><h3 class="font-bold text-indigo-800">🖨️ તમારી ફોર્મેટમાં પ્રશ્નપત્ર બનાવો</h3><button onclick="closeCustomPaperBuilder()" class="text-xl font-bold">×</button></div>
+  <p id="customPaperSelectedCount" class="text-xs font-bold text-emerald-700">પસંદ કરેલા પ્રશ્નો: 0</p>
+  <div><label class="block text-xs font-bold mb-1">પ્રશ્નપત્રનું શીર્ષક</label><input id="paperTitle" class="w-full border rounded-lg p-2 text-sm" value="પ્રશ્નપત્ર"></div>
+  <div><label class="block text-xs font-bold mb-1">પ્રશ્નપત્રની ફોર્મેટ (10માંથી પસંદ કરો)</label><select id="paperFormat" class="w-full border rounded-lg p-2 text-sm"><option value="format1">1. ક્લાસિક બોર્ડ ફોર્મેટ</option><option value="format2">2. બોર્ડર બોક્સ ફોર્મેટ</option><option value="format3">3. બે કૉલમ ફોર્મેટ</option><option value="format4">4. સાદું બ્લેક-એન્ડ-વ્હાઇટ</option><option value="format5">5. કોમ્પેક્ટ ફોર્મેટ</option><option value="format6">6. દરેક પ્રશ્ન અલગ બોક્સ</option><option value="format7">7. અંડરલાઇન હેડિંગ</option><option value="format8">8. પરીક્ષા પદ્ધતિ ફોર્મેટ</option><option value="format9">9. મોટાં અક્ષરનું ફોર્મેટ</option><option value="format10">10. ટેબલ ફોર્મેટ</option></select></div>
+  <div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold mb-1">કોર્ષ / ધોરણ</label><input id="paperCourse" class="w-full border rounded-lg p-2 text-sm" placeholder="ધોરણ 5 / નવોદય"></div><div><label class="block text-xs font-bold mb-1">વિષય</label><input id="paperSubject" class="w-full border rounded-lg p-2 text-sm" placeholder="ગણિત"></div></div>
+  <div class="grid grid-cols-3 gap-2"><div><label class="block text-xs font-bold mb-1">કુલ ગુણ</label><input id="paperMarks" type="number" min="0" class="w-full border rounded-lg p-2 text-sm" placeholder="50"></div><div><label class="block text-xs font-bold mb-1">સમય (મિનિટ)</label><input id="paperTime" type="number" min="0" class="w-full border rounded-lg p-2 text-sm" placeholder="60"></div><div><label class="block text-xs font-bold mb-1">દરેક પ્રશ્નના ગુણ</label><input id="paperEachMarks" type="number" min="0" step="0.5" value="1" class="w-full border rounded-lg p-2 text-sm"></div></div>
+  <div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold mb-1">ફોન્ટ સાઇઝ (px)</label><input id="paperFontSize" type="number" min="9" max="24" value="13" class="w-full border rounded-lg p-2 text-sm"></div><div><label class="block text-xs font-bold mb-1">પ્રશ્નો વચ્ચેનું અંતર (px)</label><input id="paperSpacing" type="number" min="2" max="30" value="12" class="w-full border rounded-lg p-2 text-sm"></div></div>
+  <div><label class="block text-xs font-bold mb-1">પ્રશ્ન ગોઠવણી</label><select id="paperLayout" class="w-full border rounded-lg p-2 text-sm"><option value="normal">સામાન્ય પ્રશ્નવાર</option><option value="table">ટેબલમાં પ્રશ્નો</option><option value="two">બે કૉલમ</option></select></div>
+  <div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold mb-1">પેજ સાઇઝ</label><select id="paperPageSize" class="w-full border rounded-lg p-2 text-sm"><option value="a4">A4 (સામાન્ય)</option><option value="a5">A5 (નાનું પેજ)</option><option value="letter">Letter</option></select></div><div><label class="block text-xs font-bold mb-1">પેજ દિશા</label><select id="paperOrientation" class="w-full border rounded-lg p-2 text-sm"><option value="portrait">ઊભું (Portrait)</option><option value="landscape">આડું (Landscape)</option></select></div></div>
+  <div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold mb-1">પેજની કિનારી</label><select id="paperMargins" class="w-full border rounded-lg p-2 text-sm"><option value="8">ઓછી (8 mm)</option><option value="10">મધ્યમ (10 mm)</option><option value="14" selected>સામાન્ય (14 mm)</option><option value="18">વધુ (18 mm)</option></select></div><div class="flex items-end"><label class="flex items-center gap-2 text-xs"><input id="paperCompact" type="checkbox" checked> ઓછા પેજ માટે કોમ્પેક્ટ ગોઠવણી</label></div></div>
+  <div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold mb-1">પ્રશ્નપત્ર સેટ</label><select id="paperSetMode" class="w-full border rounded-lg p-2 text-sm"><option value="same">મૂળ ક્રમ</option><option value="A">સેટ A</option><option value="B">સેટ B (મિશ્ર ક્રમ)</option></select></div><div class="flex items-end"><label class="flex items-center gap-2 text-xs"><input id="paperRandomize" type="checkbox"> પ્રશ્નો રેન્ડમ ગોઠવો</label></div></div>
+  <div class="flex flex-wrap gap-2"><button type="button" onclick="saveCustomPaperDraft()" class="border border-emerald-600 text-emerald-700 rounded-lg px-3 py-2 text-xs font-bold">💾 સેટિંગ્સ સેવ કરો</button><button type="button" onclick="loadCustomPaperDraft()" class="border border-indigo-600 text-indigo-700 rounded-lg px-3 py-2 text-xs font-bold">📂 સેવ કરેલું ખોલો</button><button type="button" onclick="previewCustomQuestionPaper()" class="border border-slate-500 text-slate-700 rounded-lg px-3 py-2 text-xs font-bold">👁️ પ્રિવ્યૂ</button></div>
+  <div><label class="block text-xs font-bold mb-1">લોગો અપલોડ કરો (વૈકલ્પિક)</label><input id="paperLogoFile" type="file" accept="image/*" class="w-full border rounded-lg p-2 text-sm"><p class="text-[10px] text-slate-500">આ પ્રશ્નપત્ર માટે લોગો પસંદ કરો.</p></div>
+  <div class="grid grid-cols-2 gap-2"><div><label class="block text-xs font-bold mb-1">હેડર લખાણ</label><input id="paperHeaderText" class="w-full border rounded-lg p-2 text-sm" placeholder="ક્લાસ / સંપર્ક નંબર"></div><div><label class="block text-xs font-bold mb-1">ફૂટર લખાણ</label><input id="paperFooterText" class="w-full border rounded-lg p-2 text-sm" placeholder="શુભેચ્છા / સરનામું"></div></div>
+  <div><label class="block text-xs font-bold mb-1">સૂચના (વૈકલ્પિક)</label><textarea id="paperInstructions" rows="2" class="w-full border rounded-lg p-2 text-sm" placeholder="બધા પ્રશ્નોના જવાબ આપો."></textarea></div>
+  <div class="flex flex-wrap gap-3 text-xs"><label class="flex items-center gap-2"><input id="paperShowAnswers" type="checkbox"> અલગ પેજ પર જવાબ કી પણ પ્રિન્ટ કરો</label><label class="flex items-center gap-2"><input id="paperShowStudentFields" type="checkbox" checked> વિદ્યાર્થીનું નામ/તારીખ માટે જગ્યા</label></div>
+  <p class="text-[11px] text-slate-500">પ્રશ્ન બેંકમાં પહેલાં પ્રશ્નો પસંદ કરો, પછી આ બટન દબાવો. પ્રિન્ટ સ્ક્રીનમાંથી A4 પેપર પસંદ કરી શકાય છે.</p>
+  <div class="flex gap-2 justify-end"><button onclick="closeCustomPaperBuilder()" class="border rounded-lg px-4 py-2 text-sm">રદ કરો</button><button onclick="printCustomQuestionPaper()" class="bg-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-bold">પ્રશ્નપત્ર તૈયાર કરો / પ્રિન્ટ</button></div>
+ </div>
+</div>
 
         <div id="editQuestionModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
             <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-4 space-y-3">
@@ -2365,6 +2387,18 @@
                     <span>તમારો જવાબ: <b class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</b></span>
                     <span>સાચો જવાબ: <b class="text-emerald-700">${q.answer || '-'}</b></span>
                 </div>
+                ${!isCorrect ? (() => {
+                    const letters = ['A','B','C','D'];
+                    const rawAnswer = String(q.answer ?? '').trim();
+                    const answerIndex = letters.indexOf(rawAnswer.toUpperCase());
+                    const correctOption = answerIndex >= 0 ? (opts[answerIndex] || '') : rawAnswer;
+                    const explanation = q.explanation || q.explain || q.solution || q.rationale || q.answerExplanation || '';
+                    const safeExplanation = escapeHtmlForResult(String(explanation));
+                    return `<div class="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm" style="color:#78350f">
+                      <div style="font-weight:800;margin-bottom:5px">💡 સમજૂતી</div>
+                      ${safeExplanation ? `<div>${safeExplanation}</div>` : `<div>સાચો વિકલ્પ <b>(${escapeHtmlForResult(rawAnswer || '-')}) ${escapeHtmlForResult(correctOption)}</b> છે. આ વિકલ્પ પ્રશ્નને અનુરૂપ સાચો જવાબ છે. આ પ્રશ્નની વિગતવાર સમજૂતી શિક્ષકે પ્રશ્ન બનાવતી વખતે ઉમેરેલી હોય તો અહીં દેખાશે.</div>`}
+                    </div>`;
+                })() : ''}
             </div>
         `;
     });
@@ -3037,6 +3071,119 @@ window.autoMathExplanation=autoMathExplanation;
 <style>
 </style>
 
+
+
+<script id="customQuestionPaperFeature">
+(function(){
+ const $=id=>document.getElementById(id);
+ const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ window.openCustomPaperBuilder=function(){
+   const selected=[...document.querySelectorAll('.qb-select-checkbox:checked')];
+   if(!selected.length){alert('પ્રશ્નપત્ર બનાવવા માટે પ્રશ્ન બેંકમાંથી પહેલાં પ્રશ્નો પસંદ કરો.');return;}
+   $('customPaperSelectedCount').textContent='પસંદ કરેલા પ્રશ્નો: '+selected.length;
+   const first=selected.map(cb=>questionBankData[cb.getAttribute('data-qb-key')]).find(Boolean)||{};
+   if(!$('paperCourse').value)$('paperCourse').value=first.course||'';
+   if(!$('paperSubject').value)$('paperSubject').value=first.subject||'';
+   if(!$('paperMarks').value)$('paperMarks').value=selected.length*(Number($('paperEachMarks').value)||1);
+   $('customPaperBuilderModal').classList.remove('hidden');
+ };
+ window.closeCustomPaperBuilder=function(){ $('customPaperBuilderModal').classList.add('hidden'); };
+ const paperDraftIds=['paperTitle','paperFormat','paperCourse','paperSubject','paperMarks','paperTime','paperEachMarks','paperFontSize','paperSpacing','paperLayout','paperHeaderText','paperFooterText','paperInstructions','paperShowAnswers','paperShowStudentFields','paperSetMode','paperRandomize','paperPageSize','paperOrientation','paperMargins','paperCompact'];
+ window.saveCustomPaperDraft=function(){try{const data={};paperDraftIds.forEach(id=>{const el=$(id);if(el)data[id]=el.type==='checkbox'?el.checked:el.value});localStorage.setItem('nsz_custom_paper_draft',JSON.stringify(data));alert('પ્રશ્નપત્રની સેટિંગ્સ સેવ થઈ ગઈ. પસંદ કરેલા પ્રશ્નો ફરી પસંદ કરવા પડી શકે છે.');}catch(e){alert('સેટિંગ્સ સેવ થઈ શકી નથી.');}};
+ window.loadCustomPaperDraft=function(){try{const data=JSON.parse(localStorage.getItem('nsz_custom_paper_draft')||'null');if(!data){alert('સેવ કરેલી સેટિંગ્સ મળી નથી.');return}paperDraftIds.forEach(id=>{const el=$(id);if(el&&data[id]!==undefined){if(el.type==='checkbox')el.checked=!!data[id];else el.value=data[id]}});alert('સેવ કરેલી સેટિંગ્સ ખૂલી ગઈ.');}catch(e){alert('સેવ કરેલી સેટિંગ્સ ખોલી શકાઈ નથી.');}};
+ window.previewCustomQuestionPaper=function(){window.printCustomQuestionPaper(true);};
+ window.printCustomQuestionPaper=async function(previewOnly=false){
+   let selected=[...document.querySelectorAll('.qb-select-checkbox:checked')].map(cb=>questionBankData[cb.getAttribute('data-qb-key')]).filter(Boolean);
+   const setMode=$('paperSetMode')?.value||'same';
+   if(setMode==='B'||$('paperRandomize')?.checked){selected=selected.slice();for(let i=selected.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[selected[i],selected[j]]=[selected[j],selected[i]];}}
+   if(!selected.length){alert('પસંદ કરેલા પ્રશ્નો મળ્યા નથી. ફરીથી પ્રશ્નો પસંદ કરો.');closeCustomPaperBuilder();return;}
+   const title=$('paperTitle').value.trim()||'પ્રશ્નપત્ર', course=$('paperCourse').value.trim(), subject=$('paperSubject').value.trim();
+   const marks=$('paperMarks').value||String(selected.length*(Number($('paperEachMarks').value)||1)), time=$('paperTime').value, each=Number($('paperEachMarks').value)||1;
+   const instructions=$('paperInstructions').value.trim();
+   const format=$('paperFormat')?.value||'format1';
+   const fontSize=Math.min(24,Math.max(9,Number($('paperFontSize')?.value)||13));
+   const spacing=Math.min(30,Math.max(2,Number($('paperSpacing')?.value)||12));
+   const layout=$('paperLayout')?.value||'normal';
+   const pageSize=$('paperPageSize')?.value||'a4';
+   const orientation=$('paperOrientation')?.value||'portrait';
+   const pageMargins=Math.min(25,Math.max(5,Number($('paperMargins')?.value)||14));
+   const compact=!!$('paperCompact')?.checked;
+   const headerText=$('paperHeaderText')?.value.trim()||'';
+   const footerText=$('paperFooterText')?.value.trim()||'';
+   let logoData=''; const logoInput=$('paperLogoFile');
+   if(logoInput&&logoInput.files&&logoInput.files[0]) { try { logoData=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=reject;reader.readAsDataURL(logoInput.files[0]);}); } catch(e) { logoData=''; } }
+   let body='', answers=[], tableRows=[]; const seenPassages=new Set();
+   selected.forEach((q,i)=>{
+     const opts=Array.isArray(q.options)?q.options:(q.options?Object.values(q.options):[]);
+     const passage=String(q.passage||'').trim();
+     if(passage&&!seenPassages.has(passage)){seenPassages.add(passage);body+=`<div class="passage"><b>ફકરો:</b><div>${esc(passage).replace(/\n/g,'<br>')}</div></div>`;}
+     let qhtml=`<div><b>પ્રશ્ન ${i+1}.</b> ${formatFractions(esc(q.question||q.text||''))} <span class="qmarks">(${each} ગુણ)</span></div>`;
+     if(q.image) qhtml+=`<div class="qimage"><img src="${esc(q.image)}"></div>`;
+     if(opts.length) qhtml+=`<div class="options">${['A','B','C','D'].map((letter,j)=>`<div>(${letter}) ${formatFractions(esc(opts[j]||''))}</div>`).join('')}</div>`;
+     if(layout==='table') tableRows.push(`<tr><td>${i+1}</td><td>${qhtml}</td><td>________</td></tr>`);
+     else body+=`<div class="question">${qhtml}</div>`;
+     const answerLetter=String(q.answer||'—').trim().toUpperCase(); const answerIndex=['A','B','C','D'].indexOf(answerLetter); const answerText=answerIndex>=0?String(opts[answerIndex]||''):''; const explanation=String(q.explanation||q.solution||q.explain||'').trim(); answers.push(`<tr><td>${i+1}</td><td><span class="correct-highlight">${formatFractions(esc(answerLetter))}${answerText?' — '+formatFractions(esc(answerText)):''}</span>${explanation?`<div class="answer-explanation"><b>સમજૂતી:</b> ${formatFractions(esc(explanation))}</div>`:''}</td></tr>`);
+   });
+   if(layout==='table') body=`<table class="question-table"><thead><tr><th>નં.</th><th>પ્રશ્ન અને વિકલ્પો</th><th>જવાબ</th></tr></thead><tbody>${tableRows.join('')}</tbody></table>`;
+   const studentFields=$('paperShowStudentFields').checked?'<div class="student">વિદ્યાર્થીનું નામ: ______________________________ &nbsp; તારીખ: ______________</div>':'';
+   const answerKey=$('paperShowAnswers').checked?`<section id="answerKeyContent" class="answerpage"><h2>જવાબ કી</h2><table><thead><tr><th>પ્રશ્ન નંબર</th><th>સાચો જવાબ</th></tr></thead><tbody>${answers.join('')}</tbody></table></section>`:'';
+   const html=`<!DOCTYPE html><html lang="gu"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet"><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script><style>
+    @page{size:${pageSize.toUpperCase()} ${orientation};margin:${pageMargins}mm}*{box-sizing:border-box}body{font-family:'Hind Vadodara',Arial,sans-serif;color:#111;font-size:${fontSize}px;line-height:${compact?'1.28':'1.55'};margin:0}.head{text-align:center;border-bottom:2px solid #222;padding-bottom:10px;margin-bottom:10px}.school{font-size:27px;font-weight:900;letter-spacing:.2px}.title{font-size:18px;font-weight:700;margin-top:3px}.meta{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:5px}.student{margin:12px 0 15px;font-weight:600}.instructions{border:1px solid #aaa;padding:7px;margin:10px 0}.passage{border:1px solid #999;padding:8px;margin:12px 0;break-inside:avoid}.passage div{margin-top:4px;white-space:normal}.question{margin:0 0 ${spacing}px;break-inside:avoid}.question-table{width:100%;border-collapse:collapse}.question-table th,.question-table td{border:1px solid #444;padding:6px;vertical-align:top}.question-table th{background:#f1f5f9}.two-layout #questionPaperContent{column-count:2;column-gap:8mm;column-fill:auto}.two-layout .question{display:block;width:auto;vertical-align:top;padding-right:0;break-inside:avoid;page-break-inside:avoid;margin-bottom:${compact?Math.min(spacing,5):spacing}px}.two-layout .passage,.two-layout .instructions{column-span:all}.compact-layout .head{padding-bottom:5px;margin-bottom:5px}.compact-layout .school{font-size:22px}.compact-layout .title{font-size:15px}.compact-layout .student{margin:5px 0}.compact-layout .instructions{padding:4px;margin:5px 0}.compact-layout .passage{padding:5px;margin:5px 0}.compact-layout .options{gap:1px 6px;padding:2px 0 0 8px}.compact-layout .qimage img{max-height:120px}.paper-logo{max-width:76px;max-height:76px;object-fit:contain;display:block;margin:0 auto 5px}.custom-head,.custom-foot{text-align:center;font-weight:700;margin:6px 0}.qmarks{float:right;font-size:11px}.options{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;padding:5px 0 0 16px}.qimage img{max-width:100%;max-height:180px;object-fit:contain;margin:6px 0}.answerpage{page-break-before:always;break-before:page}.answerpage h2{text-align:center}.answerpage table{border-collapse:collapse;width:100%}th,td{border:1px solid #555;padding:6px;text-align:left}.correct-highlight{display:inline-block;background:#bbf7d0;color:#065f46;border:1px solid #10b981;border-radius:5px;padding:3px 8px;font-weight:900}.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.05;margin:0 2px}.frac-num{display:block;border-bottom:1px solid currentColor;padding:0 3px 1px}.frac-den{display:block;padding:1px 3px 0}.answer-explanation{margin-top:5px;color:#334155;font-size:.95em;white-space:normal}.format2 .question{border:1px solid #555;padding:9px;border-radius:5px}.format3 .question{display:inline-block;vertical-align:top;width:48%;padding-right:2%;}.format4 .head{border-bottom:1px solid #000}.format5{font-size:11px!important}.format5 .question{margin-bottom:6px}.format6 .question{border:1px solid #cbd5e1;padding:10px;margin-bottom:10px;border-radius:8px}.format7 .head{border-bottom:4px double #222}.format8 .head{outline:1px solid #222;outline-offset:4px;margin-bottom:18px}.format9{font-size:15px}.format9 .school{font-size:30px}.format10 .question{border-bottom:1px dashed #777;padding:7px 0}.format10 .options{grid-template-columns:1fr 1fr}@media print{.no-print{display:none}}
+   </style></head><body class="${format} ${layout==='two'?'two-layout':''} ${compact?'compact-layout':''}"><div class="head">${logoData?`<img class="paper-logo" src="${logoData}" alt="લોગો">`:''}${headerText?`<div class="custom-head">${esc(headerText)}</div>`:''}<div class="school">નિર્મળા નવોદય ક્લાસિસ</div><div class="title">${esc(title)}${setMode==='A'?' — સેટ A':setMode==='B'?' — સેટ B':''}</div><div class="meta">${course?`<span><b>કોર્ષ/ધોરણ:</b> ${esc(course)}</span>`:''}${subject?`<span><b>વિષય:</b> ${esc(subject)}</span>`:''}<span><b>કુલ ગુણ:</b> ${esc(marks)}</span>${time?`<span><b>સમય:</b> ${esc(time)} મિનિટ</span>`:''}</div></div><div id="questionPaperContent">${studentFields}${instructions?`<div class="instructions"><b>સૂચના:</b> ${esc(instructions).replace(/\n/g,'<br>')}</div>`:''}${body}${footerText?`<div class="custom-foot">${esc(footerText)}</div>`:''}</div>${answerKey}<div class="no-print" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px"><button onclick="window.print()" style="padding:10px 18px;background:#4338ca;color:white;border:0;border-radius:8px;font-weight:bold">🖨️ પ્રિન્ટ / Save as PDF</button><button onclick="downloadPaperPdf()" style="padding:10px 18px;background:#047857;color:white;border:0;border-radius:8px;font-weight:bold">⬇️ પ્રશ્નપત્ર PDF ડાઉનલોડ</button>${$('paperShowAnswers').checked?`<button onclick="downloadAnswerKeyPdf()" style="padding:10px 18px;background:#b45309;color:white;border:0;border-radius:8px;font-weight:bold">🔑 જવાબ કી PDF ડાઉનલોડ</button>`:''}</div><script>async function makePdf(id,name){const el=document.getElementById(id);if(!el){alert('આ વિભાગ ઉપલબ્ધ નથી.');return}if(typeof html2pdf!=='function'){alert('PDF લાઇબ્રેરી ઇન્ટરનેટથી લોડ થઈ નથી. હવે Print વિન્ડો ખોલાશે; ત્યાં Save as PDF પસંદ કરો.');try{window.focus();window.print()}catch(printError){alert('આ WebViewમાં પ્રિન્ટિંગ ઉપલબ્ધ નથી. આ પેજ Chromeમાં ખોલીને Print → Save as PDF કરો.')}return}try{await html2pdf().set({margin:${pageMargins},filename:name,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'${pageSize}',orientation:'${orientation}'},pagebreak:{mode:['css','legacy']}}).from(el).save()}catch(e){console.error('html2pdf failed:',e);alert('PDF સીધું બનાવી શકાયું નથી. હવે Print વિન્ડો ખોલાશે; ત્યાં Save as PDF પસંદ કરો.');try{window.focus();window.print()}catch(printError){alert('આ WebViewમાં પ્રિન્ટિંગ ઉપલબ્ધ નથી. Chromeમાં ખોલીને Print → Save as PDF કરો.')}}}function downloadPaperPdf(){makePdf('questionPaperContent','Nirmala_Navodaya_Question_Paper.pdf')}function downloadAnswerKeyPdf(){makePdf('answerKeyContent','Nirmala_Navodaya_Answer_Key.pdf')}window.addEventListener('load',()=>{document.title='પ્રશ્નપત્ર પ્રિવ્યૂ - '+document.title;});<\/script></body></html>`;
+   const w=window.open('','_blank');
+   if(!w){alert('બ્રાઉઝરે નવી વિન્ડો રોકી છે. Chromeમાં pop-up મંજૂરી આપો અથવા ફરી બટન દબાવો.');return;}
+   w.document.open();w.document.write(html);w.document.close();closeCustomPaperBuilder();
+ };
+})();
+</script>
+
+
+<!-- 5-minute inactivity lock: valid page markup (not inside a JavaScript string) -->
+<div id="idleLockOverlay" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(15,23,42,.96);align-items:center;justify-content:center;padding:20px;font-family:Arial,sans-serif">
+  <div style="background:#fff;max-width:360px;width:100%;padding:24px;border-radius:18px;text-align:center;box-shadow:0 20px 60px #0006">
+    <div style="font-size:42px;color:#4f46e5;margin-bottom:8px">🔒</div>
+    <h2 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#1e293b">એપ લોક થઈ ગઈ છે</h2>
+    <p style="font-size:14px;color:#475569;margin:0 0 16px">5 મિનિટ સુધી કોઈ પ્રવૃત્તિ ન હોવાથી પેજ રીફ્રેશ થયું છે. ચાલુ રાખવા પાસવર્ડ દાખલ કરો.</p>
+    <input id="idleLockPassword" type="password" autocomplete="current-password" placeholder="પાસવર્ડ દાખલ કરો" style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;box-sizing:border-box;margin-bottom:10px">
+    <p id="idleLockError" style="display:none;color:#dc2626;font-size:13px;margin:0 0 10px">પાસવર્ડ ખોટો છે. ફરી પ્રયાસ કરો.</p>
+    <button id="idleUnlockBtn" type="button" style="width:100%;padding:12px;background:#4f46e5;color:#fff;border:0;border-radius:10px;font-size:16px;font-weight:700">અનલોક કરો</button>
+  </div>
+</div>
+<script id="idleRefreshLockFix">
+(function(){
+  'use strict';
+  const LIMIT=5*60*1000, FLAG='nirmalaStudyZonIdleLocked';
+  let timer=null, locked=false;
+  const byId=id=>document.getElementById(id);
+  function lockAndRefresh(){
+    if(locked)return; locked=true;
+    try{sessionStorage.setItem(FLAG,'1')}catch(e){}
+    location.reload();
+  }
+  function showLock(){
+    locked=true; const overlay=byId('idleLockOverlay'); if(overlay)overlay.style.display='flex';
+    if(timer){clearTimeout(timer);timer=null;}
+    const input=byId('idleLockPassword'); if(input){input.value='';setTimeout(()=>input.focus(),100);}
+  }
+  function reset(){if(locked)return;if(timer)clearTimeout(timer);timer=setTimeout(lockAndRefresh,LIMIT);}
+  function unlock(){
+    const input=byId('idleLockPassword'), error=byId('idleLockError');
+    const entered=input?input.value:'';
+    if(typeof adminPasscode!=='undefined' && entered===String(adminPasscode)){
+      try{sessionStorage.removeItem(FLAG)}catch(e){}
+      locked=false; const overlay=byId('idleLockOverlay');if(overlay)overlay.style.display='none';
+      if(error)error.style.display='none'; reset();
+    }else{if(error)error.style.display='block';if(input){input.value='';input.focus();}}
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    let shouldLock=false;try{shouldLock=sessionStorage.getItem(FLAG)==='1'}catch(e){}
+    if(shouldLock)showLock();else reset();
+    ['pointerdown','keydown','touchstart','scroll','click','input','change'].forEach(evt=>document.addEventListener(evt,reset,{passive:true}));
+    if(byId('idleUnlockBtn'))byId('idleUnlockBtn').addEventListener('click',unlock);
+    if(byId('idleLockPassword'))byId('idleLockPassword').addEventListener('keydown',e=>{if(e.key==='Enter')unlock()});
+  });
+})();
+</script>
 
 </body>
 

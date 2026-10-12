@@ -133,8 +133,12 @@
                 </div>
             </div>
 
-            <div>
-                <button onclick="promptTeacherLogin()" title="Admin Login" class="focus:outline-none">
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="window.location.reload()" title="પેજ રીફ્રેશ કરો" aria-label="પેજ રીફ્રેશ કરો"
+                    class="px-2.5 py-2 rounded-lg bg-indigo-800 border border-indigo-300 text-white flex items-center justify-center gap-1.5 shadow hover:bg-indigo-600 active:scale-95 text-xs font-bold whitespace-nowrap">
+                    <i class="fa-solid fa-rotate-right"></i><span>રીફ્રેશ</span>
+                </button>
+                <button type="button" onclick="promptTeacherLogin()" title="Admin Login" class="focus:outline-none">
                     <img src="https://i.ibb.co/L5Q852p/profile.jpg" alt="Admin Icon" class="w-8 h-8 rounded-full object-cover border-2 border-amber-300 shadow hover:opacity-80 transition">
                 </button>
             </div>

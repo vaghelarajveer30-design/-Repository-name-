@@ -248,26 +248,11 @@
                     <div class="flex items-center gap-2 mb-3">
                         <i class="fa-solid fa-image text-indigo-600 text-lg"></i>
                         <div>
-                            <h3 class="font-bold text-slate-800 text-sm">તમારું રિઝલ્ટ ઇમેજમાં ડાઉનલોડ કરો</h3>
-                            <p class="text-[10px] text-slate-500">અલગ અલગ સ્ટાઇલ પસંદ કરીને સુંદર રિઝલ્ટ કાર્ડ સેવ કરો.</p>
+                            <h3 class="font-bold text-slate-800 text-sm">રિઝલ્ટ ડાઉનલોડ</h3>
+                            <p class="text-[10px] text-slate-500">વિદ્યાર્થી માટે ડાઉનલોડ બંધ છે; શિક્ષક રિઝલ્ટ ડાઉનલોડ કરી શકે છે.</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                        <button onclick="downloadResultImage('classic')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-xs shadow">🏆 ક્લાસિક</button>
-                        <button onclick="downloadResultImage('modern')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs shadow">⚡ મોડર્ન</button>
-                        <button onclick="downloadResultImage('certificate')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl text-xs shadow">🏅 સર્ટિફિકેટ</button>
-                        <button onclick="downloadResultImage('scorecard')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow">📊 સ્કોરકાર્ડ</button>
-                        <button onclick="downloadResultImage('minimal')" class="bg-white border text-slate-700 font-bold py-2 rounded-xl text-xs shadow">◻️ મિનિમલ</button>
-                        <button onclick="downloadResultImage('academic')" class="bg-blue-600 text-white font-bold py-2 rounded-xl text-xs shadow">🎓 એકેડેમિક</button>
-                        <button onclick="downloadResultImage('neon')" class="bg-violet-700 text-white font-bold py-2 rounded-xl text-xs shadow">✨ નીઓન</button>
-                        <button onclick="downloadResultImage('royal')" class="bg-purple-700 text-white font-bold py-2 rounded-xl text-xs shadow">👑 રોયલ</button>
-                        <button onclick="downloadResultImage('nature')" class="bg-teal-600 text-white font-bold py-2 rounded-xl text-xs shadow">🌿 નેચર</button>
-                        <button onclick="downloadResultImage('newspaper')" class="bg-gray-700 text-white font-bold py-2 rounded-xl text-xs shadow">📰 ન્યૂઝ</button>
-                    </div>
-                    <div class="flex justify-center gap-2 mt-3">
-                        <button onclick="downloadResultImage('classic','png')" class="px-3 py-1.5 rounded-lg border bg-white text-xs font-bold text-slate-700 hover:bg-slate-100">PNG</button>
-                        <button onclick="downloadResultImage('classic','jpg')" class="px-3 py-1.5 rounded-lg border bg-white text-xs font-bold text-slate-700 hover:bg-slate-100">JPG</button>
-                    </div>
+                    <p class="text-sm text-slate-600">રિઝલ્ટ ડાઉનલોડ કરવાની સુવિધા ફક્ત શિક્ષક પાસે ઉપલબ્ધ છે.</p>
                 </div>
                 <p class="text-xs font-semibold text-slate-600">તમે આપેલી ટેસ્ટનું સોલ્યુશન નીચે મુજબ છે:</p>
             </div>
@@ -2387,18 +2372,7 @@
                     <span>તમારો જવાબ: <b class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</b></span>
                     <span>સાચો જવાબ: <b class="text-emerald-700">${q.answer || '-'}</b></span>
                 </div>
-                ${!isCorrect ? (() => {
-                    const letters = ['A','B','C','D'];
-                    const rawAnswer = String(q.answer ?? '').trim();
-                    const answerIndex = letters.indexOf(rawAnswer.toUpperCase());
-                    const correctOption = answerIndex >= 0 ? (opts[answerIndex] || '') : rawAnswer;
-                    const explanation = q.explanation || q.explain || q.solution || q.rationale || q.answerExplanation || '';
-                    const safeExplanation = escapeHtmlForResult(String(explanation));
-                    return `<div class="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm" style="color:#78350f">
-                      <div style="font-weight:800;margin-bottom:5px">💡 સમજૂતી</div>
-                      ${safeExplanation ? `<div>${safeExplanation}</div>` : `<div>સાચો વિકલ્પ <b>(${escapeHtmlForResult(rawAnswer || '-')}) ${escapeHtmlForResult(correctOption)}</b> છે. આ વિકલ્પ પ્રશ્નને અનુરૂપ સાચો જવાબ છે. આ પ્રશ્નની વિગતવાર સમજૂતી શિક્ષકે પ્રશ્ન બનાવતી વખતે ઉમેરેલી હોય તો અહીં દેખાશે.</div>`}
-                    </div>`;
-                })() : ''}
+
             </div>
         `;
     });
@@ -2967,21 +2941,14 @@ E.saveSettings=function(b){let m={...(currentTests[activeTestKey]?.meta||{})};m.
 E.analytics=function(){let k=activeTestKey,s=allSubmissionsGlobal.filter(x=>x.testKey===k),avg=s.length?Math.round(s.reduce((a,x)=>a+Number(x.percentage||0),0)/s.length):0,rank=s.slice().sort((a,b)=>b.percentage-a.percentage||b.correctCount-a.correctCount).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.studentName)}</td><td>${x.correctCount}/${x.totalQuestions}</td><td>${x.percentage}%</td><td>${E.grade(x.percentage)}</td></tr>`).join('');let q={};s.forEach(x=>E.arr(x.questions).forEach((z,i)=>{let id=z.question||i;q[id]??={q:id,t:0,c:0};q[id].t++;if(normalizeAnswerForGrading(x.answers?.[i], z)===normalizeAnswerForGrading(z.answer, z))q[id].c++}));let hard=Object.values(q).sort((a,b)=>a.c/a.t-b.c/b.t).slice(0,10).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.q)}</td><td>${Math.round(x.c/x.t*100)}%</td></tr>`).join('');let d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>📈 ${E.esc(currentTests[k]?.meta?.title||k)} Analytics</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="ev2grid my-3"><div class="ev2stat">Submissions<br><b>${s.length}</b></div><div class="ev2stat">Average<br><b>${avg}%</b></div><div class="ev2stat">Highest<br><b>${s.length?Math.max(...s.map(x=>+x.percentage||0)):'-'}%</b></div><div class="ev2stat">Topper<br><b class="text-sm">${s[0]?E.esc(s.slice().sort((a,b)=>b.percentage-a.percentage)[0].studentName):'-'}</b></div></div><h4 class="font-bold text-xs mb-1">🏆 Rank</h4><table class="ev2table"><tr><th>Rank</th><th>વિદ્યાર્થી</th><th>ગુણ</th><th>%</th><th>Grade</th></tr>${rank||'<tr><td colspan=5>ડેટા નથી</td></tr>'}</table><h4 class="font-bold text-xs mt-4 mb-1">⚠️ મુશ્કેલ પ્રશ્નો</h4><table class="ev2table"><tr><th>#</th><th>પ્રશ્ન</th><th>સાચા</th></tr>${hard||'<tr><td colspan=3>ડેટા નથી</td></tr>'}</table></div>`;document.body.appendChild(d)};
 E.csv=function(){let r=[['તારીખ','ટેસ્ટ','કોર્ષ','વિષય','વિદ્યાર્થી','ધોરણ','સાચા','કુલ','ટકાવારી','Grade']];allSubmissionsGlobal.forEach(x=>r.push([x.timestamp?new Date(x.timestamp).toLocaleString('gu-IN'):'',x.testTitle||'',x.course||'',x.subject||'',x.studentName||'',x.std||'',x.correctCount||0,x.totalQuestions||0,x.percentage||0,E.grade(+x.percentage||0)]));let c='\ufeff'+r.map(a=>a.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv;charset=utf-8'}));a.download='nirmala_results.csv';a.click()};
 E.json=function(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({version:2,exportedAt:Date.now(),tests:currentTests,submissions:allSubmissionsGlobal,question_bank:questionBankData,customLogo:customLogoBase64},null,2)],{type:'application/json'}));a.download='nirmala_backup.json';a.click()};
-function nav(){let q=document.getElementById('quizScreen');if(!q||document.getElementById('ev2nav'))return;let n=document.createElement('div');n.id='ev2nav';n.style.cssText='position:sticky;top:55px;z-index:40;background:white;border:1px solid #e2e8f0;border-radius:12px;padding:7px;margin-bottom:8px';q.insertBefore(n,q.firstChild);updateNav()}function updateNav(){let n=document.getElementById('ev2nav');if(!n||!currentStudentQuizData)return;let t=currentStudentQuizData.questions.length,d=currentStudentQuizData.questions.filter((_,i)=>currentStudentQuizData.answers[i]!=null&&currentStudentQuizData.answers[i]!=='').length;n.innerHTML=`<div class="flex gap-2 items-center text-[11px] font-bold"><span>📝 ${d}/${t}</span><span class="flex-1 ev2bar"><span style="width:${t?d/t*100:0}%"></span></span><button onclick="EV2.unanswered()" class="bg-slate-100 px-2 py-1 rounded">અનઉત્તરિત</button></div>`}
-E.unanswered=function(){
- let d=currentStudentQuizData;if(!d)return;let missing=d.questions.map((q,i)=>({i,q})).filter(x=>d.answers[x.i]==null||d.answers[x.i]==='');
- if(!missing.length){alert('બધા જવાબ અપાઈ ગયા છે.');return;}
- let old=document.getElementById('ev2UnansweredModal');if(old)old.remove();
- let modal=document.createElement('div');modal.id='ev2UnansweredModal';modal.className='ev2modal';
- modal.innerHTML=`<div><div class="flex justify-between items-center border-b pb-2"><b>⚠️ બાકી પ્રશ્નો (${missing.length})</b><button onclick="this.closest('.ev2modal').remove()">✕</button></div><p class="text-xs text-slate-600 my-2">કોઈ પ્રશ્ન પર ક્લિક કરો; તે પ્રશ્ન પાસે સીધા પહોંચી શકશો.</p><div class="grid grid-cols-4 sm:grid-cols-6 gap-2">${missing.map(x=>`<button type="button" onclick="EV2.jumpToQuestion(${x.i});document.getElementById('ev2UnansweredModal')?.remove()" class="border border-rose-300 bg-rose-50 text-rose-700 rounded-lg p-3 font-bold">પ્રશ્ન ${x.i+1}</button>`).join('')}</div><div class="text-right mt-3"><button onclick="this.closest('.ev2modal').remove()" class="bg-slate-700 text-white px-4 py-2 rounded-lg">બંધ કરો</button></div></div>`;document.body.appendChild(modal);
-};
-E.jumpToQuestion=function(i){let target=document.getElementById('opt_'+i+'_A')||document.querySelector(`[data-question-index="${i}"]`)||document.getElementById('quizScreen');target?.scrollIntoView({behavior:'smooth',block:'center'});};
+function nav(){let q=document.getElementById('quizScreen');if(!q||document.getElementById('ev2nav'))return;let n=document.createElement('div');n.id='ev2nav';n.style.cssText='position:sticky;top:55px;z-index:40;background:white;border:1px solid #e2e8f0;border-radius:12px;padding:7px;margin-bottom:8px';q.insertBefore(n,q.firstChild);updateNav()}function updateNav(){let n=document.getElementById('ev2nav');if(!n||!currentStudentQuizData)return;let t=currentStudentQuizData.questions.length,d=Object.keys(currentStudentQuizData.answers||{}).length;n.innerHTML=`<div class="flex gap-2 items-center text-[11px] font-bold"><span>📝 ${d}/${t}</span><span class="flex-1 ev2bar"><span style="width:${t?d/t*100:0}%"></span></span><button onclick="EV2.unanswered()" class="bg-slate-100 px-2 py-1 rounded">અનઉત્તરિત</button></div>`}
+E.unanswered=function(){let i=currentStudentQuizData?.questions.findIndex((_,i)=>currentStudentQuizData.answers[i]==null);if(i>=0)document.getElementById('opt_'+i+'_A')?.scrollIntoView({behavior:'smooth',block:'center'});else alert('બધા જવાબ અપાઈ ગયા છે.')};
 function save(){if(!currentStudentQuizData||currentStudentQuizData.meta?.allowResume===false)return;localStorage.setItem(E.key(currentStudentQuizData.studentName,currentStudentQuizData.testKey),JSON.stringify({startedAt:currentStudentQuizData.startedAt,answers:currentStudentQuizData.answers,questions:currentStudentQuizData.questions}))}
 function start(ev){ev.preventDefault();let name=document.getElementById('studentName').value.trim(),std=document.getElementById('studentStd').value,u=new URLSearchParams(location.search),k=u.get('t')||u.get('test')||activeTestKey,t=currentTests[k];if(!name||!t)return;let m=t.meta||{},now=Date.now();if(m.status==='draft'){alert('આ ટેસ્ટ Draftમાં છે.');return}if(m.startAt&&now<m.startAt){alert('ટેસ્ટ હજુ શરૂ થઈ નથી.');return}if(m.endAt&&now>m.endAt){alert('ટેસ્ટનો સમયગાળો પૂર્ણ થયો છે.');return}let qs=E.arr(t.questions);if(!qs.length){alert('આ ટેસ્ટમાં પ્રશ્નો નથી.');return}let old=null;try{old=JSON.parse(localStorage.getItem(E.key(name,k))||'null')}catch{};if(old?.questions?.length&&m.allowResume!==false){if(confirm('અધૂરી ટેસ્ટ મળી છે. Resume કરવી છે?'))qs=old.questions;else localStorage.removeItem(E.key(name,k)),old=null}currentStudentQuizData={testKey:k,studentName:name,std,meta:m,questions:qs,answers:old?.answers||{},startedAt:old?.startedAt||Date.now()};document.getElementById('studentRegScreen').classList.add('hidden');document.getElementById('quizScreen').classList.remove('hidden');document.getElementById('quizHeaderTimerBox').classList.remove('hidden');document.getElementById('quizTitleDisplay').textContent=m.title||'ઓનલાઇન ટેસ્ટ';nav();renderStudentQuizQuestions();startStudentTimer(Math.max(1,(+m.timeLimit||60)*60-Math.floor((Date.now()-currentStudentQuizData.startedAt)/1000)));save()}
 function answer(i,l){currentStudentQuizData.answers[i]=l;save();['A','B','C','D'].forEach(x=>document.getElementById(`opt_${i}_${x}`)?.classList.remove('selected-ans'));document.getElementById(`opt_${i}_${l}`)?.classList.add('selected-ans');updateNav()}
-let locking=false;function submit(timeExpired=false){if(locking||!currentStudentQuizData)return;const missing=currentStudentQuizData.questions.map((q,i)=>i).filter(i=>currentStudentQuizData.answers[i]==null||currentStudentQuizData.answers[i]==='');if(missing.length&&!timeExpired){E.unanswered();alert(`હજુ ${missing.length} પ્રશ્નોના જવાબ બાકી છે. સમય પૂરો થાય તે પહેલાં બધા પ્રશ્નોના જવાબ આપ્યા વગર ટેસ્ટ સબમિટ નહીં થાય. બાકી પ્રશ્નોની યાદીમાંથી પ્રશ્ન પસંદ કરો.`);return;}locking=true;if(studentTimerInterval)clearInterval(studentTimerInterval);let q=currentStudentQuizData.questions,c=0;q.forEach((x,i)=>{if(currentStudentQuizData.answers[i]===x.answer)c++});let total=q.length,p=total?Math.round(c/total*100):0,s={testKey:currentStudentQuizData.testKey,testTitle:currentStudentQuizData.meta?.title||'ટેસ્ટ',studentName:currentStudentQuizData.studentName,std:currentStudentQuizData.std,correctCount:c,totalQuestions:total,percentage:p,timestamp:Date.now(),answers:currentStudentQuizData.answers,questions:q,course:currentStudentQuizData.meta?.course||'',subject:currentStudentQuizData.meta?.subject||'',durationSeconds:Math.floor((Date.now()-currentStudentQuizData.startedAt)/1000),grade:E.grade(p)};database.ref('submissions').push(s);localStorage.removeItem(E.key(s.studentName,s.testKey));let a=JSON.parse(localStorage.getItem('attempts_'+s.testKey)||'[]');a.push({score:c,total,percentage:p,date:new Date().toISOString(),studentName:s.studentName,std:s.std,testTitle:s.testTitle,answers:s.answers,questions:s.questions,course:s.course,subject:s.subject});localStorage.setItem('attempts_'+s.testKey,JSON.stringify(a));showResultsScreen(s);setTimeout(()=>locking=false,1200)}
+let locking=false;function submit(){if(locking||!currentStudentQuizData)return;locking=true;if(studentTimerInterval)clearInterval(studentTimerInterval);let q=currentStudentQuizData.questions,c=0;q.forEach((x,i)=>{if(currentStudentQuizData.answers[i]===x.answer)c++});let total=q.length,p=total?Math.round(c/total*100):0,s={testKey:currentStudentQuizData.testKey,testTitle:currentStudentQuizData.meta?.title||'ટેસ્ટ',studentName:currentStudentQuizData.studentName,std:currentStudentQuizData.std,correctCount:c,totalQuestions:total,percentage:p,timestamp:Date.now(),answers:currentStudentQuizData.answers,questions:q,course:currentStudentQuizData.meta?.course||'',subject:currentStudentQuizData.meta?.subject||'',durationSeconds:Math.floor((Date.now()-currentStudentQuizData.startedAt)/1000),grade:E.grade(p)};database.ref('submissions').push(s);localStorage.removeItem(E.key(s.studentName,s.testKey));let a=JSON.parse(localStorage.getItem('attempts_'+s.testKey)||'[]');a.push({score:c,total,percentage:p,date:new Date().toISOString(),studentName:s.studentName,std:s.std,testTitle:s.testTitle,answers:s.answers,questions:s.questions,course:s.course,subject:s.subject});localStorage.setItem('attempts_'+s.testKey,JSON.stringify(a));showResultsScreen(s);setTimeout(()=>locking=false,1200)}
 window.startStudentQuiz=start;window.selectStudentAnswer=answer;window.submitStudentQuiz=submit;
-let oldTimer=window.startStudentTimer;window.startStudentTimer=function(d){studentTimeLeft=d;updateTimerDisplay();if(studentTimerInterval)clearInterval(studentTimerInterval);studentTimerInterval=setInterval(()=>{studentTimeLeft--;updateTimerDisplay();save();if(studentTimeLeft===600)alert('⏰ 10 મિનિટ બાકી.');if(studentTimeLeft===300)alert('⏰ 5 મિનિટ બાકી.');if(studentTimeLeft<=0){clearInterval(studentTimerInterval);alert('સમય પૂર્ણ. ટેસ્ટ સબમિટ થઈ રહી છે.');submit(true)}},1000)};
+let oldTimer=window.startStudentTimer;window.startStudentTimer=function(d){studentTimeLeft=d;updateTimerDisplay();if(studentTimerInterval)clearInterval(studentTimerInterval);studentTimerInterval=setInterval(()=>{studentTimeLeft--;updateTimerDisplay();save();if(studentTimeLeft===600)alert('⏰ 10 મિનિટ બાકી.');if(studentTimeLeft===300)alert('⏰ 5 મિનિટ બાકી.');if(studentTimeLeft<=0){clearInterval(studentTimerInterval);alert('સમય પૂર્ણ. ટેસ્ટ સબમિટ થઈ રહી છે.');submit()}},1000)};
 let oldRender=window.renderTestBoxes;window.renderTestBoxes=function(){try{oldRender&&oldRender()}catch(e){}dash();stats()};let oldLoad=window.loadAdminTestData;window.loadAdminTestData=function(){let r=oldLoad?.apply(this,arguments);setTimeout(stats,100);return r};function renderLockedAttemptAnswerSheet(sub){
  const box=document.getElementById('lockedAttemptAnswerSheet'); if(!box)return;
  if(!sub||!Array.isArray(sub.questions)){box.innerHTML='<div class="text-xs text-slate-500 mt-2">આ પ્રયાસની ઉત્તરવહી આ ઉપકરણમાં ઉપલબ્ધ નથી.</div>';return;}
@@ -3523,10 +3490,24 @@ function normalizeAnswerForGrading(value, question){
     function submitFixed(){
         const d=currentStudentQuizData;
         if(!d) return;
-        if(studentTimerInterval) clearInterval(studentTimerInterval);
-
         const questions=fixedQuestions(d.questions);
         const answers=Object.assign({},d.answers||{});
+        const unanswered=[];
+        questions.forEach((q,i)=>{ if(!normalizeLetter(answers[i])) unanswered.push(i); });
+        const timeExpired = Number(studentTimeLeft) <= 0;
+        if(unanswered.length && !timeExpired){
+            if(studentTimerInterval) { clearInterval(studentTimerInterval); studentTimerInterval=null; }
+            alert('હજી નીચેના પ્રશ્નોના જવાબ બાકી છે: '+unanswered.map(i=>i+1).join(', ')+'. કૃપા કરીને આ પ્રશ્નો પૂર્ણ કરો.');
+            const first=unanswered[0];
+            const target=document.getElementById('question_'+first)||document.getElementById('q_'+first)||document.getElementById('opt_'+first+'_A');
+            target?.scrollIntoView({behavior:'smooth',block:'center'});
+            return;
+        }
+        if(timeExpired && unanswered.length){
+            alert('સમય પૂર્ણ થયો હોવાથી ટેસ્ટ સબમિટ કરવામાં આવી છે. બાકી પ્રશ્નો: '+unanswered.map(i=>i+1).join(', ')+'.');
+        }
+        if(studentTimerInterval) clearInterval(studentTimerInterval);
+
         let correct=0;
         questions.forEach((q,i)=>{
             if(normalizeAnswerForGrading(answers[i], q)===normalizeAnswerForGrading(q.answer, q)) correct++;
@@ -3571,6 +3552,20 @@ function normalizeAnswerForGrading(value, question){
     }
 
     function confirmFixed(){
+        const d=currentStudentQuizData;
+        if(!d) return;
+        const questions=fixedQuestions(d.questions);
+        const answers=d.answers||{};
+        const unanswered=[];
+        questions.forEach((q,i)=>{ if(!normalizeLetter(answers[i])) unanswered.push(i); });
+        if(unanswered.length && Number(studentTimeLeft)>0){
+            alert('ટેસ્ટ સબમિટ કરી શકાતી નથી. નીચેના પ્રશ્નોના જવાબ બાકી છે: '+unanswered.map(i=>i+1).join(', ')+'. હવે સીધા બાકી પ્રશ્નો પર લઈ જઈશું.');
+            const first=unanswered[0];
+            const target=document.getElementById('question_'+first)||document.getElementById('q_'+first)||document.getElementById('opt_'+first+'_A');
+            target?.scrollIntoView({behavior:'smooth',block:'center'});
+            return;
+        }
+        if(Number(studentTimeLeft)<=0){ submitFixed(); return; }
         if(confirm('શું તમે ખરેખર ટેસ્ટ સબમિટ કરવા માગો છો?')) submitFixed();
     }
 

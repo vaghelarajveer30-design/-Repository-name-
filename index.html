@@ -2300,7 +2300,7 @@
             let correctCount = 0;
 
             questions.forEach((q, idx) => {
-                if (currentStudentQuizData.answers[idx] === q.answer) {
+                if (normalizeAnswerForGrading(currentStudentQuizData.answers[idx], q) === normalizeAnswerForGrading(q.answer, q)) {
                     correctCount++;
                 }
             });
@@ -2364,7 +2364,7 @@
 
     (sub.questions || []).forEach((q, idx) => {
         const userAns = sub.answers ? sub.answers[idx] : undefined;
-        const isCorrect = userAns === q.answer;
+        const isCorrect = normalizeAnswerForGrading(userAns, q) === normalizeAnswerForGrading(q.answer, q);
         const opts = q.options || ['A','B','C','D'];
 
         container.innerHTML += `
@@ -2568,7 +2568,7 @@
             if (sub.questions && Array.isArray(sub.questions)) {
                 sub.questions.forEach((q, idx) => {
                     const userAns = sub.answers ? sub.answers[idx] : undefined;
-                    const isCorrect = userAns === q.answer;
+                    const isCorrect = normalizeAnswerForGrading(userAns, q) === normalizeAnswerForGrading(q.answer, q);
                     const opts = q.options || ['A', 'B', 'C', 'D'];
 
                     container.innerHTML += `
@@ -2964,17 +2964,24 @@ function stats(){let d=document.getElementById('ev2dash');if(!d)return;let ts=Ob
 function dash(){return;}
 E.settings=function(){let m=currentTests[activeTestKey]?.meta||{},d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>⚙️ ટેસ્ટ સેટિંગ્સ</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="grid sm:grid-cols-2 gap-3 text-xs mt-3"><label>Max Attempts<input id="eA" type="number" min="1" value="${m.maxAttempts||2}" class="w-full border rounded p-2"></label><label>Start<input id="eS" type="datetime-local" value="${m.startAt?new Date(m.startAt).toISOString().slice(0,16):''}" class="w-full border rounded p-2"></label><label>End<input id="eE" type="datetime-local" value="${m.endAt?new Date(m.endAt).toISOString().slice(0,16):''}" class="w-full border rounded p-2"></label><label><input id="eR" type="checkbox" ${m.allowResume!==false?'checked':''}> Auto-save/Resume</label><label><input id="eC" type="checkbox" ${m.cloudAttemptLimit!==false?'checked':''}> Cloud attempt tracking</label></div><div class="text-right mt-4"><button onclick="EV2.saveSettings(this)" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">સેવ</button></div></div>`;document.body.appendChild(d)};
 E.saveSettings=function(b){let m={...(currentTests[activeTestKey]?.meta||{})};m.maxAttempts=Math.max(1,+document.getElementById('eA').value||2);m.startAt=document.getElementById('eS').value?new Date(document.getElementById('eS').value).getTime():null;m.endAt=document.getElementById('eE').value?new Date(document.getElementById('eE').value).getTime():null;m.allowResume=document.getElementById('eR').checked;m.cloudAttemptLimit=document.getElementById('eC').checked;database.ref('tests/'+activeTestKey+'/meta').update(m).then(()=>{alert('સેટિંગ્સ સેવ થઈ ગઈ.');b.closest('.ev2modal').remove()})};
-E.analytics=function(){let k=activeTestKey,s=allSubmissionsGlobal.filter(x=>x.testKey===k),avg=s.length?Math.round(s.reduce((a,x)=>a+Number(x.percentage||0),0)/s.length):0,rank=s.slice().sort((a,b)=>b.percentage-a.percentage||b.correctCount-a.correctCount).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.studentName)}</td><td>${x.correctCount}/${x.totalQuestions}</td><td>${x.percentage}%</td><td>${E.grade(x.percentage)}</td></tr>`).join('');let q={};s.forEach(x=>E.arr(x.questions).forEach((z,i)=>{let id=z.question||i;q[id]??={q:id,t:0,c:0};q[id].t++;if(x.answers?.[i]===z.answer)q[id].c++}));let hard=Object.values(q).sort((a,b)=>a.c/a.t-b.c/b.t).slice(0,10).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.q)}</td><td>${Math.round(x.c/x.t*100)}%</td></tr>`).join('');let d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>📈 ${E.esc(currentTests[k]?.meta?.title||k)} Analytics</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="ev2grid my-3"><div class="ev2stat">Submissions<br><b>${s.length}</b></div><div class="ev2stat">Average<br><b>${avg}%</b></div><div class="ev2stat">Highest<br><b>${s.length?Math.max(...s.map(x=>+x.percentage||0)):'-'}%</b></div><div class="ev2stat">Topper<br><b class="text-sm">${s[0]?E.esc(s.slice().sort((a,b)=>b.percentage-a.percentage)[0].studentName):'-'}</b></div></div><h4 class="font-bold text-xs mb-1">🏆 Rank</h4><table class="ev2table"><tr><th>Rank</th><th>વિદ્યાર્થી</th><th>ગુણ</th><th>%</th><th>Grade</th></tr>${rank||'<tr><td colspan=5>ડેટા નથી</td></tr>'}</table><h4 class="font-bold text-xs mt-4 mb-1">⚠️ મુશ્કેલ પ્રશ્નો</h4><table class="ev2table"><tr><th>#</th><th>પ્રશ્ન</th><th>સાચા</th></tr>${hard||'<tr><td colspan=3>ડેટા નથી</td></tr>'}</table></div>`;document.body.appendChild(d)};
+E.analytics=function(){let k=activeTestKey,s=allSubmissionsGlobal.filter(x=>x.testKey===k),avg=s.length?Math.round(s.reduce((a,x)=>a+Number(x.percentage||0),0)/s.length):0,rank=s.slice().sort((a,b)=>b.percentage-a.percentage||b.correctCount-a.correctCount).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.studentName)}</td><td>${x.correctCount}/${x.totalQuestions}</td><td>${x.percentage}%</td><td>${E.grade(x.percentage)}</td></tr>`).join('');let q={};s.forEach(x=>E.arr(x.questions).forEach((z,i)=>{let id=z.question||i;q[id]??={q:id,t:0,c:0};q[id].t++;if(normalizeAnswerForGrading(x.answers?.[i], z)===normalizeAnswerForGrading(z.answer, z))q[id].c++}));let hard=Object.values(q).sort((a,b)=>a.c/a.t-b.c/b.t).slice(0,10).map((x,i)=>`<tr><td>${i+1}</td><td>${E.esc(x.q)}</td><td>${Math.round(x.c/x.t*100)}%</td></tr>`).join('');let d=document.createElement('div');d.className='ev2modal';d.innerHTML=`<div><div class="flex justify-between border-b pb-2"><b>📈 ${E.esc(currentTests[k]?.meta?.title||k)} Analytics</b><button onclick="this.closest('.ev2modal').remove()">×</button></div><div class="ev2grid my-3"><div class="ev2stat">Submissions<br><b>${s.length}</b></div><div class="ev2stat">Average<br><b>${avg}%</b></div><div class="ev2stat">Highest<br><b>${s.length?Math.max(...s.map(x=>+x.percentage||0)):'-'}%</b></div><div class="ev2stat">Topper<br><b class="text-sm">${s[0]?E.esc(s.slice().sort((a,b)=>b.percentage-a.percentage)[0].studentName):'-'}</b></div></div><h4 class="font-bold text-xs mb-1">🏆 Rank</h4><table class="ev2table"><tr><th>Rank</th><th>વિદ્યાર્થી</th><th>ગુણ</th><th>%</th><th>Grade</th></tr>${rank||'<tr><td colspan=5>ડેટા નથી</td></tr>'}</table><h4 class="font-bold text-xs mt-4 mb-1">⚠️ મુશ્કેલ પ્રશ્નો</h4><table class="ev2table"><tr><th>#</th><th>પ્રશ્ન</th><th>સાચા</th></tr>${hard||'<tr><td colspan=3>ડેટા નથી</td></tr>'}</table></div>`;document.body.appendChild(d)};
 E.csv=function(){let r=[['તારીખ','ટેસ્ટ','કોર્ષ','વિષય','વિદ્યાર્થી','ધોરણ','સાચા','કુલ','ટકાવારી','Grade']];allSubmissionsGlobal.forEach(x=>r.push([x.timestamp?new Date(x.timestamp).toLocaleString('gu-IN'):'',x.testTitle||'',x.course||'',x.subject||'',x.studentName||'',x.std||'',x.correctCount||0,x.totalQuestions||0,x.percentage||0,E.grade(+x.percentage||0)]));let c='\ufeff'+r.map(a=>a.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv;charset=utf-8'}));a.download='nirmala_results.csv';a.click()};
 E.json=function(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({version:2,exportedAt:Date.now(),tests:currentTests,submissions:allSubmissionsGlobal,question_bank:questionBankData,customLogo:customLogoBase64},null,2)],{type:'application/json'}));a.download='nirmala_backup.json';a.click()};
-function nav(){let q=document.getElementById('quizScreen');if(!q||document.getElementById('ev2nav'))return;let n=document.createElement('div');n.id='ev2nav';n.style.cssText='position:sticky;top:55px;z-index:40;background:white;border:1px solid #e2e8f0;border-radius:12px;padding:7px;margin-bottom:8px';q.insertBefore(n,q.firstChild);updateNav()}function updateNav(){let n=document.getElementById('ev2nav');if(!n||!currentStudentQuizData)return;let t=currentStudentQuizData.questions.length,d=Object.keys(currentStudentQuizData.answers||{}).length;n.innerHTML=`<div class="flex gap-2 items-center text-[11px] font-bold"><span>📝 ${d}/${t}</span><span class="flex-1 ev2bar"><span style="width:${t?d/t*100:0}%"></span></span><button onclick="EV2.unanswered()" class="bg-slate-100 px-2 py-1 rounded">અનઉત્તરિત</button></div>`}
-E.unanswered=function(){let i=currentStudentQuizData?.questions.findIndex((_,i)=>currentStudentQuizData.answers[i]==null);if(i>=0)document.getElementById('opt_'+i+'_A')?.scrollIntoView({behavior:'smooth',block:'center'});else alert('બધા જવાબ અપાઈ ગયા છે.')};
+function nav(){let q=document.getElementById('quizScreen');if(!q||document.getElementById('ev2nav'))return;let n=document.createElement('div');n.id='ev2nav';n.style.cssText='position:sticky;top:55px;z-index:40;background:white;border:1px solid #e2e8f0;border-radius:12px;padding:7px;margin-bottom:8px';q.insertBefore(n,q.firstChild);updateNav()}function updateNav(){let n=document.getElementById('ev2nav');if(!n||!currentStudentQuizData)return;let t=currentStudentQuizData.questions.length,d=currentStudentQuizData.questions.filter((_,i)=>currentStudentQuizData.answers[i]!=null&&currentStudentQuizData.answers[i]!=='').length;n.innerHTML=`<div class="flex gap-2 items-center text-[11px] font-bold"><span>📝 ${d}/${t}</span><span class="flex-1 ev2bar"><span style="width:${t?d/t*100:0}%"></span></span><button onclick="EV2.unanswered()" class="bg-slate-100 px-2 py-1 rounded">અનઉત્તરિત</button></div>`}
+E.unanswered=function(){
+ let d=currentStudentQuizData;if(!d)return;let missing=d.questions.map((q,i)=>({i,q})).filter(x=>d.answers[x.i]==null||d.answers[x.i]==='');
+ if(!missing.length){alert('બધા જવાબ અપાઈ ગયા છે.');return;}
+ let old=document.getElementById('ev2UnansweredModal');if(old)old.remove();
+ let modal=document.createElement('div');modal.id='ev2UnansweredModal';modal.className='ev2modal';
+ modal.innerHTML=`<div><div class="flex justify-between items-center border-b pb-2"><b>⚠️ બાકી પ્રશ્નો (${missing.length})</b><button onclick="this.closest('.ev2modal').remove()">✕</button></div><p class="text-xs text-slate-600 my-2">કોઈ પ્રશ્ન પર ક્લિક કરો; તે પ્રશ્ન પાસે સીધા પહોંચી શકશો.</p><div class="grid grid-cols-4 sm:grid-cols-6 gap-2">${missing.map(x=>`<button type="button" onclick="EV2.jumpToQuestion(${x.i});document.getElementById('ev2UnansweredModal')?.remove()" class="border border-rose-300 bg-rose-50 text-rose-700 rounded-lg p-3 font-bold">પ્રશ્ન ${x.i+1}</button>`).join('')}</div><div class="text-right mt-3"><button onclick="this.closest('.ev2modal').remove()" class="bg-slate-700 text-white px-4 py-2 rounded-lg">બંધ કરો</button></div></div>`;document.body.appendChild(modal);
+};
+E.jumpToQuestion=function(i){let target=document.getElementById('opt_'+i+'_A')||document.querySelector(`[data-question-index="${i}"]`)||document.getElementById('quizScreen');target?.scrollIntoView({behavior:'smooth',block:'center'});};
 function save(){if(!currentStudentQuizData||currentStudentQuizData.meta?.allowResume===false)return;localStorage.setItem(E.key(currentStudentQuizData.studentName,currentStudentQuizData.testKey),JSON.stringify({startedAt:currentStudentQuizData.startedAt,answers:currentStudentQuizData.answers,questions:currentStudentQuizData.questions}))}
 function start(ev){ev.preventDefault();let name=document.getElementById('studentName').value.trim(),std=document.getElementById('studentStd').value,u=new URLSearchParams(location.search),k=u.get('t')||u.get('test')||activeTestKey,t=currentTests[k];if(!name||!t)return;let m=t.meta||{},now=Date.now();if(m.status==='draft'){alert('આ ટેસ્ટ Draftમાં છે.');return}if(m.startAt&&now<m.startAt){alert('ટેસ્ટ હજુ શરૂ થઈ નથી.');return}if(m.endAt&&now>m.endAt){alert('ટેસ્ટનો સમયગાળો પૂર્ણ થયો છે.');return}let qs=E.arr(t.questions);if(!qs.length){alert('આ ટેસ્ટમાં પ્રશ્નો નથી.');return}let old=null;try{old=JSON.parse(localStorage.getItem(E.key(name,k))||'null')}catch{};if(old?.questions?.length&&m.allowResume!==false){if(confirm('અધૂરી ટેસ્ટ મળી છે. Resume કરવી છે?'))qs=old.questions;else localStorage.removeItem(E.key(name,k)),old=null}currentStudentQuizData={testKey:k,studentName:name,std,meta:m,questions:qs,answers:old?.answers||{},startedAt:old?.startedAt||Date.now()};document.getElementById('studentRegScreen').classList.add('hidden');document.getElementById('quizScreen').classList.remove('hidden');document.getElementById('quizHeaderTimerBox').classList.remove('hidden');document.getElementById('quizTitleDisplay').textContent=m.title||'ઓનલાઇન ટેસ્ટ';nav();renderStudentQuizQuestions();startStudentTimer(Math.max(1,(+m.timeLimit||60)*60-Math.floor((Date.now()-currentStudentQuizData.startedAt)/1000)));save()}
 function answer(i,l){currentStudentQuizData.answers[i]=l;save();['A','B','C','D'].forEach(x=>document.getElementById(`opt_${i}_${x}`)?.classList.remove('selected-ans'));document.getElementById(`opt_${i}_${l}`)?.classList.add('selected-ans');updateNav()}
-let locking=false;function submit(){if(locking||!currentStudentQuizData)return;locking=true;if(studentTimerInterval)clearInterval(studentTimerInterval);let q=currentStudentQuizData.questions,c=0;q.forEach((x,i)=>{if(currentStudentQuizData.answers[i]===x.answer)c++});let total=q.length,p=total?Math.round(c/total*100):0,s={testKey:currentStudentQuizData.testKey,testTitle:currentStudentQuizData.meta?.title||'ટેસ્ટ',studentName:currentStudentQuizData.studentName,std:currentStudentQuizData.std,correctCount:c,totalQuestions:total,percentage:p,timestamp:Date.now(),answers:currentStudentQuizData.answers,questions:q,course:currentStudentQuizData.meta?.course||'',subject:currentStudentQuizData.meta?.subject||'',durationSeconds:Math.floor((Date.now()-currentStudentQuizData.startedAt)/1000),grade:E.grade(p)};database.ref('submissions').push(s);localStorage.removeItem(E.key(s.studentName,s.testKey));let a=JSON.parse(localStorage.getItem('attempts_'+s.testKey)||'[]');a.push({score:c,total,percentage:p,date:new Date().toISOString(),studentName:s.studentName,std:s.std,testTitle:s.testTitle,answers:s.answers,questions:s.questions,course:s.course,subject:s.subject});localStorage.setItem('attempts_'+s.testKey,JSON.stringify(a));showResultsScreen(s);setTimeout(()=>locking=false,1200)}
+let locking=false;function submit(timeExpired=false){if(locking||!currentStudentQuizData)return;const missing=currentStudentQuizData.questions.map((q,i)=>i).filter(i=>currentStudentQuizData.answers[i]==null||currentStudentQuizData.answers[i]==='');if(missing.length&&!timeExpired){E.unanswered();alert(`હજુ ${missing.length} પ્રશ્નોના જવાબ બાકી છે. સમય પૂરો થાય તે પહેલાં બધા પ્રશ્નોના જવાબ આપ્યા વગર ટેસ્ટ સબમિટ નહીં થાય. બાકી પ્રશ્નોની યાદીમાંથી પ્રશ્ન પસંદ કરો.`);return;}locking=true;if(studentTimerInterval)clearInterval(studentTimerInterval);let q=currentStudentQuizData.questions,c=0;q.forEach((x,i)=>{if(currentStudentQuizData.answers[i]===x.answer)c++});let total=q.length,p=total?Math.round(c/total*100):0,s={testKey:currentStudentQuizData.testKey,testTitle:currentStudentQuizData.meta?.title||'ટેસ્ટ',studentName:currentStudentQuizData.studentName,std:currentStudentQuizData.std,correctCount:c,totalQuestions:total,percentage:p,timestamp:Date.now(),answers:currentStudentQuizData.answers,questions:q,course:currentStudentQuizData.meta?.course||'',subject:currentStudentQuizData.meta?.subject||'',durationSeconds:Math.floor((Date.now()-currentStudentQuizData.startedAt)/1000),grade:E.grade(p)};database.ref('submissions').push(s);localStorage.removeItem(E.key(s.studentName,s.testKey));let a=JSON.parse(localStorage.getItem('attempts_'+s.testKey)||'[]');a.push({score:c,total,percentage:p,date:new Date().toISOString(),studentName:s.studentName,std:s.std,testTitle:s.testTitle,answers:s.answers,questions:s.questions,course:s.course,subject:s.subject});localStorage.setItem('attempts_'+s.testKey,JSON.stringify(a));showResultsScreen(s);setTimeout(()=>locking=false,1200)}
 window.startStudentQuiz=start;window.selectStudentAnswer=answer;window.submitStudentQuiz=submit;
-let oldTimer=window.startStudentTimer;window.startStudentTimer=function(d){studentTimeLeft=d;updateTimerDisplay();if(studentTimerInterval)clearInterval(studentTimerInterval);studentTimerInterval=setInterval(()=>{studentTimeLeft--;updateTimerDisplay();save();if(studentTimeLeft===600)alert('⏰ 10 મિનિટ બાકી.');if(studentTimeLeft===300)alert('⏰ 5 મિનિટ બાકી.');if(studentTimeLeft<=0){clearInterval(studentTimerInterval);alert('સમય પૂર્ણ. ટેસ્ટ સબમિટ થઈ રહી છે.');submit()}},1000)};
+let oldTimer=window.startStudentTimer;window.startStudentTimer=function(d){studentTimeLeft=d;updateTimerDisplay();if(studentTimerInterval)clearInterval(studentTimerInterval);studentTimerInterval=setInterval(()=>{studentTimeLeft--;updateTimerDisplay();save();if(studentTimeLeft===600)alert('⏰ 10 મિનિટ બાકી.');if(studentTimeLeft===300)alert('⏰ 5 મિનિટ બાકી.');if(studentTimeLeft<=0){clearInterval(studentTimerInterval);alert('સમય પૂર્ણ. ટેસ્ટ સબમિટ થઈ રહી છે.');submit(true)}},1000)};
 let oldRender=window.renderTestBoxes;window.renderTestBoxes=function(){try{oldRender&&oldRender()}catch(e){}dash();stats()};let oldLoad=window.loadAdminTestData;window.loadAdminTestData=function(){let r=oldLoad?.apply(this,arguments);setTimeout(stats,100);return r};function renderLockedAttemptAnswerSheet(sub){
  const box=document.getElementById('lockedAttemptAnswerSheet'); if(!box)return;
  if(!sub||!Array.isArray(sub.questions)){box.innerHTML='<div class="text-xs text-slate-500 mt-2">આ પ્રયાસની ઉત્તરવહી આ ઉપકરણમાં ઉપલબ્ધ નથી.</div>';return;}
@@ -3327,6 +3334,24 @@ window.autoMathExplanation=autoMathExplanation;
 
 <!-- FINAL MCQ ANSWER + PER-STUDENT ATTEMPT FIX -->
 <script>
+// Shared answer normalizer: accepts A-D, 1-4, Gujarati ૧-૪, or exact option text.
+function normalizeAnswerForGrading(value, question){
+    if(value===undefined||value===null) return '';
+    let raw=String(value).trim();
+    if(!raw) return '';
+    raw=raw.toUpperCase().replace(/[()\s.ઃ:]/g,'');
+    if(/^[૧૨૩૪]$/.test(raw)) return 'ABCD'[['૧','૨','૩','૪'].indexOf(raw)];
+    if(/^[1-4]$/.test(raw)) return 'ABCD'[Number(raw)-1];
+    if(/^[ABCD]$/.test(raw)) return raw;
+    if(question && Array.isArray(question.options)){
+      const norm=t=>String(t??'').toLocaleLowerCase('gu').replace(/[()\s.,:;।!?-]/g,'');
+      const target=norm(value);
+      const idx=question.options.findIndex(o=>{const n=norm(o);return n && (n===target || n.includes(target) || target.includes(n));});
+      if(idx>=0 && idx<4) return 'ABCD'[idx];
+    }
+    return raw;
+}
+
 (function(){
     // This final layer intentionally keeps A/B/C/D positions fixed.
     // It also stores attempts/resume data per TEST + STUDENT, so two different
@@ -3393,7 +3418,8 @@ window.autoMathExplanation=autoMathExplanation;
             x.options = Array.isArray(q.options) ? q.options.slice(0,4) : ['A','B','C','D'];
             while(x.options.length < 4) x.options.push('');
             // Correct answer is always tied to its fixed A/B/C/D position.
-            x.answer = normalizeLetter(q.answer);
+            x.answer = normalizeAnswerForGrading(q.answer, x);
+            if (!x.answer || !/^[ABCD]$/.test(x.answer)) { x.answer = ''; }
             return x;
         });
     }
@@ -3440,6 +3466,8 @@ window.autoMathExplanation=autoMathExplanation;
 
         let qs=fixedQuestions(test.questions);
         if(!qs.length){ alert('આ ટેસ્ટમાં પ્રશ્નો નથી.'); return false; }
+        const invalidAnswerIndex = qs.findIndex(q => !/^[ABCD]$/.test(q.answer));
+        if(invalidAnswerIndex >= 0){ alert(`પ્રશ્ન ${invalidAnswerIndex+1} નો સાચો જવાબ યોગ્ય રીતે સેવ નથી. શિક્ષકને જવાબ સુધારવા કહો.`); return false; }
 
         // Resume only this student's unfinished test.
         let old=loadStudentResume(name,k);
@@ -3501,7 +3529,7 @@ window.autoMathExplanation=autoMathExplanation;
         const answers=Object.assign({},d.answers||{});
         let correct=0;
         questions.forEach((q,i)=>{
-            if(normalizeLetter(answers[i])===normalizeLetter(q.answer)) correct++;
+            if(normalizeAnswerForGrading(answers[i], q)===normalizeAnswerForGrading(q.answer, q)) correct++;
         });
 
         const total=questions.length;

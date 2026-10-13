@@ -273,6 +273,9 @@
                     <button onclick="exportTestToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded border text-xs font-bold shadow flex items-center gap-1">
                         <i class="fa-solid fa-file-pdf"></i> PDF ડાઉનલોડ
                     </button>
+                    <button type="button" onclick="openTeacherSettingsPanel()" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded border text-xs font-bold shadow flex items-center gap-1" id="teacherSettingsButton">
+                        <i class="fa-solid fa-gear"></i> સેટિંગ્સ
+                    </button>
                     <button onclick="openQuestionBankModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded border text-xs font-bold shadow flex items-center gap-1">
                         <i class="fa-solid fa-boxes-stacked"></i> પ્રશ્ન બેંક
                     </button>
@@ -327,6 +330,7 @@
                     </div>
                     <div id="testNumberSelector" class="test-number-box flex flex-wrap gap-1.5"></div>
                 </div>
+                <div id="selectedTestResultsPanel" class="hidden bg-white border-2 border-indigo-200 rounded-xl p-3 space-y-3"></div>
                 <div id="testBoxesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
 
@@ -1218,7 +1222,7 @@
             const selected = new Set(getSelectedTestNumbers());
             box.innerHTML = entries.map(key => `
                 <label class="test-number-chip">
-                    <input type="checkbox" class="test-number-checkbox" value="${key}" ${selected.has(key) ? 'checked' : ''} onchange="filterTestBoxes(activeBoxFilter)" />
+                    <input type="checkbox" class="test-number-checkbox" value="${key}" ${selected.has(key) ? 'checked' : ''} onchange="filterTestBoxes(activeBoxFilter); renderSelectedTestResults()" />
                     <span>ટેસ્ટ ${map[key]}</span>
                 </label>
             `).join('');
@@ -3156,6 +3160,57 @@ window.autoMathExplanation=autoMathExplanation;
     if(byId('idleUnlockBtn'))byId('idleUnlockBtn').addEventListener('click',unlock);
     if(byId('idleLockPassword'))byId('idleLockPassword').addEventListener('keydown',e=>{if(e.key==='Enter')unlock()});
   });
+})();
+</script>
+
+
+<script>
+(function(){
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  window.renderSelectedTestResults = function(){
+    const panel=document.getElementById('selectedTestResultsPanel'); if(!panel) return;
+    const keys=[...document.querySelectorAll('.test-number-checkbox:checked')].map(x=>x.value);
+    if(!keys.length){panel.classList.add('hidden');panel.innerHTML='';return;}
+    const map=typeof getTestNumberMap==='function'?getTestNumberMap():{};
+    let html=''; let totalSubmissions=0;
+    keys.forEach(key=>{
+      const test=(currentTests||{})[key]; if(!test) return;
+      const meta=test.meta||{};
+      const subs=(allSubmissionsGlobal||[]).filter(s=>s.testKey===key || (s.testTitle && s.testTitle===meta.title));
+      totalSubmissions+=subs.length;
+      html += `<section class="border rounded-lg p-3 mb-3"><div class="flex flex-wrap justify-between gap-2 items-center"><b class="text-indigo-800">ટેસ્ટ ${esc(map[key]||meta.testNumber||key)} — ${esc(meta.title||key)}</b><span class="bg-indigo-100 text-indigo-800 rounded-full px-3 py-1 text-xs font-bold">વિદ્યાર્થીઓ: ${subs.length}</span></div>`;
+      if(!subs.length){html+='<p class="text-sm text-slate-500 mt-2">આ ટેસ્ટ હજી કોઈ વિદ્યાર્થીએ આપી નથી.</p></section>';return;}
+      html+='<div class="overflow-x-auto mt-2"><table class="w-full text-xs border-collapse"><thead><tr class="bg-indigo-50"><th class="border p-2">વિદ્યાર્થી</th><th class="border p-2">ગુણ</th><th class="border p-2">ટકાવારી</th><th class="border p-2">તારીખ</th><th class="border p-2">ઉત્તરવહી</th></tr></thead><tbody>';
+      subs.forEach(sub=>{const date=sub.timestamp?new Date(sub.timestamp).toLocaleString('gu-IN'):'-';html+=`<tr><td class="border p-2">${esc(sub.studentName||'-')}<div class="text-slate-500">${esc(sub.std||'')}</div></td><td class="border p-2 font-bold">${Number(sub.correctCount||0)} / ${Number(sub.totalQuestions||0)}</td><td class="border p-2">${Number(sub.percentage||0)}%</td><td class="border p-2">${esc(date)}</td><td class="border p-2"><button type="button" onclick="viewStudentAnswerSheet('${String(sub.id||'').replace(/'/g,'\\\'')}')" class="bg-indigo-600 text-white rounded px-2 py-1 font-bold">જુઓ</button></td></tr>`;});
+      html+='</tbody></table></div></section>';
+    });
+    panel.innerHTML=`<div class="flex justify-between items-center gap-2 flex-wrap"><h3 class="font-bold text-indigo-800">📊 પસંદ કરેલી ટેસ્ટનું પરિણામ</h3><span class="text-xs font-bold text-slate-600">કુલ સબમિશન: ${totalSubmissions}</span></div>${html||'<p>પસંદ કરેલી ટેસ્ટ મળી નથી.</p>'}`;
+    panel.classList.remove('hidden');
+  };
+  window.openTeacherSettingsPanel = function(){
+    if(document.getElementById('teacherSettingsModal')) return;
+    const modal=document.createElement('div'); modal.id='teacherSettingsModal';
+    modal.style.cssText='position:fixed;inset:0;background:#0f172acc;z-index:999990;display:flex;align-items:center;justify-content:center;padding:12px;';
+    const key=typeof activeTestKey!=='undefined'?activeTestKey:''; const meta=(typeof currentTests!=='undefined' && currentTests[key] && currentTests[key].meta)||{};
+    modal.innerHTML=`<div style="background:white;border-radius:16px;padding:16px;width:min(700px,100%);max-height:92vh;overflow:auto"><div class="flex justify-between items-center border-b pb-3"><h2 class="font-bold text-lg text-indigo-800">⚙️ શિક્ષક સેટિંગ્સ</h2><button id="closeTeacherSettings" class="bg-slate-200 rounded px-3 py-1 font-bold">બંધ કરો</button></div><p class="text-xs text-slate-500 mt-2">પસંદ કરેલી ટેસ્ટ માટેની સેટિંગ્સ. ટેસ્ટ પસંદ કર્યા પછી સેવ કરો.</p><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3"><label class="text-sm font-bold">ટેસ્ટ સમય (મિનિટ)<input id="tsTime" type="number" min="1" value="${Number(meta.timeLimit||60)}" class="block w-full border rounded-lg p-2 mt-1"></label><label class="text-sm font-bold">વધુમાં વધુ પ્રયાસો<input id="tsAttempts" type="number" min="1" value="${Number(meta.maxAttempts||2)}" class="block w-full border rounded-lg p-2 mt-1"></label><label class="text-sm font-bold">પાસિંગ ગુણ (%)<input id="tsPass" type="number" min="0" max="100" value="${Number(meta.passPercentage||35)}" class="block w-full border rounded-lg p-2 mt-1"></label><label class="text-sm font-bold">એક મોબાઇલથી વિદ્યાર્થીઓની મર્યાદા<input id="tsPhoneLimit" type="number" min="1" value="${Number(meta.maxStudentsPerPhone||1)}" class="block w-full border rounded-lg p-2 mt-1"></label><label class="flex items-center gap-2 text-sm"><input id="tsResume" type="checkbox" ${meta.allowResume!==false?'checked':''}> અધૂરી ટેસ્ટ ફરી ચાલુ રાખવા દેવી</label><label class="flex items-center gap-2 text-sm"><input id="tsNeg" type="checkbox" ${meta.negativeMarking===true?'checked':''}> નેગેટિવ માર્કિંગ ચાલુ</label></div><div class="mt-4 border-t pt-3"><h3 class="font-bold text-indigo-800 mb-2">🎨 એપ દેખાવ સેટિંગ્સ</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><label class="text-sm font-bold">ફોન્ટ સાઇઝ (px)<input id="uiFontSize" type="number" min="12" max="28" value="${(JSON.parse(localStorage.getItem('nsz_ui_appearance')||'{}').fontSize)||16}" class="block w-full border rounded-lg p-2 mt-1"></label><label class="text-sm font-bold">ફોન્ટ કલર<input id="uiFontColor" type="color" value="${(JSON.parse(localStorage.getItem('nsz_ui_appearance')||'{}').fontColor)||'#1f2937'}" class="block w-full border rounded-lg p-2 mt-1 h-11"></label><label class="text-sm font-bold">બેકગ્રાઉન્ડ કલર<input id="uiBgColor" type="color" value="${(JSON.parse(localStorage.getItem('nsz_ui_appearance')||'{}').bgColor)||'#f1f5f9'}" class="block w-full border rounded-lg p-2 mt-1 h-11"></label><label class="text-sm font-bold">કાર્ડ/પેનલ કલર<input id="uiCardColor" type="color" value="${(JSON.parse(localStorage.getItem('nsz_ui_appearance')||'{}').cardColor)||'#ffffff'}" class="block w-full border rounded-lg p-2 mt-1 h-11"></label><label class="text-sm font-bold sm:col-span-2">ટેસ્ટ લેઆઉટ<select id="uiTestLayout" class="block w-full border rounded-lg p-2 mt-1"><option value="comfortable" ${(JSON.parse(localStorage.getItem('nsz_ui_appearance')||'{}').layout||'comfortable')==='comfortable'?'selected':''}>આરામદાયક (Comfortable)</option><option value="compact" ${(JSON.parse(localStorage.getItem('nsz_ui_appearance')||'{}').layout)==='compact'?'selected':''}>કોમ્પેક્ટ (Compact)</option><option value="large" ${(JSON.parse(localStorage.getItem('nsz_ui_appearance')||'{}').layout)==='large'?'selected':''}>મોટા પ્રશ્નો (Large)</option></select></label></div><p class="text-xs text-slate-500 mt-2">આ દેખાવની સેટિંગ્સ આ ડિવાઇસના બ્રાઉઝરમાં સાચવાશે.</p></div><div class="flex gap-2 justify-end mt-4"><button id="saveTeacherSettings" class="bg-indigo-600 text-white rounded-lg px-4 py-2 font-bold">સેટિંગ્સ સેવ કરો</button></div><p class="text-xs text-amber-700 mt-3">નોંધ: મોબાઇલ નંબર દીઠ મર્યાદા અસરકારક બનાવવા વિદ્યાર્થી ફોર્મમાં મોબાઇલ નંબર અને Firebaseમાં ચકાસણી પણ હોવી જરૂરી છે.</p></div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#closeTeacherSettings').onclick=()=>modal.remove();
+    modal.querySelector('#saveTeacherSettings').onclick=async()=>{
+      try{
+        if(typeof database==='undefined'||!database.ref||!key){alert('ટેસ્ટ અથવા Firebase ઉપલબ્ધ નથી. પહેલા ટેસ્ટ પસંદ કરો.');return;}
+        const updates={timeLimit:Math.max(1,Number(modal.querySelector('#tsTime').value)||60),maxAttempts:Math.max(1,Number(modal.querySelector('#tsAttempts').value)||2),passPercentage:Math.min(100,Math.max(0,Number(modal.querySelector('#tsPass').value)||0)),maxStudentsPerPhone:Math.max(1,Number(modal.querySelector('#tsPhoneLimit').value)||1),allowResume:modal.querySelector('#tsResume').checked,negativeMarking:modal.querySelector('#tsNeg').checked};
+        await database.ref('tests/'+key+'/meta').update(updates);
+        const appearance={fontSize:Math.max(12,Math.min(28,Number(modal.querySelector('#uiFontSize').value)||16)),fontColor:modal.querySelector('#uiFontColor').value,bgColor:modal.querySelector('#uiBgColor').value,cardColor:modal.querySelector('#uiCardColor').value,layout:modal.querySelector('#uiTestLayout').value};
+        localStorage.setItem('nsz_ui_appearance',JSON.stringify(appearance)); window.applyNszAppearance(appearance); alert('ટેસ્ટ અને દેખાવની સેટિંગ્સ સેવ થઈ ગઈ.'); modal.remove();
+      }catch(e){console.error(e);alert('સેટિંગ્સ સેવ ન થઈ. Firebase permission/internet તપાસો.');}
+    };
+  };
+  window.applyNszAppearance=function(a){try{a=a||JSON.parse(localStorage.getItem('nsz_ui_appearance')||'{}');const root=document.documentElement;root.style.setProperty('--nsz-font-size',(Number(a.fontSize)||16)+'px');root.style.setProperty('--nsz-font-color',a.fontColor||'#1f2937');root.style.setProperty('--nsz-bg-color',a.bgColor||'#f1f5f9');root.style.setProperty('--nsz-card-color',a.cardColor||'#ffffff');let st=document.getElementById('nszAppearanceStyle');if(!st){st=document.createElement('style');st.id='nszAppearanceStyle';document.head.appendChild(st)}st.textContent=`body{background-color:var(--nsz-bg-color)!important;color:var(--nsz-font-color)!important;font-size:var(--nsz-font-size)!important}body .card,body section.card,body .bg-white{background-color:var(--nsz-card-color)}body .question-text,body .question,body label,body p{color:inherit}body .question-card,body .test-question{padding:${a.layout==='compact'?'8px':a.layout==='large'?'22px':'14px'}!important}body .question-text,body .test-question .text{font-size:${a.layout==='large'?'1.25em':a.layout==='compact'?'0.92em':'1em'}!important}`;}catch(e){console.warn('Appearance settings error',e)}};
+  try{window.applyNszAppearance(JSON.parse(localStorage.getItem('nsz_ui_appearance')||'{}'))}catch(e){}
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
+    // The button is inside the teacher-only admin section, so it is not shown to students.
+    if(typeof renderSelectedTestResults==='function') renderSelectedTestResults();
+  },1000));
 })();
 </script>
 

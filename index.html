@@ -1630,8 +1630,8 @@
             const lines=normalizedText.split('\n');
             const isPassageStart=line=>line.trim().match(/^(?:ફકરો|પેસેજ|passage|paragraph)\s*(?:નં\.?|નંબર\.?|no\.?)?\s*[0-9૦-૯]+\s*[:.)-]\s*(.*)$/i);
             const normalizeDigits=x=>String(x||'').replace(/[૦-૯]/g,d=>'૦૧૨૩૪૫૬૭૮૯'.indexOf(d));
-            const qStart=line=>line.trim().match(/^(?:પ્રશ્ન\s*)?([0-9૦-૯]+)\s*[.)\-:]\s*(.+)$/i);
-            const opt=line=>line.trim().match(/^\(?([ABCD])\)?\s*[.)\-:]\s*(.*)$/i);
+            const qStart=line=>line.trim().match(/^(?:પ્રશ્ન\s*)?(?:\(([0-9૦-૯]+)\)|([0-9૦-૯]+)\s*[).\-:])\s*(.+)$/i);
+            const opt=line=>line.trim().match(/^(?:\(([ABCD])\)|([ABCD])\s*[).\-:])\s*(.*)$/i);
             const ans=line=>line.trim().match(/^(?:જવાબ\s*કી|જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer\s*key|answer|ans)\s*[:=\-]?\s*\(?([ABCD]|[1-4]|[૦-૪])\)?(?:\s*[).:\-]?\s*(.*))?$/i);
             const blocks=[]; let current=null, q=null, optIndex=-1;
             const finishQ=()=>{ if(!q||!q.question) return; if(q.options.length===4 && q.options.every(Boolean)){ blocks[blocks.length-1].questions.push(q); } q=null; optIndex=-1; };
@@ -1650,7 +1650,7 @@
                 if(qm){
                     closeQuestion();
                     if(curBlock.passage && !curBlock.questions.length && passageLines.length){ curBlock.passage=passageLines.join(' ').trim(); }
-                    q={question:qm[2].trim(),options:[],answer:''}; optIndex=-1; continue;
+                    q={question:(qm[3]||qm[2]).trim(),options:[],answer:''}; optIndex=-1; continue;
                 }
                 const am=ans(line); if(am&&q){
                     let a=am[1].toUpperCase(); if(/^[૦-૪]$/.test(a)) a=String('૦૧૨૩૪'.indexOf(a)); if(/^[1-4]$/.test(a)) a='ABCD'[Number(a)-1];
@@ -1663,7 +1663,7 @@
                     }
                     q.answer=a; continue;
                 }
-                const om=opt(line); if(om&&q){ const idx='ABCD'.indexOf(om[1].toUpperCase()); q.options[idx]=om[2].trim(); optIndex=idx; continue; }
+                const om=opt(line); if(om&&q){ const letter=(om[1]||om[2]).toUpperCase(); const idx='ABCD'.indexOf(letter); q.options[idx]=(om[3]||'').trim(); optIndex=idx; continue; }
                 if(q){ if(optIndex>=0) q.options[optIndex]=(q.options[optIndex]+' '+line).trim(); else q.question=(q.question+' '+line).trim(); }
                 else { if(line) passageLines.push(line); }
                 if(curBlock && !curBlock.questions.length) curBlock.passage=passageLines.length ? passageLines.join(' ').trim() : curBlock.passage;
@@ -2999,8 +2999,8 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()}
 .bmcq-modal{position:fixed;inset:0;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;padding:12px}
 .bmcq-box{background:#fff;width:min(1000px,100%);max-height:94vh;border-radius:18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 .bmcq-head{background:#4338ca;color:#fff;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-.bmcq-body{padding:12px;overflow:auto;flex:1}.bmcq-row{border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-bottom:8px;background:#fff}.bmcq-row.bad{border-color:#f59e0b;background:#fffbeb}.bmcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px}.bmcq-answer{margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.bmcq-answer label{padding:5px 9px;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px}.bmcq-answer input{accent-color:#4338ca}.bmcq-foot{padding:10px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-@media(max-width:640px){.bmcq-grid{grid-template-columns:1fr}.bmcq-box{max-height:96vh}.bmcq-body{padding:8px}}
+.bmcq-body{padding:12px;overflow-y:auto;overflow-x:hidden;flex:1;min-height:0;max-height:calc(94vh - 120px);-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.bmcq-row{border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-bottom:8px;background:#fff}.bmcq-row.bad{border-color:#f59e0b;background:#fffbeb}.bmcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px}.bmcq-answer{margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.bmcq-answer label{padding:5px 9px;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px}.bmcq-answer input{accent-color:#4338ca}.bmcq-foot{padding:10px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+@media(max-width:640px){.bmcq-grid{grid-template-columns:1fr}.bmcq-box{max-height:96dvh;max-height:96vh;min-height:0}.bmcq-body{padding:8px;max-height:calc(96vh - 116px);overflow-y:auto;min-height:0}.bmcq-modal{align-items:flex-start;padding:6px}}
 </style>
 <script>
 (function(){
@@ -3053,6 +3053,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()}
     const box=document.getElementById('bulkMcqPreview');document.getElementById('bulkMcqCount').textContent=qs.length?`${qs.length} MCQ મળ્યા`:'કોઈ સંપૂર્ણ MCQ મળ્યો નથી. Format ચકાસો.';
     if(!qs.length){box.innerHTML='<div style="padding:12px;background:#fff7ed;border:1px solid #fdba74;border-radius:10px;font-size:11px">દરેક પ્રશ્નમાં 4 વિકલ્પ A, B, C, D હોવા જરૂરી છે.</div>';return;}
     box.innerHTML=qs.map((q,i)=>`<div class="bmcq-row ${q.answer?'':'bad'}"><div style="font-weight:800;font-size:12px;margin-bottom:6px">${i+1}. ${escB(q.question)}</div><div class="bmcq-grid"><div>A) ${escB(q.options[0])}</div><div>B) ${escB(q.options[1])}</div><div>C) ${escB(q.options[2])}</div><div>D) ${escB(q.options[3])}</div></div><div class="bmcq-answer"><b>સાચો જવાબ:</b>${['A','B','C','D'].map(a=>`<label><input type="radio" name="bulkAns${i}" value="${a}" ${q.answer===a?'checked':''}> ${a}</label>`).join('')}</div></div>`).join('');
+    requestAnimationFrame(()=>{const modalBody=document.querySelector('#bulkMcqModal .bmcq-body');const first=box.firstElementChild;if(modalBody&&first){modalBody.scrollTop=Math.max(0,box.offsetTop-8);first.scrollIntoView({behavior:'smooth',block:'start'});}});
   };
   window.saveBulkMCQ=function(){
     const qs=window._bulkMCQ||[];if(!qs.length){alert('પહેલા પ્રશ્નો તૈયાર કરો.');return;}
@@ -3242,66 +3243,6 @@ window.autoMathExplanation=autoMathExplanation;
 })();
 </script>
 
-
-
-<!-- Universal PDF settings for every PDF export in NIRMALA STUDY ZON -->
-<style id="nsz-pdf-settings-style">
-#nszPdfSettingsModal{position:fixed;inset:0;z-index:2147483646;background:#0f172acc;display:none;align-items:center;justify-content:center;padding:12px;font-family:'Hind Vadodara',sans-serif}
-#nszPdfSettingsModal .nsz-pdf-box{background:#fff;color:#111;width:min(620px,100%);max-height:92vh;overflow:auto;border-radius:16px;padding:16px;box-shadow:0 15px 50px #0005}
-#nszPdfSettingsModal label{display:block;font-size:13px;font-weight:700;margin:7px 0}
-#nszPdfSettingsModal input,#nszPdfSettingsModal select{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#111}
-#nszPdfSettingsModal .nsz-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-</style>
-<div id="nszPdfSettingsModal" role="dialog" aria-modal="true">
- <div class="nsz-pdf-box">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="font-size:20px;font-weight:900;margin:0">⚙️ બધા PDF માટે સેટિંગ્સ</h2><button type="button" onclick="window.nszClosePdfSettings()" style="font-size:24px;padding:0 8px">×</button></div>
-  <p style="font-size:12px;color:#64748b;margin:5px 0 12px">આ સેટિંગ્સ પ્રશ્નપત્ર, ટેસ્ટ PDF, જવાબ કી અને રિઝલ્ટ PDFમાં લાગુ થશે. લાંબા વિકલ્પો માટે 2 અથવા 1 વિકલ્પ પ્રતિ લાઇન પસંદ કરો.</p>
-  <div class="nsz-grid">
-   <label>MCQ ગોઠવણી<select id="nszPdfOptLayout"><option value="auto">ઓટો (લાંબાઈ મુજબ)</option><option value="4">ચાર વિકલ્પ આડી</option><option value="2">બે-બે આડી</option><option value="1">એક-એક ઊભી</option></select></label>
-   <label>MCQ વિકલ્પ ફોન્ટ (px)<input id="nszPdfOptionFont" type="number" min="8" max="24" step="1" value="13"></label>
-   <label>પ્રશ્ન/મુખ્ય લખાણ ફોન્ટ (px)<input id="nszPdfBodyFont" type="number" min="9" max="26" step="1" value="14"></label>
-   <label>હેડર ફોન્ટ (px)<input id="nszPdfHeaderFont" type="number" min="12" max="36" step="1" value="22"></label>
-   <label>પેજ સાઇઝ<select id="nszPdfPageSize"><option value="a4">A4</option><option value="a5">A5</option><option value="letter">Letter</option><option value="legal">Legal</option></select></label>
-   <label>દિશા<select id="nszPdfOrientation"><option value="portrait">Portrait (ઊભું)</option><option value="landscape">Landscape (આડું)</option></select></label>
-   <label>માર્જિન (mm)<input id="nszPdfMargin" type="number" min="0" max="30" step="1" value="10"></label>
-   <label>પેજ લેઆઉટ<select id="nszPdfColumns"><option value="1">એક કૉલમ</option><option value="2">બે કૉલમ</option></select></label>
-   <label>હેડર લખાણ<input id="nszPdfHeaderText" type="text" placeholder="વૈકલ્પિક હેડર"></label>
-   <label>ફૂટર લખાણ<input id="nszPdfFooterText" type="text" placeholder="વૈકલ્પિક ફૂટર"></label>
-  </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px"><button type="button" onclick="window.nszResetPdfSettings()" style="background:#64748b;color:#fff;border-radius:8px;padding:9px 12px">ડિફોલ્ટ</button><button type="button" onclick="window.nszSavePdfSettings()" style="background:#4f46e5;color:#fff;border-radius:8px;padding:9px 14px;font-weight:800">સેવ કરો</button></div>
- </div>
-</div>
-<script id="nsz-universal-pdf-settings">
-(function(){
- const KEY='nirmala_universal_pdf_settings_v1';
- const defaults={optionLayout:'auto',optionFont:13,bodyFont:14,headerFont:22,pageSize:'a4',orientation:'portrait',margin:10,columns:1,headerText:'',footerText:''};
- function read(){try{return {...defaults,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){return {...defaults}}}
- function write(){try{localStorage.setItem(KEY,JSON.stringify(readForm()))}catch(e){}}
- function readForm(){return {optionLayout:document.getElementById('nszPdfOptLayout')?.value||defaults.optionLayout,optionFont:clamp('nszPdfOptionFont',8,24,13),bodyFont:clamp('nszPdfBodyFont',9,26,14),headerFont:clamp('nszPdfHeaderFont',12,36,22),pageSize:document.getElementById('nszPdfPageSize')?.value||'a4',orientation:document.getElementById('nszPdfOrientation')?.value||'portrait',margin:clamp('nszPdfMargin',0,30,10),columns:document.getElementById('nszPdfColumns')?.value||'1',headerText:document.getElementById('nszPdfHeaderText')?.value||'',footerText:document.getElementById('nszPdfFooterText')?.value||''}}
- function clamp(id,min,max,def){const n=Number(document.getElementById(id)?.value);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):def}
- function fill(){const s=read();const map={nszPdfOptLayout:s.optionLayout,nszPdfOptionFont:s.optionFont,nszPdfBodyFont:s.bodyFont,nszPdfHeaderFont:s.headerFont,nszPdfPageSize:s.pageSize,nszPdfOrientation:s.orientation,nszPdfMargin:s.margin,nszPdfColumns:s.columns,nszPdfHeaderText:s.headerText,nszPdfFooterText:s.footerText};Object.entries(map).forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.value=v})}
- window.nszOpenPdfSettings=function(){fill();const m=document.getElementById('nszPdfSettingsModal');if(m)m.style.display='flex'};
- window.nszClosePdfSettings=function(){const m=document.getElementById('nszPdfSettingsModal');if(m)m.style.display='none'};
- window.nszSavePdfSettings=function(){write();window.nszClosePdfSettings();alert('બધા PDF માટેની સેટિંગ્સ સેવ થઈ ગઈ છે.')};
- window.nszResetPdfSettings=function(){try{localStorage.setItem(KEY,JSON.stringify(defaults))}catch(e){}fill()};
- window.nszGetPdfSettings=read;
- window.nszApplyPdfSettings=function(el){if(!el)return read();const s=read();el.style.fontFamily="'Hind Vadodara',Arial,sans-serif";el.style.fontSize=s.bodyFont+'px';el.style.lineHeight='1.45';
-  // Apply MCQ font/column choices to common option containers without shrinking text.
-  el.querySelectorAll('.options,[data-mcq-options],.mcq-options').forEach(box=>{box.style.setProperty('font-size',s.optionFont+'px','important');box.style.setProperty('display','grid','important');box.style.setProperty('grid-template-columns',s.optionLayout==='auto'?'repeat(auto-fit,minmax(42%,1fr))':`repeat(${s.optionLayout},minmax(0,1fr))`,'important');box.style.setProperty('gap','3px 8px','important');box.style.setProperty('line-height','1.4','important')});
-  // Handle common inline MCQ rows used in generated test and answer-key PDFs.
-  el.querySelectorAll('div[style*="flex-direction:row"]').forEach(box=>{if(box.children.length>=3){box.style.setProperty('font-size',s.optionFont+'px','important');box.style.setProperty('flex-wrap',s.optionLayout==='1'?'wrap':'wrap','important');box.style.setProperty('display','grid','important');box.style.setProperty('grid-template-columns',s.optionLayout==='auto'?'repeat(auto-fit,minmax(42%,1fr))':`repeat(${s.optionLayout},minmax(0,1fr))`,'important');box.style.setProperty('gap','3px 8px','important')}});
-  el.querySelectorAll('h1,h2,.school').forEach(h=>h.style.setProperty('font-size',s.headerFont+'px','important'));
-  if(s.columns==='2')el.style.setProperty('column-count','2','important');
-  if(s.headerText){const h=document.createElement('div');h.textContent=s.headerText;h.style.cssText=`text-align:center;font-size:${s.headerFont}px;font-weight:bold;margin:0 0 8px`;el.insertBefore(h,el.firstChild)}
-  if(s.footerText){const f=document.createElement('div');f.textContent=s.footerText;f.style.cssText=`text-align:center;font-size:${s.bodyFont}px;margin-top:10px;border-top:1px solid #bbb;padding-top:5px`;el.appendChild(f)}
-  return s;
- };
- function addButton(){const admin=document.getElementById('adminScreen');if(!admin||document.getElementById('nszUniversalPdfSettingsBtn'))return;const pdf=[...admin.querySelectorAll('button')].find(b=>(b.textContent||'').includes('PDF ડાઉનલોડ'));if(!pdf)return;const b=document.createElement('button');b.id='nszUniversalPdfSettingsBtn';b.type='button';b.textContent='⚙️ બધા PDF સેટિંગ્સ';b.className='bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded border text-xs font-bold shadow';b.onclick=window.nszOpenPdfSettings;pdf.insertAdjacentElement('afterend',b)}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{addButton();fill()});else{addButton();fill()}
- new MutationObserver(addButton).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
-
 </body>
 
 <!-- NIRMALA STUDY ZONE: local test cache and offline result queue -->
@@ -3440,6 +3381,64 @@ window.autoMathExplanation=autoMathExplanation;
 })();
 </script>
 
+
+<!-- Universal PDF settings for every PDF export in NIRMALA STUDY ZON -->
+<style id="nsz-pdf-settings-style">
+#nszPdfSettingsModal{position:fixed;inset:0;z-index:2147483646;background:#0f172acc;display:none;align-items:center;justify-content:center;padding:12px;font-family:'Hind Vadodara',sans-serif}
+#nszPdfSettingsModal .nsz-pdf-box{background:#fff;color:#111;width:min(620px,100%);max-height:92vh;overflow:auto;border-radius:16px;padding:16px;box-shadow:0 15px 50px #0005}
+#nszPdfSettingsModal label{display:block;font-size:13px;font-weight:700;margin:7px 0}
+#nszPdfSettingsModal input,#nszPdfSettingsModal select{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#111}
+#nszPdfSettingsModal .nsz-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+</style>
+<div id="nszPdfSettingsModal" role="dialog" aria-modal="true">
+ <div class="nsz-pdf-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="font-size:20px;font-weight:900;margin:0">⚙️ બધા PDF માટે સેટિંગ્સ</h2><button type="button" onclick="window.nszClosePdfSettings()" style="font-size:24px;padding:0 8px">×</button></div>
+  <p style="font-size:12px;color:#64748b;margin:5px 0 12px">આ સેટિંગ્સ પ્રશ્નપત્ર, ટેસ્ટ PDF, જવાબ કી અને રિઝલ્ટ PDFમાં લાગુ થશે. લાંબા વિકલ્પો માટે 2 અથવા 1 વિકલ્પ પ્રતિ લાઇન પસંદ કરો.</p>
+  <div class="nsz-grid">
+   <label>MCQ ગોઠવણી<select id="nszPdfOptLayout"><option value="auto">ઓટો (લાંબાઈ મુજબ)</option><option value="4">ચાર વિકલ્પ આડી</option><option value="2">બે-બે આડી</option><option value="1">એક-એક ઊભી</option></select></label>
+   <label>MCQ વિકલ્પ ફોન્ટ (px)<input id="nszPdfOptionFont" type="number" min="8" max="24" step="1" value="13"></label>
+   <label>પ્રશ્ન/મુખ્ય લખાણ ફોન્ટ (px)<input id="nszPdfBodyFont" type="number" min="9" max="26" step="1" value="14"></label>
+   <label>હેડર ફોન્ટ (px)<input id="nszPdfHeaderFont" type="number" min="12" max="36" step="1" value="22"></label>
+   <label>પેજ સાઇઝ<select id="nszPdfPageSize"><option value="a4">A4</option><option value="a5">A5</option><option value="letter">Letter</option><option value="legal">Legal</option></select></label>
+   <label>દિશા<select id="nszPdfOrientation"><option value="portrait">Portrait (ઊભું)</option><option value="landscape">Landscape (આડું)</option></select></label>
+   <label>માર્જિન (mm)<input id="nszPdfMargin" type="number" min="0" max="30" step="1" value="10"></label>
+   <label>પેજ લેઆઉટ<select id="nszPdfColumns"><option value="1">એક કૉલમ</option><option value="2">બે કૉલમ</option></select></label>
+   <label>હેડર લખાણ<input id="nszPdfHeaderText" type="text" placeholder="વૈકલ્પિક હેડર"></label>
+   <label>ફૂટર લખાણ<input id="nszPdfFooterText" type="text" placeholder="વૈકલ્પિક ફૂટર"></label>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px"><button type="button" onclick="window.nszResetPdfSettings()" style="background:#64748b;color:#fff;border-radius:8px;padding:9px 12px">ડિફોલ્ટ</button><button type="button" onclick="window.nszSavePdfSettings()" style="background:#4f46e5;color:#fff;border-radius:8px;padding:9px 14px;font-weight:800">સેવ કરો</button></div>
+ </div>
+</div>
+<script id="nsz-universal-pdf-settings">
+(function(){
+ const KEY='nirmala_universal_pdf_settings_v1';
+ const defaults={optionLayout:'auto',optionFont:13,bodyFont:14,headerFont:22,pageSize:'a4',orientation:'portrait',margin:10,columns:1,headerText:'',footerText:''};
+ function read(){try{return {...defaults,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){return {...defaults}}}
+ function write(){try{localStorage.setItem(KEY,JSON.stringify(readForm()))}catch(e){}}
+ function readForm(){return {optionLayout:document.getElementById('nszPdfOptLayout')?.value||defaults.optionLayout,optionFont:clamp('nszPdfOptionFont',8,24,13),bodyFont:clamp('nszPdfBodyFont',9,26,14),headerFont:clamp('nszPdfHeaderFont',12,36,22),pageSize:document.getElementById('nszPdfPageSize')?.value||'a4',orientation:document.getElementById('nszPdfOrientation')?.value||'portrait',margin:clamp('nszPdfMargin',0,30,10),columns:document.getElementById('nszPdfColumns')?.value||'1',headerText:document.getElementById('nszPdfHeaderText')?.value||'',footerText:document.getElementById('nszPdfFooterText')?.value||''}}
+ function clamp(id,min,max,def){const n=Number(document.getElementById(id)?.value);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):def}
+ function fill(){const s=read();const map={nszPdfOptLayout:s.optionLayout,nszPdfOptionFont:s.optionFont,nszPdfBodyFont:s.bodyFont,nszPdfHeaderFont:s.headerFont,nszPdfPageSize:s.pageSize,nszPdfOrientation:s.orientation,nszPdfMargin:s.margin,nszPdfColumns:s.columns,nszPdfHeaderText:s.headerText,nszPdfFooterText:s.footerText};Object.entries(map).forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.value=v})}
+ window.nszOpenPdfSettings=function(){fill();const m=document.getElementById('nszPdfSettingsModal');if(m)m.style.display='flex'};
+ window.nszClosePdfSettings=function(){const m=document.getElementById('nszPdfSettingsModal');if(m)m.style.display='none'};
+ window.nszSavePdfSettings=function(){write();window.nszClosePdfSettings();alert('બધા PDF માટેની સેટિંગ્સ સેવ થઈ ગઈ છે.')};
+ window.nszResetPdfSettings=function(){try{localStorage.setItem(KEY,JSON.stringify(defaults))}catch(e){}fill()};
+ window.nszGetPdfSettings=read;
+ window.nszApplyPdfSettings=function(el){if(!el)return read();const s=read();el.style.fontFamily="'Hind Vadodara',Arial,sans-serif";el.style.fontSize=s.bodyFont+'px';el.style.lineHeight='1.45';
+  // Apply MCQ font/column choices to common option containers without shrinking text.
+  el.querySelectorAll('.options,[data-mcq-options],.mcq-options').forEach(box=>{box.style.setProperty('font-size',s.optionFont+'px','important');box.style.setProperty('display','grid','important');box.style.setProperty('grid-template-columns',s.optionLayout==='auto'?'repeat(auto-fit,minmax(42%,1fr))':`repeat(${s.optionLayout},minmax(0,1fr))`,'important');box.style.setProperty('gap','3px 8px','important');box.style.setProperty('line-height','1.4','important')});
+  // Handle common inline MCQ rows used in generated test and answer-key PDFs.
+  el.querySelectorAll('div[style*="flex-direction:row"]').forEach(box=>{if(box.children.length>=3){box.style.setProperty('font-size',s.optionFont+'px','important');box.style.setProperty('flex-wrap',s.optionLayout==='1'?'wrap':'wrap','important');box.style.setProperty('display','grid','important');box.style.setProperty('grid-template-columns',s.optionLayout==='auto'?'repeat(auto-fit,minmax(42%,1fr))':`repeat(${s.optionLayout},minmax(0,1fr))`,'important');box.style.setProperty('gap','3px 8px','important')}});
+  el.querySelectorAll('h1,h2,.school').forEach(h=>h.style.setProperty('font-size',s.headerFont+'px','important'));
+  if(s.columns==='2')el.style.setProperty('column-count','2','important');
+  if(s.headerText){const h=document.createElement('div');h.textContent=s.headerText;h.style.cssText=`text-align:center;font-size:${s.headerFont}px;font-weight:bold;margin:0 0 8px`;el.insertBefore(h,el.firstChild)}
+  if(s.footerText){const f=document.createElement('div');f.textContent=s.footerText;f.style.cssText=`text-align:center;font-size:${s.bodyFont}px;margin-top:10px;border-top:1px solid #bbb;padding-top:5px`;el.appendChild(f)}
+  return s;
+ };
+ function addButton(){const admin=document.getElementById('adminScreen');if(!admin||document.getElementById('nszUniversalPdfSettingsBtn'))return;const pdf=[...admin.querySelectorAll('button')].find(b=>(b.textContent||'').includes('PDF ડાઉનલોડ'));if(!pdf)return;const b=document.createElement('button');b.id='nszUniversalPdfSettingsBtn';b.type='button';b.textContent='⚙️ બધા PDF સેટિંગ્સ';b.className='bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded border text-xs font-bold shadow';b.onclick=window.nszOpenPdfSettings;pdf.insertAdjacentElement('afterend',b)}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{addButton();fill()});else{addButton();fill()}
+ new MutationObserver(addButton).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
 </html>
 
 <!-- FINAL MCQ ANSWER + PER-STUDENT ATTEMPT FIX -->

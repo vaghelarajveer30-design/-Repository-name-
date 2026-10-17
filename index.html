@@ -2916,6 +2916,7 @@
                 }
             });
             page.innerHTML = html;
+            if (typeof window.nszApplyPdfSettings === 'function') window.nszApplyPdfSettings(page);
             root.appendChild(page);
             const note = document.createElement('div'); note.textContent = 'PDF તૈયાર થઈ રહ્યો છે…'; note.style.cssText='position:sticky;top:0;background:#fff3cd;padding:8px;text-align:center;font-weight:bold'; root.insertBefore(note,page);
             document.body.appendChild(root);
@@ -2938,8 +2939,9 @@
                 const canvas = await window.html2canvas(page,{scale:1.5,backgroundColor:'#ffffff',useCORS:true,allowTaint:false,logging:false,scrollX:0,scrollY:0,width:page.scrollWidth,height:page.scrollHeight});
                 if (!canvas || canvas.width < 100 || canvas.height < 100) throw new Error('Canvas is blank');
                 const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
-                const margin=8, pageW=210, pageH=297, usableW=pageW-margin*2, usableH=pageH-margin*2;
+                const pdfSettings = typeof window.nszGetPdfSettings === 'function' ? window.nszGetPdfSettings() : {pageSize:'a4',orientation:'portrait',margin:8};
+                const pdf = new jsPDF({orientation:pdfSettings.orientation||'portrait',unit:'mm',format:pdfSettings.pageSize||'a4',compress:true});
+                const dims = pdf.internal.pageSize; const pageW = dims.getWidth(); const pageH = dims.getHeight(); const margin=Math.max(0,Math.min(30,Number(pdfSettings.margin ?? 8))); const usableW=pageW-margin*2, usableH=pageH-margin*2;
                 const imgData=canvas.toDataURL('image/jpeg',0.92);
                 const imgW=usableW, imgH=canvas.height*imgW/canvas.width;
                 let remaining=imgH, y=margin, sourceY=0;
@@ -2950,6 +2952,7 @@
                     const ctx=slice.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,slice.width,slice.height);
                     ctx.drawImage(canvas,0,Math.floor(sourceY*canvas.width/imgW),canvas.width,slice.height,0,0,slice.width,slice.height);
                     pdf.addImage(slice.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,usableW,slice.height*usableW/slice.width,undefined,'FAST');
+                    if(pdfSettings.borderOn!==false){const bw=Math.max(0.25,Math.min(3,(Number(pdfSettings.borderWidth)||2)*0.35));pdf.setLineWidth(bw);pdf.setDrawColor(...((pdfSettings.borderColor||'#222222').match(/[0-9a-f]{2}/gi)||['22','22','22']).slice(0,3).map(v=>parseInt(v,16)));const inset=Math.max(2,margin/2);if(pdfSettings.borderStyle==='dashed')pdf.setLineDashPattern([2,1],0);else if(pdfSettings.borderStyle==='dotted')pdf.setLineDashPattern([0.5,1],0);else pdf.setLineDashPattern([],0);pdf.rect(inset,inset,pageW-inset*2,pageH-inset*2);if(pdfSettings.borderStyle==='double'){pdf.setLineDashPattern([],0);pdf.setLineWidth(Math.max(0.25,bw*0.55));pdf.rect(inset+2,inset+2,pageW-(inset+2)*2,pageH-(inset+2)*2);}}
                     sourceY += slice.height*imgW/canvas.width; remaining=imgH-sourceY;
                 }
                 pdf.save(safeName+'.pdf');
@@ -3370,7 +3373,7 @@ window.autoMathExplanation=autoMathExplanation;
     };
     const wrap=document.createElement('div');wrap.style.cssText='font-family:Arial,sans-serif;background:#fff;color:#111;padding:24px;width:760px;box-sizing:border-box;line-height:1.5';
     wrap.innerHTML=`<h2 style="text-align:center;color:#312e81;margin-bottom:4px">નિર્મળા નવોદય સ્ટડી ઝોન</h2><h3 style="text-align:center;margin-top:0">${safe(meta.title||'જવાબ કી')}</h3><p><b>કોર્ષ:</b> ${safe(meta.course||'સામાન્ય')} &nbsp; | &nbsp; <b>વિષય:</b> ${safe(meta.subject||'સામાન્ય')}</p><hr>`+qs.map((q,i)=>{const a=answerDetails(q);const opts=Array.isArray(q.options)?q.options:(q.options&&typeof q.options==='object'?Object.values(q.options):[]);let correctIndex=-1;if(a.letter)correctIndex=['A','B','C','D'].indexOf(a.letter);if(correctIndex<0){const raw=String(q.answer??q.correctAnswer??q.correct_answer??'').trim();correctIndex=opts.findIndex(o=>String(o??'').trim().toLowerCase()===raw.toLowerCase());}const letters=['A','B','C','D'];return `<div style="padding:10px 0;border-bottom:1px solid #ddd;page-break-inside:avoid;break-inside:avoid"><div style="font-weight:bold;margin-bottom:5px">પ્રશ્ન ${i+1}. ${safe(q.question||'')}</div>${q.passage?`<div style="margin:3px 0 6px;padding:7px;background:#f8fafc;border-left:3px solid #94a3b8"><b>ફકરો:</b> ${safe(q.passage)}</div>`:''}<div style="margin:4px 0 5px">${opts.slice(0,4).map((o,j)=>`<div style="padding:3px 6px;margin:2px 0;border-radius:4px;${j===correctIndex?'background:#dcfce7;color:#047857;font-weight:bold;border:1px solid #86efac;':''}">(${letters[j]}) ${safe(o??'')}${j===correctIndex?' ✓':''}</div>`).join('')}</div><div style="color:#047857;font-weight:bold">સાચો જવાબ: ${safe(a.label)}</div></div>`}).join('');
-    document.body.appendChild(wrap);html2pdf().set({margin:.45,filename:`${(meta.title||'Test').replace(/[\\/:*?"<>|]/g,'_')}_Answer_Key.pdf`,image:{type:'jpeg',quality:.95},html2canvas:{scale:2,backgroundColor:'#fff',useCORS:true},jsPDF:{unit:'in',format:'letter',orientation:'portrait'}}).from(wrap).save().finally(()=>wrap.remove());
+    const ps=typeof window.nszGetPdfSettings==='function'?window.nszGetPdfSettings():{pageSize:'letter',orientation:'portrait',margin:10};if(typeof window.nszApplyPdfSettings==='function')window.nszApplyPdfSettings(wrap);document.body.appendChild(wrap);html2pdf().set({margin:(Number(ps.margin??10)/25.4),filename:`${(meta.title||'Test').replace(/[\\/:*?"<>|]/g,'_')}_Answer_Key.pdf`,image:{type:'jpeg',quality:.95},html2canvas:{scale:2,backgroundColor:'#fff',useCORS:true},jsPDF:{unit:'in',format:ps.pageSize||'letter',orientation:ps.orientation||'portrait'}}).from(wrap).save().finally(()=>wrap.remove());
   }
   document.addEventListener('DOMContentLoaded',()=>{
     const qbFooter=document.querySelector('#qBankModal .bg-slate-100.border-t');
@@ -3396,6 +3399,11 @@ window.autoMathExplanation=autoMathExplanation;
   <p style="font-size:12px;color:#64748b;margin:5px 0 12px">આ સેટિંગ્સ પ્રશ્નપત્ર, ટેસ્ટ PDF, જવાબ કી અને રિઝલ્ટ PDFમાં લાગુ થશે. લાંબા વિકલ્પો માટે 2 અથવા 1 વિકલ્પ પ્રતિ લાઇન પસંદ કરો.</p>
   <div class="nsz-grid">
    <label>MCQ ગોઠવણી<select id="nszPdfOptLayout"><option value="auto">ઓટો (લાંબાઈ મુજબ)</option><option value="4">ચાર વિકલ્પ આડી</option><option value="2">બે-બે આડી</option><option value="1">એક-એક ઊભી</option></select></label>
+   <label style="display:flex;align-items:center;gap:8px"><input id="nszPdfBoldText" type="checkbox" style="width:auto;transform:scale(1.15)"> PDFમાં બધું લખાણ બોલ્ડ કરો</label>
+   <label style="display:flex;align-items:center;gap:8px"><input id="nszPdfBorderOn" type="checkbox" checked style="width:auto;transform:scale(1.15)"> PDF પેજની ફરતે બોર્ડર</label>
+   <label>બોર્ડર પ્રકાર<select id="nszPdfBorderStyle"><option value="solid">સાદી લાઇન</option><option value="double">ડબલ લાઇન</option><option value="dashed">તૂટક લાઇન</option><option value="dotted">બિંદુવાળી લાઇન</option></select></label>
+   <label>બોર્ડર જાડાઈ (px)<input id="nszPdfBorderWidth" type="number" min="1" max="8" step="1" value="2"></label>
+   <label>બોર્ડર રંગ<input id="nszPdfBorderColor" type="color" value="#222222"></label>
    <label>MCQ વિકલ્પ ફોન્ટ (px)<input id="nszPdfOptionFont" type="number" min="8" max="24" step="1" value="13"></label>
    <label>પ્રશ્ન/મુખ્ય લખાણ ફોન્ટ (px)<input id="nszPdfBodyFont" type="number" min="9" max="26" step="1" value="14"></label>
    <label>હેડર ફોન્ટ (px)<input id="nszPdfHeaderFont" type="number" min="12" max="36" step="1" value="22"></label>
@@ -3412,18 +3420,18 @@ window.autoMathExplanation=autoMathExplanation;
 <script id="nsz-universal-pdf-settings">
 (function(){
  const KEY='nirmala_universal_pdf_settings_v1';
- const defaults={optionLayout:'auto',optionFont:13,bodyFont:14,headerFont:22,pageSize:'a4',orientation:'portrait',margin:10,columns:1,headerText:'',footerText:''};
+ const defaults={optionLayout:'auto',optionFont:13,bodyFont:14,headerFont:22,pageSize:'a4',orientation:'portrait',margin:10,columns:1,boldText:false,borderOn:true,borderStyle:'solid',borderWidth:2,borderColor:'#222222',headerText:'',footerText:''};
  function read(){try{return {...defaults,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){return {...defaults}}}
  function write(){try{localStorage.setItem(KEY,JSON.stringify(readForm()))}catch(e){}}
- function readForm(){return {optionLayout:document.getElementById('nszPdfOptLayout')?.value||defaults.optionLayout,optionFont:clamp('nszPdfOptionFont',8,24,13),bodyFont:clamp('nszPdfBodyFont',9,26,14),headerFont:clamp('nszPdfHeaderFont',12,36,22),pageSize:document.getElementById('nszPdfPageSize')?.value||'a4',orientation:document.getElementById('nszPdfOrientation')?.value||'portrait',margin:clamp('nszPdfMargin',0,30,10),columns:document.getElementById('nszPdfColumns')?.value||'1',headerText:document.getElementById('nszPdfHeaderText')?.value||'',footerText:document.getElementById('nszPdfFooterText')?.value||''}}
+ function readForm(){return {boldText:!!document.getElementById('nszPdfBoldText')?.checked,borderOn:!!document.getElementById('nszPdfBorderOn')?.checked,borderStyle:document.getElementById('nszPdfBorderStyle')?.value||'solid',borderWidth:clamp('nszPdfBorderWidth',1,8,2),borderColor:document.getElementById('nszPdfBorderColor')?.value||'#222222',optionLayout:document.getElementById('nszPdfOptLayout')?.value||defaults.optionLayout,optionFont:clamp('nszPdfOptionFont',8,24,13),bodyFont:clamp('nszPdfBodyFont',9,26,14),headerFont:clamp('nszPdfHeaderFont',12,36,22),pageSize:document.getElementById('nszPdfPageSize')?.value||'a4',orientation:document.getElementById('nszPdfOrientation')?.value||'portrait',margin:clamp('nszPdfMargin',0,30,10),columns:document.getElementById('nszPdfColumns')?.value||'1',headerText:document.getElementById('nszPdfHeaderText')?.value||'',footerText:document.getElementById('nszPdfFooterText')?.value||''}}
  function clamp(id,min,max,def){const n=Number(document.getElementById(id)?.value);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):def}
- function fill(){const s=read();const map={nszPdfOptLayout:s.optionLayout,nszPdfOptionFont:s.optionFont,nszPdfBodyFont:s.bodyFont,nszPdfHeaderFont:s.headerFont,nszPdfPageSize:s.pageSize,nszPdfOrientation:s.orientation,nszPdfMargin:s.margin,nszPdfColumns:s.columns,nszPdfHeaderText:s.headerText,nszPdfFooterText:s.footerText};Object.entries(map).forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.value=v})}
+ function fill(){const s=read();const map={nszPdfBoldText:s.boldText,nszPdfBorderOn:s.borderOn,nszPdfBorderStyle:s.borderStyle,nszPdfBorderWidth:s.borderWidth,nszPdfBorderColor:s.borderColor,nszPdfOptLayout:s.optionLayout,nszPdfOptionFont:s.optionFont,nszPdfBodyFont:s.bodyFont,nszPdfHeaderFont:s.headerFont,nszPdfPageSize:s.pageSize,nszPdfOrientation:s.orientation,nszPdfMargin:s.margin,nszPdfColumns:s.columns,nszPdfHeaderText:s.headerText,nszPdfFooterText:s.footerText};Object.entries(map).forEach(([id,v])=>{const e=document.getElementById(id);if(e){if(e.type==='checkbox')e.checked=!!v;else e.value=v}})}
  window.nszOpenPdfSettings=function(){fill();const m=document.getElementById('nszPdfSettingsModal');if(m)m.style.display='flex'};
  window.nszClosePdfSettings=function(){const m=document.getElementById('nszPdfSettingsModal');if(m)m.style.display='none'};
  window.nszSavePdfSettings=function(){write();window.nszClosePdfSettings();alert('બધા PDF માટેની સેટિંગ્સ સેવ થઈ ગઈ છે.')};
  window.nszResetPdfSettings=function(){try{localStorage.setItem(KEY,JSON.stringify(defaults))}catch(e){}fill()};
  window.nszGetPdfSettings=read;
- window.nszApplyPdfSettings=function(el){if(!el)return read();const s=read();el.style.fontFamily="'Hind Vadodara',Arial,sans-serif";el.style.fontSize=s.bodyFont+'px';el.style.lineHeight='1.45';
+ window.nszApplyPdfSettings=function(el){if(!el)return read();const s=read();el.style.fontFamily="'Hind Vadodara',Arial,sans-serif";el.style.fontSize=s.bodyFont+'px';el.style.lineHeight='1.45';if(s.borderOn){el.style.setProperty('border',`${s.borderWidth||2}px ${s.borderStyle||'solid'} ${s.borderColor||'#222222'}`,'important');el.style.setProperty('box-sizing','border-box','important');el.style.setProperty('padding','8px','important')}else{el.style.removeProperty('border')}if(s.boldText){el.style.setProperty('font-weight','700','important');el.querySelectorAll('*').forEach(n=>n.style.setProperty('font-weight','700','important'))}
   // Apply MCQ font/column choices to common option containers without shrinking text.
   el.querySelectorAll('.options,[data-mcq-options],.mcq-options').forEach(box=>{box.style.setProperty('font-size',s.optionFont+'px','important');box.style.setProperty('display','grid','important');box.style.setProperty('grid-template-columns',s.optionLayout==='auto'?'repeat(auto-fit,minmax(42%,1fr))':`repeat(${s.optionLayout},minmax(0,1fr))`,'important');box.style.setProperty('gap','3px 8px','important');box.style.setProperty('line-height','1.4','important')});
   // Handle common inline MCQ rows used in generated test and answer-key PDFs.
@@ -3776,5 +3784,61 @@ function normalizeAnswerForGrading(value, question){
             if(typeof oldSave==='function') return oldSave(b);
         };
     }
+})();
+</script>
+
+<script id="nsz-pdf-settings-real-integration">
+(function(){
+  // Connect the saved settings to every html2pdf export made from this app.
+  function getSettings(){
+    try { return typeof window.nszGetPdfSettings==='function' ? window.nszGetPdfSettings() : {}; }
+    catch(e){ return {}; }
+  }
+  function applyToElement(el){
+    if(!el || el.nodeType!==1) return;
+    try { if(typeof window.nszApplyPdfSettings==='function') window.nszApplyPdfSettings(el); } catch(e) { console.warn('PDF styling settings could not be applied',e); }
+  }
+  function install(){
+    if(typeof window.html2pdf!=='function' || window.html2pdf.__nszSettingsWrapped) return;
+    const original=window.html2pdf;
+    function wrapped(){
+      const worker=original.apply(this,arguments);
+      if(!worker || typeof worker.set!=='function' || typeof worker.from!=='function') return worker;
+      const originalSet=worker.set.bind(worker), originalFrom=worker.from.bind(worker);
+      worker.set=function(options){
+        const s=getSettings(); const o=Object.assign({},options||{});
+        o.jsPDF=Object.assign({},o.jsPDF||{}, {unit:'mm',format:s.pageSize||o.jsPDF?.format||'a4',orientation:s.orientation||o.jsPDF?.orientation||'portrait'});
+        if(s.margin!==undefined && s.margin!==null && Number.isFinite(Number(s.margin))) o.margin=Math.max(0,Math.min(30,Number(s.margin)));
+        o.html2canvas=Object.assign({useCORS:true,backgroundColor:'#ffffff'},o.html2canvas||{});
+        return originalSet(o);
+      };
+      worker.from=function(el){ applyToElement(el); return originalFrom.apply(this,arguments); };
+      return worker;
+    }
+    Object.keys(original).forEach(k=>{try{wrapped[k]=original[k]}catch(e){}});
+    wrapped.__nszSettingsWrapped=true; wrapped.__nszOriginal=original;
+    window.html2pdf=wrapped;
+  }
+  // Also ensure the hand-built test PDF honors bold/font/layout and its selected page format.
+  const oldApply=window.nszApplyPdfSettings;
+  window.nszApplyPdfSettings=function(el){
+    const s=getSettings();
+    if(oldApply) oldApply(el);
+    if(!el || el.nodeType!==1) return s;
+    try {
+      el.style.setProperty('font-size',(Number(s.bodyFont)||14)+'px','important');
+      if(s.borderOn){el.style.setProperty('border',`${Number(s.borderWidth)||2}px ${s.borderStyle||'solid'} ${s.borderColor||'#222222'}`,'important');el.style.setProperty('box-sizing','border-box','important');el.style.setProperty('padding','8px','important')}else{el.style.removeProperty('border')}
+      if(s.boldText){el.style.setProperty('font-weight','700','important');el.querySelectorAll('*').forEach(n=>n.style.setProperty('font-weight','700','important'));}
+      el.querySelectorAll('div[style*="flex-direction:row"]').forEach(box=>{
+        if(box.children.length>=3){const layout=s.optionLayout||'auto';const cols=layout==='auto'?'repeat(auto-fit,minmax(42%,1fr))':`repeat(${Math.max(1,Math.min(4,Number(layout)||1))},minmax(0,1fr))`;box.style.setProperty('display','grid','important');box.style.setProperty('grid-template-columns',cols,'important');box.style.setProperty('font-size',(Number(s.optionFont)||13)+'px','important');box.style.setProperty('gap','3px 8px','important');}
+      });
+      if(s.columns==='2') el.style.setProperty('column-count','2','important');
+    } catch(e){console.warn('PDF settings application issue',e)}
+    return s;
+  };
+  install();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
+  // CDN may load late on slow mobile networks.
+  let attempts=0; const timer=setInterval(()=>{install();attempts++;if(window.html2pdf?.__nszSettingsWrapped||attempts>30)clearInterval(timer)},250);
 })();
 </script>

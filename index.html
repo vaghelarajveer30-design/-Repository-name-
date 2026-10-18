@@ -1357,7 +1357,10 @@
 
         function formatFractions(text) {
             if (!text) return '';
-            return text.replace(/(\d+)\/(\d+)/g, '<span class="frac"><span class="frac-num">$1</span><span class="frac-den">$2</span></span>');
+            // Accept fractions pasted as 1/2 or LaTeX-style \frac{1}{2}; keep all other math text (√, x², x^2, etc.) intact.
+            return String(text)
+                .replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, '<span class="frac"><span class="frac-num">$1</span><span class="frac-den">$2</span></span>')
+                .replace(/(?<![\w.])(\d+)\/(\d+)(?![\w.])/g, '<span class="frac"><span class="frac-num">$1</span><span class="frac-den">$2</span></span>');
         }
 
         // Bulk MCQ builder for the same MCQ area: paste many questions first,
@@ -1408,7 +1411,7 @@
                             </select>
                         </div>
                         <label class="block text-[11px] font-bold text-slate-700 mt-2">સમજૂતી (વૈકલ્પિક — વિદ્યાર્થીઓને પરિણામ પછી દેખાશે)</label>
-                        <textarea rows="2" class="w-full border rounded-lg p-2 text-xs mt-1" placeholder="આ પ્રશ્નની સમજૂતી લખો..." onchange="window._bulkTestMCQ[${i}].explanation=this.value">${escapeHtmlForResult(q.explanation||'')}</textarea>
+                        <textarea rows="5" class="w-full border rounded-lg p-2 text-xs mt-1" style="min-height:110px;white-space:pre-wrap;line-height:1.6" placeholder="સમજૂતી અહીં સુધારો અથવા વધારો કરી શકો છો..." oninput="window._bulkTestMCQ[${i}].explanation=this.value;this.style.height='auto';this.style.height=this.scrollHeight+'px'">${escapeHtmlForResult(q.explanation||'')}</textarea>
                         <div class="flex items-center gap-2 flex-wrap text-[11px] mt-2">
                             <b>સાચો જવાબ:</b>
                             ${['A','B','C','D'].map(a=>`<label class="px-2 py-1 rounded border bg-white cursor-pointer font-bold text-emerald-700"><input type="radio" name="bulkTestAns${i}" value="${a}" ${q.answer===a?'checked':''}> ${a}</label>`).join('')}
@@ -1449,11 +1452,17 @@
         // Answer keys may include the option text: જવાબ: (B) નવી દિલ્હી
         function normalizeBulkMCQLayout(text) {
             const answerMarker = /(?:સાચો\s*જવાબ|સાચો\s*ઉત્તર|જવાબ\s*કી|જવાબ|correct\s*answer|answer\s*key|answer|ans)\s*[:=\-]?/i;
+            const explanationMarker = /^(?:સમજૂતી|સમજુતી|ઉકેલ|વિગતવાર\s*સમજ|explanation|solution)\s*[:=\-]?/i;
+            const questionStart = /^(?:પ્રશ્ન\s*)?(?:\([0-9૦-૯]+\)|[0-9૦-૯]+\s*[).:\-])\s*/i;
             const splitOptions = line => line.replace(/[ \t]+(?=(?:\([ABCD]\)|[ABCD]\s*[).:\-])\s*)/gi, '\n');
+            let inExplanation = false;
             return String(text || '').replace(/\r/g, '').split('\n').map(line => {
                 const trimmed=line.trim();
+                if (questionStart.test(trimmed)) inExplanation = false;
+                if (explanationMarker.test(trimmed)) inExplanation = true;
+                // Never rewrite explanation content: preserve its line breaks and math notation as pasted.
+                if (inExplanation) return line;
                 if (!trimmed) return '';
-                // Do not split (B) inside an answer key appended to the last option.
                 const marker=trimmed.match(answerMarker);
                 if (marker && marker.index > 0) {
                     const before=trimmed.slice(0,marker.index).trim();
@@ -1462,13 +1471,13 @@
                 }
                 if (/^(?:જવાબ\s*કી|જવાબ|સાચો\s*જવાબ|સાચો\s*ઉત્તર|correct\s*answer|answer\s*key|answer|ans)\s*[:=\-]/i.test(trimmed)) return trimmed;
                 return splitOptions(trimmed);
-            }).join('\n').split('\n').map(line => line.trim()).filter(Boolean).join('\n');
+            }).join('\n');
         }
 
         function parseBulkTestMCQ(text) {
             const guDigits='૦૧૨૩૪૫૬૭૮૯';
             const normalizeDigits = x => String(x||'').replace(/[૦-૯]/g,d=>String(guDigits.indexOf(d)));
-            const lines = normalizeBulkMCQLayout(text).split('\n').map(x=>x.trim()).filter(Boolean);
+            const lines = normalizeBulkMCQLayout(text).split('\n').map(x=>x.trim());
             const out=[]; let cur=null; let currentOpt=-1;
             const cleanText = value => String(value||'')
                 .replace(/\s*(?:સાચો\s*જવાબ|સાચો\s*ઉત્તર|જવાબ\s*કી|જવાબ|correct\s*answer|answer\s*key|answer|ans)\s*[:=\-]?.*$/i,'')
@@ -1504,13 +1513,14 @@
                 cur=null; currentOpt=-1;
             };
             for(let line of lines){
+                if(!line){ if(cur && cur.inExplanation) cur.explanation += '\n'; continue; }
                 const qs=isQStart(line);
                 if(qs){ finish(); cur={question:cleanText(qs.text),options:[],answer:'',explanation:'',inExplanation:false}; currentOpt=-1; continue; }
                 if(!cur){ cur={question:cleanText(line),options:[],answer:'',explanation:'',inExplanation:false}; currentOpt=-1; continue; }
                 // Teacher-authored explanation may span multiple lines.
                 const expMatch=line.match(/^(?:સમજૂતી|સમજુતી|ઉકેલ|વિગતવાર\s*સમજ|explanation|solution)\s*[:=\-]?\s*(.*)$/i);
-                if(expMatch){cur.inExplanation=true;cur.explanation=(cur.explanation+' '+expMatch[1]).trim();continue;}
-                if(cur.inExplanation){cur.explanation=(cur.explanation+' '+line).trim();continue;}
+                if(expMatch){cur.inExplanation=true;const part=String(expMatch[1]||'');cur.explanation=(cur.explanation ? cur.explanation+'\n' : '')+part;continue;}
+                if(cur.inExplanation){cur.explanation += (cur.explanation && !cur.explanation.endsWith('\n') ? '\n' : '') + line;continue;}
                 // If the answer key is appended to an option line (common paste format), extract it first.
                 const extracted=setAnswerFromText(line);
                 line=extracted.text;
@@ -1545,7 +1555,7 @@
                 const course=document.getElementById('adminCourse')?.value||testData.meta?.course||'સામાન્ય';
                 const subject=document.getElementById('adminSubjectSelect')?.value||testData.meta?.subject||'સામાન્ય';
                 const questions=testData.questions?(Array.isArray(testData.questions)?[...testData.questions]:Object.values(testData.questions)):[];
-                const items=qs.map((q,i)=>({type:'mcq',course,subject:q.subject||subject,question:q.question,options:q.options,answer:document.querySelector(`input[name="bulkTestAns${i}"]:checked`).value,explanation:String(q.explanation||'').trim(),createdAt:Date.now()}));
+                const items=qs.map((q,i)=>({type:'mcq',course,subject:q.subject||subject,question:q.question,options:q.options,answer:document.querySelector(`input[name="bulkTestAns${i}"]:checked`).value,explanation:String(q.explanation??''),createdAt:Date.now()}));
                 questions.push(...items);
                 await database.ref(`tests/${activeTestKey}/questions`).set(questions);
                 for(const item of items){ const key=database.ref('question_bank').push().key; await database.ref(`question_bank/${key}`).set(item); }
@@ -2409,7 +2419,7 @@
                     <span>તમારો જવાબ: <b class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</b></span>
                     <span>સાચો જવાબ: <b class="text-emerald-700">${q.answer || '-'}</b></span>
                 </div>
-                ${String(q.explanation || q.solution || q.explain || '').trim() ? `<div class="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200"><b class="text-blue-800">સમજૂતી:</b><div class="mt-1 whitespace-pre-wrap text-slate-700">${formatFractions(escapeHtmlForResult(String(q.explanation || q.solution || q.explain || '').trim()))}</div></div>` : ''}
+                ${String(q.explanation || q.solution || q.explain || '').trim() ? `<div class="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200"><b class="text-blue-800">સમજૂતી:</b><div class="mt-1 text-slate-700" style="white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7">${formatFractions(escapeHtmlForResult(String(q.explanation ?? q.solution ?? q.explain ?? '')))}</div></div>` : ''}
 
             </div>
         `;
@@ -2995,7 +3005,7 @@ let oldRender=window.renderTestBoxes;window.renderTestBoxes=function(){try{oldRe
  let out='<div class="border-t pt-3 mt-3"><div class="font-bold text-indigo-700 text-sm mb-2">📄 ઉત્તરવહી (જવાબ સાથે)</div>';
  sub.questions.forEach((q,i)=>{
    const ua=sub.answers?sub.answers[i]:''; const ok=ua===q.answer; const opts=q.options||['A','B','C','D'];
-   out+=`<div class="result-review-card ${ok?'result-correct':'result-wrong'}"><div class="result-q-head"><div class="result-q-number">${i+1}</div><div class="result-q-text">${formatFractions(q.question||'')}</div><div class="${ok?'result-ok':'result-bad'}">${ok?'✓ સાચો જવાબ':'✕ ખોટો જવાબ'}</div></div><div class="result-options"><div>(A) ${formatFractions(opts[0]||'')}</div><div>(B) ${formatFractions(opts[1]||'')}</div><div>(C) ${formatFractions(opts[2]||'')}</div><div>(D) ${formatFractions(opts[3]||'')}</div></div><div class="result-answer-row"><span>તમારો જવાબ: <b class="${ok?'text-emerald-600':'text-rose-600'}">${ua||'આપેલ નથી'}</b></span><span>સાચો જવાબ: <b class="text-emerald-700">${q.answer||'-'}</b></span></div>${q.explanation?`<div class="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200"><b class="text-blue-800">સમજૂતી:</b><div class="mt-1 whitespace-pre-wrap text-slate-700">${formatFractions(q.explanation)}</div></div>`:getAutoMathExplanationHtml(q,ua,q.answer)}</div>`;
+   out+=`<div class="result-review-card ${ok?'result-correct':'result-wrong'}"><div class="result-q-head"><div class="result-q-number">${i+1}</div><div class="result-q-text">${formatFractions(q.question||'')}</div><div class="${ok?'result-ok':'result-bad'}">${ok?'✓ સાચો જવાબ':'✕ ખોટો જવાબ'}</div></div><div class="result-options"><div>(A) ${formatFractions(opts[0]||'')}</div><div>(B) ${formatFractions(opts[1]||'')}</div><div>(C) ${formatFractions(opts[2]||'')}</div><div>(D) ${formatFractions(opts[3]||'')}</div></div><div class="result-answer-row"><span>તમારો જવાબ: <b class="${ok?'text-emerald-600':'text-rose-600'}">${ua||'આપેલ નથી'}</b></span><span>સાચો જવાબ: <b class="text-emerald-700">${q.answer||'-'}</b></span></div>${q.explanation?`<div class="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200"><b class="text-blue-800">સમજૂતી:</b><div class="mt-1 text-slate-700" style="white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7">${formatFractions(escapeHtmlForResult(String(q.explanation)))}</div></div>`:getAutoMathExplanationHtml(q,ua,q.answer)}</div>`;
  });
  box.innerHTML=out+'</div>';
 }
@@ -3019,7 +3029,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()}
     if(!text)return [];
     const guDigits='૦૧૨૩૪૫૬૭૮૯';
     const normDigits=x=>String(x||'').replace(/[૦-૯]/g,d=>String(guDigits.indexOf(d)));
-    const lines=String(text).replace(/\r/g,'').split('\n').map(x=>x.trim()).filter(Boolean);
+    const lines=String(text).replace(/\r/g,'').split('\n').map(x=>x.trim());
     const out=[]; let cur=null;
     const clean=x=>String(x||'').replace(/\s*(?:સાચો\s*જવાબ|સાચો\s*ઉત્તર|જવાબ\s*કી|જવાબ|correct\s*answer|answer\s*key|answer|ans)\s*[:=\-]?.*$/i,'').replace(/[\s(]+$/,'').replace(/^[\s:;,-]+|[\s:;,-]+$/g,'').trim();
     const startRe=/^(?:પ્રશ્ન\s*)?(?:\(([0-9૦-૯]+)\)|([0-9૦-૯]+)\s*[).:\-])\s*(.*)$/i;
@@ -3032,8 +3042,9 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()}
       if(sm){finish();cur={question:clean(sm[3]),options:[],answer:'',explanation:'',inExplanation:false};continue;}
       if(!cur)cur={question:'',options:[],answer:'',explanation:'',inExplanation:false};
       const exm=line.match(/^(?:સમજૂતી|સમજુતી|ઉકેલ|વિગતવાર\s*સમજ|explanation|solution)\s*[:=\-]?\s*(.*)$/i);
-      if(exm){cur.inExplanation=true;cur.explanation=(cur.explanation+' '+exm[1]).trim();continue;}
-      if(cur.inExplanation){cur.explanation=(cur.explanation+' '+line).trim();continue;}
+      if(exm){cur.inExplanation=true;cur.explanation=(cur.explanation ? cur.explanation+'\n' : '')+String(exm[1]||'');continue;}
+      if(!line){if(cur.inExplanation)cur.explanation+='\n';continue;}
+      if(cur.inExplanation){cur.explanation+=(cur.explanation && !cur.explanation.endsWith('\n')?'\n':'')+line;continue;}
       // Extract answer key wherever it occurs, including after option D on the same line.
       const am=line.match(ansRe);
       let before=line;
@@ -3065,7 +3076,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()}
     const qs=parseBulkMCQ(document.getElementById('bulkMcqText').value);window._bulkMCQ=qs;
     const box=document.getElementById('bulkMcqPreview');document.getElementById('bulkMcqCount').textContent=qs.length?`${qs.length} MCQ મળ્યા`:'કોઈ સંપૂર્ણ MCQ મળ્યો નથી. Format ચકાસો.';
     if(!qs.length){box.innerHTML='<div style="padding:12px;background:#fff7ed;border:1px solid #fdba74;border-radius:10px;font-size:11px">દરેક પ્રશ્નમાં 4 વિકલ્પ A, B, C, D હોવા જરૂરી છે.</div>';return;}
-    box.innerHTML=qs.map((q,i)=>`<div class="bmcq-row ${q.answer?'':'bad'}"><div style="font-weight:800;font-size:12px;margin-bottom:6px">${i+1}. ${escB(q.question)}</div><div class="bmcq-grid"><div>A) ${escB(q.options[0])}</div><div>B) ${escB(q.options[1])}</div><div>C) ${escB(q.options[2])}</div><div>D) ${escB(q.options[3])}</div></div><div class="bmcq-answer"><b>સાચો જવાબ:</b>${['A','B','C','D'].map(a=>`<label><input type="radio" name="bulkAns${i}" value="${a}" ${q.answer===a?'checked':''}> ${a}</label>`).join('')}</div><label style="display:block;font-size:11px;font-weight:700;margin-top:8px">સમજૂતી (વૈકલ્પિક)</label><textarea rows="2" style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-size:12px" placeholder="સમજૂતી લખો..." onchange="window._bulkMCQ[${i}].explanation=this.value">${escB(q.explanation||'')}</textarea></div>`).join('');
+    box.innerHTML=qs.map((q,i)=>`<div class="bmcq-row ${q.answer?'':'bad'}"><div style="font-weight:800;font-size:12px;margin-bottom:6px">${i+1}. ${escB(q.question)}</div><div class="bmcq-grid"><div>A) ${escB(q.options[0])}</div><div>B) ${escB(q.options[1])}</div><div>C) ${escB(q.options[2])}</div><div>D) ${escB(q.options[3])}</div></div><div class="bmcq-answer"><b>સાચો જવાબ:</b>${['A','B','C','D'].map(a=>`<label><input type="radio" name="bulkAns${i}" value="${a}" ${q.answer===a?'checked':''}> ${a}</label>`).join('')}</div><label style="display:block;font-size:11px;font-weight:700;margin-top:8px">સમજૂતી (વૈકલ્પિક)</label><textarea rows="5" style="width:100%;min-height:110px;white-space:pre-wrap;line-height:1.6;border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-size:12px" placeholder="સમજૂતી અહીં સુધારો અથવા વધારો કરી શકો છો..." oninput="window._bulkMCQ[${i}].explanation=this.value;this.style.height='auto';this.style.height=this.scrollHeight+'px'">${escB(q.explanation||'')}</textarea></div>`).join('');
     requestAnimationFrame(()=>{const modalBody=document.querySelector('#bulkMcqModal .bmcq-body');const first=box.firstElementChild;if(modalBody&&first){modalBody.scrollTop=Math.max(0,box.offsetTop-8);first.scrollIntoView({behavior:'smooth',block:'start'});}});
   };
   window.saveBulkMCQ=function(){
@@ -3074,7 +3085,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()}
     if(missing.length){alert(`હજી ${missing.length} પ્રશ્નનો સાચો જવાબ પસંદ કર્યો નથી.`);return;}
     const course=document.getElementById('qbCourseFilter')?.value||'સામાન્ય';const subject=document.getElementById('qbSubjectFilter')?.value;const finalSubject=subject&&subject!=='all'?subject:'સામાન્ય';
     const updates={};const base='question_bank/';
-    qs.forEach((q,i)=>{const key=database.ref('question_bank').push().key;updates[base+key]={question:q.question,options:q.options,answer:document.querySelector(`input[name="bulkAns${i}"]:checked`).value,explanation:String(q.explanation||'').trim(),type:'mcq',course:course==='all'?'સામાન્ય':course,subject:finalSubject,createdAt:Date.now()};});
+    qs.forEach((q,i)=>{const key=database.ref('question_bank').push().key;updates[base+key]={question:q.question,options:q.options,answer:document.querySelector(`input[name="bulkAns${i}"]:checked`).value,explanation:String(q.explanation??''),type:'mcq',course:course==='all'?'સામાન્ય':course,subject:finalSubject,createdAt:Date.now()};});
     database.ref().update(updates).then(()=>{alert(`${qs.length} MCQ પ્રશ્નો સાચા જવાબ સાથે Question Bankમાં સેવ થઈ ગયા.`);document.getElementById('bulkMcqModal')?.remove();if(typeof renderQbQuestionsList==='function')renderQbQuestionsList();}).catch(e=>{console.error(e);alert('પ્રશ્નો સેવ કરવામાં સમસ્યા આવી. Internet/Firebase Rules ચકાસો.');});
   };
   window.openBulkMCQImport=openBulk;

@@ -2409,6 +2409,7 @@
                     <span>તમારો જવાબ: <b class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${userAns || 'આપેલ નથી'}</b></span>
                     <span>સાચો જવાબ: <b class="text-emerald-700">${q.answer || '-'}</b></span>
                 </div>
+                ${String(q.explanation || q.solution || q.explain || '').trim() ? `<div class="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200"><b class="text-blue-800">સમજૂતી:</b><div class="mt-1 whitespace-pre-wrap text-slate-700">${formatFractions(escapeHtmlForResult(String(q.explanation || q.solution || q.explain || '').trim()))}</div></div>` : ''}
 
             </div>
         `;

@@ -691,6 +691,7 @@
                     <div class="flex justify-between items-center gap-2 flex-wrap">
                     <button onclick="deleteSelectedQbQuestions()" class="bg-rose-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow hover:bg-rose-700">પસંદ કરેલા પ્રશ્નો ડિલીટ કરો</button>
                     <button onclick="openCustomPaperBuilder()" class="bg-amber-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow">🖨️ પસંદ કરેલા પ્રશ્નોથી પ્રશ્નપત્ર બનાવો</button>
+                    <button onclick="openQuestionBankTools()" class="bg-sky-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow">🧰 પ્રશ્ન બેંકના નવા સાધનો</button>
                     <button onclick="addSelectedQbQuestionsToTest()" class="bg-indigo-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs shadow hover:bg-indigo-700">પસંદ કરેલા વર્તમાન ટેસ્ટમાં ઉમેરો</button>
                     </div>
                 </div>
@@ -744,6 +745,10 @@
                     <select id="editCorrectAns" class="p-1 border rounded font-bold text-emerald-600">
                         <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
                     </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-xs text-slate-700 mb-1">સમજૂતી (ફકરા/ગણિત સહિત — લાંબી સમજૂતી પણ લખી શકો)</label>
+                    <textarea id="editQuestionExplanation" rows="5" class="w-full p-2 border rounded-lg text-xs" style="min-height:120px;white-space:pre-wrap;line-height:1.6" placeholder="સમજૂતી અહીં લખો અથવા સુધારો કરો..."></textarea>
                 </div>
                 <div class="flex justify-end gap-2 pt-2 border-t">
                     <button onclick="closeEditQuestionModal()" class="px-3 py-1 text-xs border rounded font-bold">રદ કરો</button>
@@ -1952,6 +1957,7 @@
                             <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
                         </div>
                         <div class="text-[10px] font-bold text-emerald-600">સાચો જવાબ: ${q.answer}</div>
+                        ${String(q.explanation||'').trim() ? `<div class="mt-2 p-2 rounded bg-blue-50 border border-blue-100 whitespace-pre-wrap" style="line-height:1.6"><b class="text-blue-800">સમજૂતી:</b> ${formatExplanationForDisplay(String(q.explanation))}</div>` : `<div class="mt-2 text-[10px] text-slate-400">સમજૂતી ઉમેરેલી નથી.</div>`}
                     </div>
                 `;
             });
@@ -1981,25 +1987,37 @@
         }
 
         function openEditQuestionModal(idx) {
-            if (currentTests[activeTestKey]?.meta?.status === 'active') {
-                alert("આ ટેસ્ટ એક્ટિવ હોવાથી સુધારી શકાશે નહીં!");
-                return;
+            const type = window._editingQuestionBankKey ? 'qb' : 'test';
+            let q = null;
+            if (type === 'qb') {
+                q = questionBankData[window._editingQuestionBankKey];
+                if (!q) { alert('પ્રશ્ન બેંકનો પ્રશ્ન મળ્યો નથી.'); return; }
+                document.getElementById('editItemType').value = 'qb';
+                document.getElementById('editItemId').value = window._editingQuestionBankKey;
+            } else {
+                if (currentTests[activeTestKey]?.meta?.status === 'active') {
+                    alert("આ ટેસ્ટ એક્ટિવ હોવાથી તેમાં ફેરફાર કરી શકાશે નહીં!"); return;
+                }
+                const test = currentTests[activeTestKey];
+                const questions = Array.isArray(test?.questions) ? test.questions : Object.values(test?.questions || {});
+                q = questions[idx];
+                if (!q) return;
+                document.getElementById('editItemType').value = 'test';
+                document.getElementById('editItemId').value = idx;
             }
-            const test = currentTests[activeTestKey];
-            const questions = Array.isArray(test.questions) ? test.questions : Object.values(test.questions);
-            const q = questions[idx];
-            if (!q) return;
-
-            document.getElementById('editItemType').value = 'test';
-            document.getElementById('editItemId').value = idx;
             document.getElementById('editQuestionText').value = q.question || '';
             document.getElementById('editOptA').value = q.options ? q.options[0] : '';
             document.getElementById('editOptB').value = q.options ? q.options[1] : '';
             document.getElementById('editOptC').value = q.options ? q.options[2] : '';
             document.getElementById('editOptD').value = q.options ? q.options[3] : '';
             document.getElementById('editCorrectAns').value = q.answer || 'A';
-
+            document.getElementById('editQuestionExplanation').value = q.explanation || q.solution || q.explain || '';
             document.getElementById('editQuestionModal').classList.remove('hidden');
+        }
+
+        function openEditQuestionBankItem(key) {
+            window._editingQuestionBankKey = key;
+            openEditQuestionModal(0);
         }
 
         function closeEditQuestionModal() {
@@ -2018,19 +2036,26 @@
                     document.getElementById('editOptC').value.trim(),
                     document.getElementById('editOptD').value.trim()
                 ],
-                answer: document.getElementById('editCorrectAns').value
+                answer: document.getElementById('editCorrectAns').value,
+                explanation: document.getElementById('editQuestionExplanation').value
             };
 
             if (type === 'test') {
                 let questions = Array.isArray(currentTests[activeTestKey].questions) ? [...currentTests[activeTestKey].questions] : Object.values(currentTests[activeTestKey].questions);
                 questions[itemId] = { ...questions[itemId], ...updatedQ };
-                database.ref(`tests/${activeTestKey}/questions`).set(questions, () => {
-                    closeEditQuestionModal();
-                });
+                database.ref(`tests/${activeTestKey}/questions`).set(questions).then(() => { currentTests[activeTestKey].questions = questions; closeEditQuestionModal(); renderAdminQuestionsList(); }).catch(e => alert('ટેસ્ટમાં ફેરફાર સેવ ન થયો: '+(e.message||e)));
             } else if (type === 'qb') {
-                database.ref(`question_bank/${itemId}`).update(updatedQ, () => {
-                    closeEditQuestionModal();
-                });
+                (async () => {
+                    try {
+                        const oldRecord = questionBankData[itemId] || {};
+                        // Save the previous version first so an edit can be undone later.
+                        await database.ref(`question_bank_history/${itemId}`).push({ ...oldRecord, _savedAt: Date.now(), _reason: 'before-edit' });
+                        await database.ref(`question_bank/${itemId}`).update({ ...updatedQ, updatedAt: Date.now() });
+                        questionBankData[itemId] = { ...oldRecord, ...updatedQ, updatedAt: Date.now() };
+                        window._editingQuestionBankKey = null; closeEditQuestionModal(); renderQbQuestionsList();
+                        alert('પ્રશ્ન અને સમજૂતી સફળતાપૂર્વક સુધારાયા. જૂની આવૃત્તિ ઇતિહાસમાં સાચવાઈ છે.');
+                    } catch(e) { alert('પ્રશ્ન/સમજૂતી સેવ ન થઈ: '+(e.message||e)); }
+                })();
             }
         }
 
@@ -2114,6 +2139,8 @@
                                 <div>(C) ${formatFractions(opts[2])}</div><div>(D) ${formatFractions(opts[3])}</div>
                             </div>
                             <div class="text-[10px] font-bold text-emerald-600">સાચો જવાબ: ${q.answer}</div>
+                            <button onclick="openEditQuestionBankItem('${q.qbKey}')" class="mt-2 bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded font-bold text-[10px]">✏️ પ્રશ્ન / જવાબ / સમજૂતી સુધારો</button>
+                            <button onclick="qbMarkReview('${q.qbKey}')" class="mt-2 ml-1 ${q.needsReview ? 'bg-amber-200 text-amber-900' : 'bg-slate-100 text-slate-700'} border px-3 py-1 rounded font-bold text-[10px]">${q.needsReview ? '📝 સુધારવાનું ચિહ્નિત' : '⚑ સુધારવા ચિહ્નિત કરો'}</button>
                         </div>
                     </div>
                 `;
@@ -2122,19 +2149,40 @@
         }
 
         async function moveSelectedQbQuestions() {
-            const boxes=[...document.querySelectorAll('.qb-select-checkbox:checked')];
-            if(!boxes.length){alert('મુવ કરવા માટે પ્રશ્ન અથવા ફકરો પસંદ કરો.');return;}
-            const course=document.getElementById('qbMoveCourse')?.value||'સામાન્ય';
-            const subject=document.getElementById('qbMoveSubject')?.value||'સામાન્ય';
-            const topic=(document.getElementById('qbMoveTopic')?.value||'').trim();
-            if(!confirm(`પસંદ કરેલા ${boxes.length} પ્રશ્ન/ફકરાને કોર્ષ: ${course}, વિષય: ${subject}, ટોપિક: ${topic||'(ખાલી)'} માં મુવ કરવાના છે?`)) return;
+            const boxes = [...document.querySelectorAll('.qb-select-checkbox:checked')];
+            if (!boxes.length) { alert('મુવ કરવા માટે પ્રશ્ન અથવા ફકરો પસંદ કરો.'); return; }
+            if (typeof database === 'undefined' || !database || typeof database.ref !== 'function') { alert('Firebase તૈયાર નથી. ઇન્ટરનેટ જોડાણ તપાસો અને પેજ ફરી લોડ કરીને પ્રયાસ કરો.'); return; }
+            const course = document.getElementById('qbMoveCourse')?.value || 'સામાન્ય';
+            const subject = document.getElementById('qbMoveSubject')?.value || 'સામાન્ય';
+            const topic = (document.getElementById('qbMoveTopic')?.value || '').trim();
+            const keys = [...new Set(boxes.map(cb => cb.getAttribute('data-qb-key')).filter(key => key && questionBankData[key]))];
+            if (!keys.length) { alert('પસંદ કરેલા પ્રશ્નો પ્રશ્ન બેંકના ડેટા સાથે મેળ ખાતા નથી. પ્રશ્ન બેંક ફરી ખોલીને પ્રયાસ કરો.'); return; }
+            if (!confirm(`પસંદ કરેલા ${keys.length} પ્રશ્ન/ફકરાને કોર્ષ: ${course}, વિષય: ${subject}, ટોપિક: ${topic || '(ખાલી)'} માં મુવ કરવાના છે?`)) return;
             try {
-                const updates={};
-                boxes.forEach(cb=>{const key=cb.getAttribute('data-qb-key'); if(key && questionBankData[key]) {updates[`question_bank/${key}/course`]=course;updates[`question_bank/${key}/subject`]=subject;updates[`question_bank/${key}/topic`]=topic;}});
+                const updates = {};
+                keys.forEach(key => {
+                    updates[`question_bank/${key}/course`] = course;
+                    updates[`question_bank/${key}/subject`] = subject;
+                    updates[`question_bank/${key}/topic`] = topic;
+                });
+                // Wait for Firebase's confirmed write before changing the local view.
                 await database.ref().update(updates);
-                alert(`✅ ${boxes.length} પ્રશ્ન/ફકરાનું કોર્ષ, વિષય અને ટોપિક અપડેટ થયું.`);
+                // Keep the in-memory copy in sync with the database.
+                keys.forEach(key => { questionBankData[key] = { ...questionBankData[key], course, subject, topic }; });
+                // Clear old filters so moved items remain visible after the move.
+                const courseFilter = document.getElementById('qbCourseFilter');
+                const subjectFilter = document.getElementById('qbSubjectFilter');
+                const topicFilter = document.getElementById('qbTopicFilter');
+                if (courseFilter) courseFilter.value = 'all';
+                if (subjectFilter) subjectFilter.innerHTML = '<option value="all">બધા વિષય</option>';
+                if (topicFilter) topicFilter.value = '';
                 renderQbQuestionsList();
-            } catch(e) { console.error('Question bank move error',e); alert('મુવ કરતી વખતે સમસ્યા આવી: '+(e?.message||e)); }
+                alert(`✅ ${keys.length} પ્રશ્ન/ફકરાનું કોર્ષ, વિષય અને ટોપિક Firebaseમાં સેવ થઈ ગયું. પ્રશ્નો હવે “બધા કોર્ષ” ફિલ્ટરમાં દેખાશે.`);
+            } catch (e) {
+                console.error('Question bank move error', e);
+                const msg = e?.message || String(e);
+                alert('મુવ સેવ થયું નથી. Firebase Rules/લખવાની પરવાનગી અથવા ઇન્ટરનેટ તપાસો. વિગત: ' + msg);
+            }
         }
 
         function deleteSelectedQbQuestions() {
@@ -2536,7 +2584,7 @@
                 const html = '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
                     escapeHtmlForResult(fileName) +
                     '</title><style>body{margin:0;background:#222;text-align:center;font-family:Arial,sans-serif}img{max-width:100%;height:auto;display:block;margin:auto}p{color:#fff;font-size:14px;padding:10px}</style></head><body>' +
-                    '<img src="' + dataUrl + '" alt="Result"><p>ઇમેજ પર લાંબું દબાવીને <b>Save image</b> અથવા <b>Copy image</b> પસંદ કરો.</p></body></html>';
+                    '<img src="' + dataUrl + '" alt="Result"><p>ઇમેજ પર લાંબું દબાવીને <b>Save image</b> અથવા <b>Copy image</b> પસંદ કરો.</p></body></html>'; 
                 const w = window.open();
                 if (w) {
                     w.document.open();
@@ -3321,6 +3369,53 @@ window.autoMathExplanation=autoMathExplanation;
 
 
 <!-- Removed global back-button visibility script to avoid interfering with teacher panel visibility. -->
+<script>
+/* NIRMALA STUDY ZON: Question bank maintenance tools (additive, existing flows preserved) */
+(function(){
+ const esc = v => (typeof escapeHtmlForResult==='function' ? escapeHtmlForResult(String(v??'')) : String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+ const norm = v => String(v||'').toLocaleLowerCase('gu').normalize('NFKC').replace(/\s+/g,' ').replace(/[.,!?;:()[\]{}"'`~\-–—]/g,'').trim();
+ window.openQuestionBankTools = function(){
+  let m=document.getElementById('qbToolsModal');
+  if(!m){m=document.createElement('div');m.id='qbToolsModal';m.className='fixed inset-0 z-[150] bg-slate-950/70 flex items-center justify-center p-3';m.innerHTML=`<div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto p-4"><div class="flex justify-between items-center border-b pb-3"><h2 class="text-lg font-black text-indigo-800">🧰 પ્રશ્ન બેંકના નવા સાધનો</h2><button onclick="document.getElementById('qbToolsModal').remove()" class="text-2xl font-bold">×</button></div><p class="text-xs text-slate-500 mt-2">કોઈ પણ મહત્વનો ફેરફાર કરતા પહેલાં બેકઅપ રાખવાની ભલામણ છે.</p><div class="grid sm:grid-cols-2 gap-2 mt-3">${[
+ ['dupes','🔎 ડુપ્લિકેટ પ્રશ્ન શોધો'],['review','📝 સુધારવાના બાકી પ્રશ્નો'],['generate','🎯 સ્માર્ટ ટેસ્ટ બનાવો'],['weak','📊 વિદ્યાર્થી પ્રગતિ / નબળા પરિણામો'],['export','⬇️ પ્રશ્ન બેંક CSV નિકાસ'],['import','⬆️ CSVમાંથી પ્રશ્નો આયાત'],['validate','✅ ટેસ્ટ પહેલાં પ્રશ્ન ચકાસણી'],['history','🕘 પસંદ કરેલા પ્રશ્નનો ઇતિહાસ']
+ ].map(([a,b])=>`<button onclick="qbToolAction('${a}')" class="text-left border rounded-xl p-3 font-bold text-sm hover:bg-indigo-50">${b}</button>`).join('')}</div><div id="qbToolsOutput" class="mt-4 text-sm"></div><input id="qbCsvFile" type="file" accept=".csv,text/csv" class="hidden" onchange="qbImportCsv(this)"></div>`;document.body.appendChild(m);}
+ };
+ window.qbToolAction = async function(action){
+  const out=document.getElementById('qbToolsOutput'); if(!out)return;
+  const bank=Object.entries(questionBankData||{}).map(([key,q])=>({key,...q}));
+  if(action==='dupes'){
+   const groups={};bank.forEach(q=>{let n=norm(q.question||q.passage||q.text);if(n){(groups[n]||(groups[n]=[])).push(q)}});
+   const dup=Object.values(groups).filter(a=>a.length>1);
+   out.innerHTML=dup.length?`<h3 class="font-bold mb-2">મળેલા સંભવિત ડુપ્લિકેટ જૂથો: ${dup.length}</h3>`+dup.map(g=>`<div class="border rounded-lg p-2 mb-2">${g.map(q=>`<div class="text-xs py-1">• ${esc(q.question||q.passage||q.text||'(પ્રશ્નનું લખાણ નથી)')} <span class="text-slate-500">[${esc(q.course||'કોર્ષ નથી')} / ${esc(q.subject||'વિષય નથી')}]</span></div>`).join('')}<div class="text-[10px] text-amber-700">કાઢતા પહેલાં બંને પ્રશ્નો સરખાવો; આ સૂચિ ફક્ત સમાન લખાણ શોધે છે.</div></div>`).join(''):'<p class="text-emerald-700 font-bold">એકસરખા લખાણવાળા પ્રશ્નો મળ્યા નથી.</p>';
+  } else if(action==='review'){
+   const flagged=bank.filter(q=>q.needsReview===true || !String(q.question||q.passage||q.text||'').trim() || (!q.explanation&&!q.solution&&!q.explain));
+   out.innerHTML=`<h3 class="font-bold mb-2">ચકાસવા જેવા પ્રશ્નો: ${flagged.length}</h3>`+(flagged.length?flagged.map(q=>`<div class="border rounded p-2 mb-2 text-xs"><b>${esc(q.question||q.passage||q.text||'પ્રશ્ન ખાલી છે')}</b><div class="text-amber-700">${q.needsReview?'શિક્ષકે સુધારવા ચિહ્નિત કર્યો':'સમજૂતી ખાલી હોઈ શકે છે અથવા પ્રશ્નનું લખાણ ખાલી છે'}</div><button class="mt-1 px-2 py-1 rounded bg-indigo-600 text-white" onclick="openEditQuestionBankItem('${q.key}')">સુધારો</button><button class="mt-1 ml-1 px-2 py-1 rounded bg-emerald-700 text-white" onclick="qbResolveReview('${q.key}')">ચકાસ્યું</button></div>`).join(''):'<p class="text-emerald-700">કોઈ ચિહ્નિત/ખાલી સમજૂતીવાળા પ્રશ્નો મળ્યા નથી.</p>');
+  } else if(action==='generate'){
+   const courses=[...new Set(bank.map(q=>q.course).filter(Boolean))];const subjects=[...new Set(bank.map(q=>q.subject).filter(Boolean))];
+   out.innerHTML=`<h3 class="font-bold mb-2">સ્માર્ટ ટેસ્ટ બનાવો</h3><div class="grid sm:grid-cols-2 gap-2"><label>કોર્ષ<select id="qbgCourse" class="w-full border rounded p-2"><option value="all">બધા કોર્ષ</option>${courses.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>વિષય<select id="qbgSubject" class="w-full border rounded p-2"><option value="all">બધા વિષય</option>${subjects.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>ટોપિક (વૈકલ્પિક)<input id="qbgTopic" class="w-full border rounded p-2" placeholder="ટોપિક"></label><label>પ્રશ્નોની સંખ્યા<input id="qbgCount" type="number" min="1" max="500" value="20" class="w-full border rounded p-2"></label></div><button onclick="qbGenerateTest()" class="mt-3 px-4 py-2 rounded bg-indigo-700 text-white font-bold">પસંદગી પ્રમાણે ટેસ્ટ બનાવો</button><p class="text-xs text-slate-500 mt-2">આ ટેસ્ટ પસંદ કરેલી હાલની ટેસ્ટમાં ઉમેરાશે. પહેલા બેકઅપ રાખો.</p>`;
+  } else if(action==='weak'){
+   const subs=Array.isArray(allSubmissionsGlobal)?allSubmissionsGlobal:Object.values(allSubmissionsGlobal||{});const tests=Object.values(currentTests||{});
+   out.innerHTML=`<h3 class="font-bold">વિદ્યાર્થી પ્રગતિનો સારાંશ</h3><div class="grid grid-cols-3 gap-2 mt-2"><div class="border rounded p-2"><b>${subs.length}</b><div class="text-xs">સબમિશન રેકોર્ડ</div></div><div class="border rounded p-2"><b>${tests.length}</b><div class="text-xs">ટેસ્ટ</div></div><div class="border rounded p-2"><b>${bank.length}</b><div class="text-xs">પ્રશ્ન બેંક</div></div></div><p class="text-xs text-amber-700 mt-2">વિષયવાર નબળાઈનું ચોક્કસ વિશ્લેષણ કરવા સબમિશનમાં વિદ્યાર્થીના દરેક પ્રશ્નના જવાબ/પ્રશ્ન ID સાચવાયેલા હોવા જરૂરી છે. હાલ આ ભાગમાં વિશ્વસનીય રીતે ઉપલબ્ધ કુલ રેકોર્ડ જ બતાવ્યા છે.</p>`;
+  } else if(action==='export'){
+   const rows=[['id','question','optionA','optionB','optionC','optionD','answer','explanation','course','subject','topic','type','needsReview']];bank.forEach(q=>rows.push([q.key,q.question||q.passage||q.text||'',...(Array.isArray(q.options)?[0,1,2,3].map(i=>q.options[i]||''):['','','','']),q.answer||'',q.explanation||q.solution||q.explain||'',q.course||'',q.subject||'',q.topic||'',q.type||'mcq',q.needsReview?'true':'false']));
+   const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='NIRMALA_STUDY_ZON_question_bank.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);out.innerHTML='<p class="text-emerald-700 font-bold">CSV ફાઇલ ડાઉનલોડ શરૂ થઈ છે.</p>';
+  } else if(action==='import'){
+   out.innerHTML='<p class="mb-2">CSVમાં headers રાખો: question, optionA, optionB, optionC, optionD, answer, explanation, course, subject, topic, type.</p><button onclick="document.getElementById(\'qbCsvFile\').click()" class="px-4 py-2 bg-indigo-700 text-white rounded font-bold">CSV ફાઇલ પસંદ કરો</button><p class="text-xs text-amber-700 mt-2">આયાત કરેલા પ્રશ્નો નવા રેકોર્ડ તરીકે ઉમેરાશે; જૂના પ્રશ્નો overwrite નહીં થાય.</p>';
+  } else if(action==='validate'){
+   const key=activeTestKey;const t=key&&currentTests[key];const qs=t?(Array.isArray(t.questions)?t.questions:Object.values(t.questions||{})):[];if(!t){out.innerHTML='<p class="text-amber-700">પહેલા શિક્ષક પેનલમાં ટેસ્ટ પસંદ કરો.</p>';return;}
+   const bad=[];qs.forEach((q,i)=>{const issues=[];if(!String(q.question||q.text||'').trim())issues.push('પ્રશ્ન ખાલી');if(!Array.isArray(q.options)||q.options.length<4||q.options.slice(0,4).some(x=>!String(x??'').trim()))issues.push('વિકલ્પ અધૂરા');if(!['A','B','C','D'].includes(String(q.answer||'').toUpperCase()))issues.push('સાચો જવાબ પસંદ નથી');if(!String(q.explanation||q.solution||q.explain||'').trim())issues.push('સમજૂતી ખાલી');if(issues.length)bad.push({i,q,issues});});
+   out.innerHTML=`<h3 class="font-bold">${esc(t.meta?.title||'પસંદ કરેલી ટેસ્ટ')} — કુલ ${qs.length} પ્રશ્નો</h3><p class="font-bold ${bad.length?'text-amber-700':'text-emerald-700'}">ચકાસવા જેવા પ્રશ્નો: ${bad.length}</p>`+bad.map(x=>`<div class="border rounded p-2 mb-2 text-xs"><b>પ્રશ્ન ${x.i+1}:</b> ${esc(x.q.question||x.q.text||'પ્રશ્ન ખાલી')}<div class="text-rose-700">${esc(x.issues.join(' • '))}</div><button class="mt-1 px-2 py-1 bg-indigo-600 text-white rounded" onclick="openEditQuestionModal(${x.i})">પ્રશ્ન સુધારો</button></div>`).join('');
+  } else if(action==='history'){
+   const checked=[...document.querySelectorAll('.qb-select-checkbox:checked')];const key=checked[0]?.getAttribute('data-qb-key');if(!key){out.innerHTML='<p class="text-amber-700">પ્રશ્ન બેંકમાં પહેલાં એક પ્રશ્ન પસંદ કરો, પછી આ સાધન ખોલો.</p>';return;}const snap=await database.ref(`question_bank_history/${key}`).once('value');const hist=snap.val()||{};const entries=Object.entries(hist).sort((a,b)=>(b[1]._savedAt||0)-(a[1]._savedAt||0));out.innerHTML=`<h3 class="font-bold mb-2">જૂની આવૃત્તિઓ: ${entries.length}</h3>`+entries.map(([hid,h])=>`<div class="border rounded p-2 mb-2 text-xs"><b>${esc(new Date(h._savedAt||0).toLocaleString())}</b><p>${esc(h.question||'')}</p><p class="whitespace-pre-wrap">${esc(h.explanation||'')}</p><button onclick="qbRestoreHistory('${key}','${hid}')" class="px-2 py-1 rounded bg-amber-600 text-white">આ આવૃત્તિ પાછી લાવો</button></div>`).join('')||'<p>આ પ્રશ્નની જૂની આવૃત્તિ નથી. ઇતિહાસ ફક્ત આ અપડેટ પછી થયેલા ફેરફારો માટે બને છે.</p>';
+  }
+ };
+ window.qbMarkReview=async function(key){try{const val=!(questionBankData[key]?.needsReview===true);await database.ref(`question_bank/${key}`).update({needsReview:val,reviewMarkedAt:Date.now()});if(questionBankData[key])questionBankData[key]={...questionBankData[key],needsReview:val};renderQbQuestionsList();}catch(e){alert('ચિહ્નિત કરી શકાયું નથી: '+(e.message||e))}};
+ window.qbResolveReview=async function(key){try{await database.ref(`question_bank/${key}`).update({needsReview:false,reviewedAt:Date.now()});if(questionBankData[key])questionBankData[key]={...questionBankData[key],needsReview:false};qbToolAction('review')}catch(e){alert('સેવ ન થયું: '+(e.message||e))}};
+ window.qbGenerateTest=async function(){try{if(!activeTestKey||!currentTests[activeTestKey]){alert('પહેલા ટેસ્ટ પસંદ કરો.');return;}const course=document.getElementById('qbgCourse').value,subject=document.getElementById('qbgSubject').value,topic=norm(document.getElementById('qbgTopic').value),count=Math.max(1,Math.min(500,Number(document.getElementById('qbgCount').value)||20));let arr=Object.values(questionBankData||{}).filter(q=>(q.type||'mcq')==='mcq'&&q.question&&Array.isArray(q.options)&&q.options.length>=4&&(!q.answer||['A','B','C','D'].includes(String(q.answer).toUpperCase()))&&(course==='all'||q.course===course)&&(subject==='all'||q.subject===subject)&&(!topic||norm(q.topic).includes(topic)));for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}arr=arr.slice(0,count);if(!arr.length){alert('આ પસંદગીમાં પ્રશ્નો મળ્યા નથી.');return;}const test=currentTests[activeTestKey];if(test.meta?.status==='active'){alert('એક્ટિવ ટેસ્ટમાં પ્રશ્નો ઉમેરાઈ શકતા નથી.');return;}const qs=Array.isArray(test.questions)?[...test.questions]:Object.values(test.questions||{});qs.push(...arr.map(q=>({question:q.question,options:q.options,answer:q.answer||'A',explanation:q.explanation||q.solution||q.explain||'',course:q.course||course,subject:q.subject||subject,topic:q.topic||'',type:q.type||'mcq'})));await database.ref(`tests/${activeTestKey}/questions`).set(qs);currentTests[activeTestKey].questions=qs;alert(`${arr.length} પ્રશ્નો પસંદ કરેલી ટેસ્ટમાં ઉમેરાયા.`);if(typeof renderAdminQuestionsList==='function')renderAdminQuestionsList()}catch(e){alert('ટેસ્ટ બનાવવામાં ભૂલ: '+(e.message||e))}};
+ window.qbImportCsv=async function(input){const file=input.files?.[0];if(!file)return;try{const text=await file.text();const parseCSV=str=>{let rows=[],row=[],cell='',q=false;for(let i=0;i<str.length;i++){const c=str[i];if(c==='"'&&q&&str[i+1]==='"'){cell+='"';i++}else if(c==='"'){q=!q}else if(c===','&&!q){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&str[i+1]==='\n')i++;row.push(cell);if(row.some(v=>v.trim()))rows.push(row);row=[];cell=''}else cell+=c}row.push(cell);if(row.some(v=>v.trim()))rows.push(row);return rows};const rows=parseCSV(text);if(rows.length<2)throw new Error('CSVમાં પ્રશ્નો મળ્યા નથી');const heads=rows.shift().map(h=>h.trim().toLowerCase());let added=0;for(const r of rows){const obj={};heads.forEach((h,i)=>obj[h]=r[i]||'');const question=obj.question||obj.passage||obj.text;if(!question)continue;const key=database.ref('question_bank').push().key;const q={question,options:[obj.optiona||obj.a||'',obj.optionb||obj.b||'',obj.optionc||obj.c||'',obj.optiond||obj.d||''],answer:String(obj.answer||'A').toUpperCase(),explanation:obj.explanation||'',course:obj.course||'સામાન્ય',subject:obj.subject||'સામાન્ય',topic:obj.topic||'',type:obj.type||'mcq',needsReview:String(obj.needsreview||'').toLowerCase()==='true',createdAt:Date.now()};await database.ref(`question_bank/${key}`).set(q);added++}alert(`${added} પ્રશ્નો CSVમાંથી ઉમેરાયા.`);input.value='';if(typeof renderQbQuestionsList==='function')renderQbQuestionsList();}catch(e){alert('CSV આયાત ન થઈ: '+(e.message||e))}};
+ window.qbRestoreHistory=async function(key,hid){if(!confirm('જૂની આવૃત્તિ વર્તમાન પ્રશ્ન ઉપર મૂકવી છે? વર્તમાન આવૃત્તિ પહેલાં ઇતિહાસમાં સાચવાશે.'))return;try{const [oldSnap,hSnap]=await Promise.all([database.ref(`question_bank/${key}`).once('value'),database.ref(`question_bank_history/${key}/${hid}`).once('value')]);const old=oldSnap.val(),hist=hSnap.val();if(!hist)throw new Error('જૂની આવૃત્તિ મળી નથી');await database.ref(`question_bank_history/${key}`).push({...old,_savedAt:Date.now(),_reason:'before-restore'});const restore={...hist};delete restore._savedAt;delete restore._reason;await database.ref(`question_bank/${key}`).update(restore);questionBankData[key]={...old,...restore};alert('જૂની આવૃત્તિ પાછી લાવવામાં આવી.');if(typeof renderQbQuestionsList==='function')renderQbQuestionsList();}catch(e){alert('જૂની આવૃત્તિ પાછી ન આવી: '+(e.message||e))}};
+})();
+</script>
 </body>
 
 <!-- NIRMALA STUDY ZONE: local test cache and offline result queue -->

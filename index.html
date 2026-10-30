@@ -3114,8 +3114,8 @@ function answer(i,l){currentStudentQuizData.answers[i]=l;save();['A','B','C','D'
 let locking=false;function submit(){if(locking||!currentStudentQuizData)return;locking=true;if(studentTimerInterval)clearInterval(studentTimerInterval);let q=currentStudentQuizData.questions,c=0;q.forEach((x,i)=>{if(currentStudentQuizData.answers[i]===x.answer)c++});let total=q.length,p=total?Math.round(c/total*100):0,s={testKey:currentStudentQuizData.testKey,testTitle:currentStudentQuizData.meta?.title||'ટેસ્ટ',studentName:currentStudentQuizData.studentName,std:currentStudentQuizData.std,correctCount:c,totalQuestions:total,percentage:p,timestamp:Date.now(),answers:currentStudentQuizData.answers,questions:q,course:currentStudentQuizData.meta?.course||'',subject:currentStudentQuizData.meta?.subject||'',durationSeconds:Math.floor((Date.now()-currentStudentQuizData.startedAt)/1000),grade:E.grade(p)};database.ref('submissions').push(s);localStorage.removeItem(E.key(s.studentName,s.testKey));let a=JSON.parse(localStorage.getItem('attempts_'+s.testKey)||'[]');a.push({score:c,total,percentage:p,date:new Date().toISOString(),studentName:s.studentName,std:s.std,testTitle:s.testTitle,answers:s.answers,questions:s.questions,course:s.course,subject:s.subject});localStorage.setItem('attempts_'+s.testKey,JSON.stringify(a));showResultsScreen(s);setTimeout(()=>locking=false,1200)}
 window.startStudentQuiz=start;window.selectStudentAnswer=answer;window.submitStudentQuiz=submit;
 let oldTimer=window.startStudentTimer;window.startStudentTimer=function(d){studentTimeLeft=d;updateTimerDisplay();if(studentTimerInterval)clearInterval(studentTimerInterval);studentTimerInterval=setInterval(()=>{studentTimeLeft--;updateTimerDisplay();save();if(studentTimeLeft===600)alert('⏰ 10 મિનિટ બાકી.');if(studentTimeLeft===300)alert('⏰ 5 મિનિટ બાકી.');if(studentTimeLeft<=0){clearInterval(studentTimerInterval);alert('સમય પૂર્ણ. ટેસ્ટ સબમિટ થઈ રહી છે.');submit()}},1000)};
-let oldRender=window.renderTestBoxes;window.renderTestBoxes=function(){try{oldRender&&oldRender()}catch(e){}dash();stats()};let oldLoad=window.loadAdminTestData;window.loadAdminTestData=function(){let r=oldLoad?.apply(this,arguments);setTimeout(stats,100);return r};function renderLockedAttemptAnswerSheet(sub){
- const box=document.getElementById('lockedAttemptAnswerSheet'); if(!box)return;
+let oldRender=window.renderTestBoxes;window.renderTestBoxes=function(){try{oldRender&&oldRender()}catch(e){}dash();stats()};let oldLoad=window.loadAdminTestData;window.loadAdminTestData=function(){let r=oldLoad?.apply(this,arguments);setTimeout(stats,100);return r};function renderLockedAttemptAnswerSheet(sub,targetBox){
+ const box=targetBox||document.getElementById('lockedAttemptAnswerSheet'); if(!box)return;
  if(!sub||!Array.isArray(sub.questions)){box.innerHTML='<div class="text-xs text-slate-500 mt-2">આ પ્રયાસની ઉત્તરવહી આ ઉપકરણમાં ઉપલબ્ધ નથી.</div>';return;}
  let out='<div class="border-t pt-3 mt-3"><div class="font-bold text-indigo-700 text-sm mb-2">📄 ઉત્તરવહી (જવાબ સાથે)</div>';
  sub.questions.forEach((q,i)=>{
@@ -3956,15 +3956,26 @@ function normalizeAnswerForGrading(value, question){
         const notice=box?.querySelector('p');
         if(attempts.length>0){
             box?.classList.remove('hidden');
-            const last=attempts[attempts.length-1];
-            set('lastAttemptScoreText',`છેલ્લી ટેસ્ટના માર્ક્સ: ${last.score} / ${last.total} (${last.percentage}%)`);
+            const shownAttempts=attempts.slice(0,max);
+            const scoreLines=shownAttempts.map((a,i)=>`પ્રયાસ ${i+1}: ${a.score} / ${a.total} (${a.percentage}%)`).join('  |  ');
+            set('lastAttemptScoreText',scoreLines);
             if(heading) heading.textContent=attempts.length>=max
                 ? 'આ મોબાઇલમાંથી આ ટેસ્ટ બે વખત અપાઈ ગઈ છે.'
                 : 'તમે આ ટેસ્ટ એક વખત આપી છે. બીજી તક બાકી છે.';
             if(notice) notice.textContent=attempts.length>=max
-                ? 'હવે નવી ટેસ્ટ આપી શકાશે નહીં. તમારી ઉત્તરવહી અને સમજૂતી નીચે જુઓ.'
-                : 'તમારું પરિણામ અને સમજૂતી નીચે જોઈ શકો છો. બીજી તક લેવા માટે ઉપર ફોર્મ ભરો.';
-            if(typeof window.renderLockedAttemptAnswerSheet==='function') window.renderLockedAttemptAnswerSheet(last);
+                ? 'હવે નવી ટેસ્ટ આપી શકાશે નહીં. બંને પ્રયાસનાં માર્ક્સ, ઉત્તરવહી અને સમજૂતી નીચે જુઓ.'
+                : 'તમારા પ્રથમ પ્રયાસનાં માર્ક્સ, ઉત્તરવહી અને સમજૂતી નીચે જોઈ શકો છો. બીજી તક લેવા માટે ઉપર ફોર્મ ભરો.';
+            if(sheet){
+                sheet.innerHTML='';
+                shownAttempts.forEach((attempt,i)=>{
+                    const section=document.createElement('section');
+                    section.className='mt-4 rounded-xl border border-indigo-200 p-3 bg-white';
+                    const date=attempt.date?new Date(attempt.date).toLocaleString('gu-IN'):(attempt.timestamp?new Date(attempt.timestamp).toLocaleString('gu-IN'):'');
+                    section.innerHTML=`<div class="flex flex-wrap items-center justify-between gap-2 mb-2"><h4 class="font-extrabold text-indigo-800">📄 પ્રયાસ ${i+1} ની ઉત્તરવહી</h4><span class="font-bold text-indigo-700">${attempt.score} / ${attempt.total} (${attempt.percentage}%)</span></div><div class="text-xs text-slate-500 mb-2">${date}</div><div class="attempt-answer-sheet-body"></div>`;
+                    sheet.appendChild(section);
+                    if(typeof window.renderLockedAttemptAnswerSheet==='function') window.renderLockedAttemptAnswerSheet(attempt,section.querySelector('.attempt-answer-sheet-body'));
+                });
+            }
         }else{
             box?.classList.add('hidden');
             if(sheet) sheet.innerHTML='';

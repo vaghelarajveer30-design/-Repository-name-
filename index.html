@@ -1227,6 +1227,16 @@
             return Array.from(document.querySelectorAll('.test-number-checkbox:checked')).map(cb => cb.value);
         }
 
+        // એક સમયે માત્ર એક ટેસ્ટ પસંદ રહે; એ જ ટેસ્ટના માર્ક્સ બતાવો.
+        function selectSingleTestNumber(clickedCheckbox) {
+            document.querySelectorAll('.test-number-checkbox').forEach(cb => {
+                if (cb !== clickedCheckbox) cb.checked = false;
+            });
+            renderTestNumberSelector();
+            renderTestBoxes();
+            if (typeof renderSelectedTestResults === 'function') renderSelectedTestResults();
+        }
+
         function renderTestNumberSelector() {
             const box = document.getElementById('testNumberSelector');
             if (!box) return;
@@ -1239,7 +1249,7 @@
             const selected = new Set(getSelectedTestNumbers());
             box.innerHTML = entries.map(key => `
                 <label class="test-number-chip">
-                    <input type="checkbox" class="test-number-checkbox" value="${key}" ${selected.has(key) ? 'checked' : ''} onchange="filterTestBoxes(activeBoxFilter); renderSelectedTestResults()" />
+                    <input type="checkbox" class="test-number-checkbox" value="${key}" ${selected.has(key) ? 'checked' : ''} onchange="selectSingleTestNumber(this)" />
                     <span>ટેસ્ટ ${map[key]}</span>
                 </label>
             `).join('');
@@ -1249,6 +1259,8 @@
             document.querySelectorAll('.test-number-checkbox').forEach(cb => cb.checked = false);
             renderTestNumberSelector();
             renderTestBoxes();
+            const panel = document.getElementById('selectedTestResultsPanel');
+            if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
         }
 
         function filterTestBoxes(filter) {
@@ -1284,7 +1296,10 @@
                 if (selectedSubjectFilter !== 'all' && meta.subject !== selectedSubjectFilter) return;
 
                 const isSelected = key === activeTestKey;
-                const testSubs = allSubmissionsGlobal.filter(s => s.testKey === key || s.testTitle === meta.title);
+                const testSubs = allSubmissionsGlobal.filter(s => {
+                    if (s.testKey) return String(s.testKey) === String(key);
+                    return !!(s.testTitle && meta.title && s.testTitle === meta.title);
+                });
 
                 let studentsListHtml = '';
                 if (testSubs.length > 0) {
@@ -3322,14 +3337,17 @@ window.autoMathExplanation=autoMathExplanation;
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   window.renderSelectedTestResults = function(){
     const panel=document.getElementById('selectedTestResultsPanel'); if(!panel) return;
-    const keys=[...document.querySelectorAll('.test-number-checkbox:checked')].map(x=>x.value);
+    const keys=[...document.querySelectorAll('.test-number-checkbox:checked')].map(x=>x.value).slice(0,1);
     if(!keys.length){panel.classList.add('hidden');panel.innerHTML='';return;}
     const map=typeof getTestNumberMap==='function'?getTestNumberMap():{};
     let html=''; let totalSubmissions=0;
     keys.forEach(key=>{
       const test=(currentTests||{})[key]; if(!test) return;
       const meta=test.meta||{};
-      const subs=(allSubmissionsGlobal||[]).filter(s=>s.testKey===key || (s.testTitle && s.testTitle===meta.title));
+      const subs=(allSubmissionsGlobal||[]).filter(s=>{
+        if (s.testKey) return String(s.testKey) === String(key);
+        return !!(s.testTitle && meta.title && s.testTitle === meta.title);
+      });
       totalSubmissions+=subs.length;
       html += `<section class="border rounded-lg p-3 mb-3"><div class="flex flex-wrap justify-between gap-2 items-center"><b class="text-indigo-800">ટેસ્ટ ${esc(map[key]||meta.testNumber||key)} — ${esc(meta.title||key)}</b><span class="bg-indigo-100 text-indigo-800 rounded-full px-3 py-1 text-xs font-bold">વિદ્યાર્થીઓ: ${subs.length}</span></div>`;
       if(!subs.length){html+='<p class="text-sm text-slate-500 mt-2">આ ટેસ્ટ હજી કોઈ વિદ્યાર્થીએ આપી નથી.</p></section>';return;}

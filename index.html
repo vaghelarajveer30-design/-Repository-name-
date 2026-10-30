@@ -3104,7 +3104,7 @@ let oldRender=window.renderTestBoxes;window.renderTestBoxes=function(){try{oldRe
  if(!sub||!Array.isArray(sub.questions)){box.innerHTML='<div class="text-xs text-slate-500 mt-2">આ પ્રયાસની ઉત્તરવહી આ ઉપકરણમાં ઉપલબ્ધ નથી.</div>';return;}
  let out='<div class="border-t pt-3 mt-3"><div class="font-bold text-indigo-700 text-sm mb-2">📄 ઉત્તરવહી (જવાબ સાથે)</div>';
  sub.questions.forEach((q,i)=>{
-   const ua=sub.answers?sub.answers[i]:''; const ok=ua===q.answer; const opts=q.options||['A','B','C','D'];
+   const ua=sub.answers?sub.answers[i]:''; const ok=normalizeAnswerForGrading(ua,q)===normalizeAnswerForGrading(q.answer,q); const opts=q.options||['A','B','C','D'];
    out+=`<div class="result-review-card ${ok?'result-correct':'result-wrong'}"><div class="result-q-head"><div class="result-q-number">${i+1}</div><div class="result-q-text">${formatFractions(q.question||'')}</div><div class="${ok?'result-ok':'result-bad'}">${ok?'✓ સાચો જવાબ':'✕ ખોટો જવાબ'}</div></div><div class="result-options"><div>(A) ${formatFractions(opts[0]||'')}</div><div>(B) ${formatFractions(opts[1]||'')}</div><div>(C) ${formatFractions(opts[2]||'')}</div><div>(D) ${formatFractions(opts[3]||'')}</div></div><div class="result-answer-row"><span>તમારો જવાબ: <b class="${ok?'text-emerald-600':'text-rose-600'}">${ua||'આપેલ નથી'}</b></span><span>સાચો જવાબ: <b class="text-emerald-700">${q.answer||'-'}</b></span></div>${q.explanation?`<div class="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200"><b class="text-blue-800">સમજૂતી:</b><div class="mt-1 text-slate-700" style="white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7">${formatExplanationForDisplay(String(q.explanation))}</div></div>`:getAutoMathExplanationHtml(q,ua,q.answer)}</div>`;
  });
  box.innerHTML=out+'</div>';
@@ -3671,6 +3671,19 @@ function normalizeAnswerForGrading(value, question){
         localStorage.setItem(studentKey(name,testKey), JSON.stringify(attempts));
     }
 
+    // Per-device limit: maximum two submissions for each test, regardless of typed student name.
+    function deviceAttemptKey(testKey){ return 'nirmala_device_attempts_v1_' + encodeURIComponent(String(testKey)); }
+    function getDeviceAttempts(testKey){
+        try { const v=JSON.parse(localStorage.getItem(deviceAttemptKey(testKey))||'[]'); return Array.isArray(v)?v:[]; }
+        catch(e){ return []; }
+    }
+    function saveDeviceAttempt(testKey, attempt){
+        const list=getDeviceAttempts(testKey);
+        list.push(attempt);
+        localStorage.setItem(deviceAttemptKey(testKey),JSON.stringify(list));
+        return list;
+    }
+
     function clearStudentResume(name, testKey){
         try { localStorage.removeItem(resumeKey(name,testKey)); } catch(e) {}
         // Also remove the legacy resume key used by the previous build.
@@ -3740,10 +3753,12 @@ function normalizeAnswerForGrading(value, question){
         if(m.startAt && now<m.startAt){ alert('ટેસ્ટ હજુ શરૂ થઈ નથી.'); return false; }
         if(m.endAt && now>m.endAt){ alert('ટેસ્ટનો સમયગાળો પૂર્ણ થયો છે.'); return false; }
 
-        const max=Math.max(1,Number(m.maxAttempts||2));
-        const attempts=getAttempts(name,k);
+        // Maximum two attempts per phone and test; settings cannot raise this limit.
+        const max=2;
+        const attempts=getDeviceAttempts(k);
         if(attempts.length>=max){
             updateRegistrationFixed();
+            alert('આ મોબાઇલમાંથી આ ટેસ્ટ બે વખત અપાઈ ગઈ છે. હવે નવી ટેસ્ટ આપી શકાશે નહીં. નીચે માર્ક્સ અને સમજૂતી સાથેની ઉત્તરવહી જુઓ.');
             return false;
         }
 
@@ -3851,14 +3866,17 @@ function normalizeAnswerForGrading(value, question){
         // Firebase gets EVERY student's submission independently.
         if (typeof window.saveSubmissionWithOfflineQueue==='function') window.saveSubmissionWithOfflineQueue(submissionObj); else database.ref('submissions').push(submissionObj).catch(e=>console.error('Submission save error:',e));
 
-        // Attempts are per STUDENT + TEST, not per device.
-        const attempts=getAttempts(d.studentName,d.testKey);
-        attempts.push({
+        // Save student history and this phone's attempt count for the selected test.
+        const attemptRecord={
             score:correct,total:total,percentage:percentage,date:new Date().toISOString(),
             studentName:d.studentName,std:d.std,testTitle:submissionObj.testTitle,
-            answers:answers,questions:questions,course:submissionObj.course,subject:submissionObj.subject
-        });
-        saveAttempts(d.studentName,d.testKey,attempts);
+            answers:answers,questions:questions,course:submissionObj.course,subject:submissionObj.subject,
+            testKey:d.testKey
+        };
+        const studentAttempts=getAttempts(d.studentName,d.testKey);
+        studentAttempts.push(attemptRecord);
+        saveAttempts(d.studentName,d.testKey,studentAttempts);
+        saveDeviceAttempt(d.testKey,attemptRecord);
         clearStudentResume(d.studentName,d.testKey);
 
         // Keep the latest result in the same global result flow.
@@ -3908,24 +3926,33 @@ function normalizeAnswerForGrading(value, question){
         set('dispTotalMarks',m.totalMarks||100);
         set('dispTimeLimit',(m.timeLimit||60)+' મિનિટ');
 
-        // IMPORTANT: do not count the whole device. Count the typed student's attempts.
-        const name=(document.getElementById('studentName')?.value||'').trim();
-        const attempts=name?getAttempts(name,k):[];
-        const max=Math.max(1,Number(m.maxAttempts||2));
-        set('dispDeviceAttempts',attempts.length);
+        // Count attempts for this test on this phone, irrespective of the name typed.
+        const attempts=getDeviceAttempts(k);
+        const max=2;
+        set('dispDeviceAttempts',Math.min(attempts.length,max));
 
         const form=document.getElementById('studentRegForm');
         const box=document.getElementById('maxAttemptsReachedBox');
         const sheet=document.getElementById('lockedAttemptAnswerSheet');
-        if(attempts.length>=max){
-            form?.classList.add('hidden'); box?.classList.remove('hidden');
+        const heading=box?.querySelector('h3');
+        const notice=box?.querySelector('p');
+        if(attempts.length>0){
+            box?.classList.remove('hidden');
             const last=attempts[attempts.length-1];
-            set('lastAttemptScoreText',`મેળવેલ માર્ક્સ: ${last.score} / ${last.total} (${last.percentage}%)`);
+            set('lastAttemptScoreText',`છેલ્લી ટેસ્ટના માર્ક્સ: ${last.score} / ${last.total} (${last.percentage}%)`);
+            if(heading) heading.textContent=attempts.length>=max
+                ? 'આ મોબાઇલમાંથી આ ટેસ્ટ બે વખત અપાઈ ગઈ છે.'
+                : 'તમે આ ટેસ્ટ એક વખત આપી છે. બીજી તક બાકી છે.';
+            if(notice) notice.textContent=attempts.length>=max
+                ? 'હવે નવી ટેસ્ટ આપી શકાશે નહીં. તમારી ઉત્તરવહી અને સમજૂતી નીચે જુઓ.'
+                : 'તમારું પરિણામ અને સમજૂતી નીચે જોઈ શકો છો. બીજી તક લેવા માટે ઉપર ફોર્મ ભરો.';
             if(typeof window.renderLockedAttemptAnswerSheet==='function') window.renderLockedAttemptAnswerSheet(last);
         }else{
-            form?.classList.remove('hidden'); box?.classList.add('hidden');
+            box?.classList.add('hidden');
             if(sheet) sheet.innerHTML='';
         }
+        if(attempts.length>=max) form?.classList.add('hidden');
+        else form?.classList.remove('hidden');
     }
 
     // Expose final versions used by inline HTML handlers.
@@ -3941,6 +3968,11 @@ function normalizeAnswerForGrading(value, question){
     });
     document.addEventListener('change',function(e){
         if(e.target?.id==='studentStd') updateRegistrationFixed();
+    });
+
+    // Show the latest saved attempt and answer sheet as soon as the shared test link opens.
+    document.addEventListener('DOMContentLoaded',function(){
+        setTimeout(function(){ updateRegistrationFixed(); },1200);
     });
 
     // Prevent the old EV2 settings from ever enabling option shuffling.

@@ -3288,53 +3288,7 @@ window.autoMathExplanation=autoMathExplanation;
 </script>
 
 
-<!-- 5-minute inactivity lock: valid page markup (not inside a JavaScript string) -->
-<div id="idleLockOverlay" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(15,23,42,.96);align-items:center;justify-content:center;padding:20px;font-family:Arial,sans-serif">
-  <div style="background:#fff;max-width:360px;width:100%;padding:24px;border-radius:18px;text-align:center;box-shadow:0 20px 60px #0006">
-    <div style="font-size:42px;color:#4f46e5;margin-bottom:8px">🔒</div>
-    <h2 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#1e293b">એપ લોક થઈ ગઈ છે</h2>
-    <p style="font-size:14px;color:#475569;margin:0 0 16px">5 મિનિટ સુધી કોઈ પ્રવૃત્તિ ન હોવાથી પેજ રીફ્રેશ થયું છે. ચાલુ રાખવા પાસવર્ડ દાખલ કરો.</p>
-    <input id="idleLockPassword" type="password" autocomplete="current-password" placeholder="પાસવર્ડ દાખલ કરો" style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;box-sizing:border-box;margin-bottom:10px">
-    <p id="idleLockError" style="display:none;color:#dc2626;font-size:13px;margin:0 0 10px">પાસવર્ડ ખોટો છે. ફરી પ્રયાસ કરો.</p>
-    <button id="idleUnlockBtn" type="button" style="width:100%;padding:12px;background:#4f46e5;color:#fff;border:0;border-radius:10px;font-size:16px;font-weight:700">અનલોક કરો</button>
-  </div>
-</div>
-<script id="idleRefreshLockFix">
-(function(){
-  'use strict';
-  const LIMIT=5*60*1000, FLAG='nirmalaStudyZonIdleLocked';
-  let timer=null, locked=false;
-  const byId=id=>document.getElementById(id);
-  function lockAndRefresh(){
-    if(locked)return; locked=true;
-    try{sessionStorage.setItem(FLAG,'1')}catch(e){}
-    location.reload();
-  }
-  function showLock(){
-    locked=true; const overlay=byId('idleLockOverlay'); if(overlay)overlay.style.display='flex';
-    if(timer){clearTimeout(timer);timer=null;}
-    const input=byId('idleLockPassword'); if(input){input.value='';setTimeout(()=>input.focus(),100);}
-  }
-  function reset(){if(locked)return;if(timer)clearTimeout(timer);timer=setTimeout(lockAndRefresh,LIMIT);}
-  function unlock(){
-    const input=byId('idleLockPassword'), error=byId('idleLockError');
-    const entered=input?input.value:'';
-    if(typeof adminPasscode!=='undefined' && entered===String(adminPasscode)){
-      try{sessionStorage.removeItem(FLAG)}catch(e){}
-      locked=false; const overlay=byId('idleLockOverlay');if(overlay)overlay.style.display='none';
-      if(error)error.style.display='none'; reset();
-    }else{if(error)error.style.display='block';if(input){input.value='';input.focus();}}
-  }
-  document.addEventListener('DOMContentLoaded',function(){
-    let shouldLock=false;try{shouldLock=sessionStorage.getItem(FLAG)==='1'}catch(e){}
-    if(shouldLock)showLock();else reset();
-    ['pointerdown','keydown','touchstart','scroll','click','input','change'].forEach(evt=>document.addEventListener(evt,reset,{passive:true}));
-    if(byId('idleUnlockBtn'))byId('idleUnlockBtn').addEventListener('click',unlock);
-    if(byId('idleLockPassword'))byId('idleLockPassword').addEventListener('keydown',e=>{if(e.key==='Enter')unlock()});
-  });
-})();
-</script>
-
+<!-- Student-facing inactivity lock removed: test links stay accessible without a password prompt. -->
 
 <script>
 (function(){
@@ -3956,6 +3910,22 @@ function normalizeAnswerForGrading(value, question){
         const form=document.getElementById('studentRegForm');
         const box=document.getElementById('maxAttemptsReachedBox');
         const sheet=document.getElementById('lockedAttemptAnswerSheet');
+        let toggleBtn=document.getElementById('toggleAttemptAnswerSheetsBtn');
+        if(sheet && !toggleBtn){
+            toggleBtn=document.createElement('button');
+            toggleBtn.id='toggleAttemptAnswerSheetsBtn';
+            toggleBtn.type='button';
+            toggleBtn.textContent='📄 ઉત્તરવહી જુઓ';
+            toggleBtn.className='w-full mt-3 px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold';
+            toggleBtn.setAttribute('aria-expanded','false');
+            sheet.parentNode.insertBefore(toggleBtn,sheet);
+            toggleBtn.addEventListener('click',()=>{
+                const isHidden=sheet.classList.contains('hidden');
+                sheet.classList.toggle('hidden',!isHidden);
+                toggleBtn.textContent=isHidden?'🙈 ઉત્તરવહી છુપાવો':'📄 ઉત્તરવહી જુઓ';
+                toggleBtn.setAttribute('aria-expanded',isHidden?'true':'false');
+            });
+        }
         const heading=box?.querySelector('h3');
         const notice=box?.querySelector('p');
         if(attempts.length>0){
@@ -3971,6 +3941,12 @@ function normalizeAnswerForGrading(value, question){
                 : 'તમારા પ્રથમ પ્રયાસનાં માર્ક્સ, ઉત્તરવહી અને સમજૂતી નીચે જોઈ શકો છો. બીજી તક લેવા માટે ઉપર ફોર્મ ભરો.';
             if(sheet){
                 sheet.innerHTML='';
+                sheet.classList.add('hidden');
+                if(toggleBtn){
+                    toggleBtn.classList.remove('hidden');
+                    toggleBtn.textContent='📄 ઉત્તરવહી જુઓ';
+                    toggleBtn.setAttribute('aria-expanded','false');
+                }
                 shownAttempts.forEach((attempt,i)=>{
                     const section=document.createElement('section');
                     section.className='mt-4 rounded-xl border border-indigo-200 p-3 bg-white';
@@ -3982,7 +3958,8 @@ function normalizeAnswerForGrading(value, question){
             }
         }else{
             box?.classList.add('hidden');
-            if(sheet) sheet.innerHTML='';
+            if(sheet){sheet.innerHTML='';sheet.classList.add('hidden');}
+            if(toggleBtn) toggleBtn.classList.add('hidden');
         }
         if(attempts.length>=max) form?.classList.add('hidden');
         else form?.classList.remove('hidden');

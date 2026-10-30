@@ -3124,6 +3124,10 @@ let oldRender=window.renderTestBoxes;window.renderTestBoxes=function(){try{oldRe
  });
  box.innerHTML=out+'</div>';
 }
+// Make the answer-sheet renderer accessible to the registration/result screen.
+// The later UI code calls window.renderLockedAttemptAnswerSheet(...); without this
+// export, the score cards render but the actual questions never appear.
+window.renderLockedAttemptAnswerSheet = renderLockedAttemptAnswerSheet;
 window.updateStudentRegistrationCard=function(){const u=new URLSearchParams(location.search),k=u.get('t')||u.get('test')||activeTestKey,t=currentTests[k],m=t?.meta||{};if(!t)return;document.getElementById('studentTestTitle').textContent=m.title||k;document.getElementById('dispCourse').textContent=m.course||'સામાન્ય';document.getElementById('dispSubject').textContent=m.subject||'સામાન્ય';document.getElementById('dispTotalMarks').textContent=m.totalMarks||100;document.getElementById('dispTimeLimit').textContent=(m.timeLimit||60)+' મિનિટ';const max=Number(m.maxAttempts||2),a=JSON.parse(localStorage.getItem('attempts_'+k)||'[]');document.getElementById('dispDeviceAttempts').textContent=a.length;const sheet=document.getElementById('lockedAttemptAnswerSheet');if(a.length>=max){document.getElementById('studentRegForm').classList.add('hidden');document.getElementById('maxAttemptsReachedBox').classList.remove('hidden');const z=a[a.length-1];document.getElementById('lastAttemptScoreText').textContent=`મેળવેલ માર્ક્સ: ${z.score} / ${z.total} (${z.percentage}%)`;renderLockedAttemptAnswerSheet(z);}else{document.getElementById('studentRegForm').classList.remove('hidden');document.getElementById('maxAttemptsReachedBox').classList.add('hidden');if(sheet)sheet.innerHTML='';}};
 document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{dash();stats()},800));
 })();
